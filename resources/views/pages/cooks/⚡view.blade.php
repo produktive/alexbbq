@@ -61,28 +61,37 @@ new class extends Component {
             // default sign convention between major versions (absolute in
             // Carbon 2, signed in Carbon 3), which silently flipped the
             // direction of every point after the first.
+            // ->all() at the end matters here: ->values() alone still
+            // returns a Collection, and Collections get wrapped by
+            // Livewire's wire-protocol serializer (so they can be hydrated
+            // back into Collection instances later). That wrapping is
+            // invisible in @js() on first page load - it just JSON-encodes
+            // whatever it's given - but it DOES show up when this same
+            // array is sent as a dispatch() event payload, since dispatch
+            // payloads go through Livewire's normal wire serialization.
+            // Plain arrays avoid that wrapping entirely.
             'food' => $readings->map(fn ($r) => [
                 'x' => $r->time->getTimestamp() - $start->getTimestamp(),
                 'y' => $this->cleanTemp($r->probe_food),
                 'id' => $r->id,
-            ])->values(),
+            ])->values()->all(),
 
             'bbq' => $readings->map(fn ($r) => [
                 'x' => $r->time->getTimestamp() - $start->getTimestamp(),
                 'y' => $this->cleanTemp($r->probe_bbq),
                 'id' => $r->id,
-            ])->values(),
+            ])->values()->all(),
         ];
     }
 
-    public function deletePoint(int $id): void
+    public function deletePoint(int $id): array
     {
         Reading::whereKey($id)->delete();
 
-        $this->dispatch('chart-refresh');
+        return $this->chartData;
     }
 
-    public function deleteBefore(int $id): void
+    public function deleteBefore(int $id): array
     {
         $reading = Reading::findOrFail($id);
 
@@ -90,10 +99,10 @@ new class extends Component {
             ->where('time', '<', $reading->time)
             ->delete();
 
-        $this->dispatch('chart-refresh');
+        return $this->chartData;
     }
 
-    public function deleteAfter(int $id): void
+    public function deleteAfter(int $id): array
     {
         $reading = Reading::findOrFail($id);
 
@@ -101,16 +110,16 @@ new class extends Component {
             ->where('time', '>', $reading->time)
             ->delete();
 
-        $this->dispatch('chart-refresh');
+        return $this->chartData;
     }
 
-    public function deleteSelectedPoints(array $ids): void
+    public function deleteSelectedPoints(array $ids): array
     {
         Reading::whereIn('id', $ids)->delete();
 
         $this->selectedReadingIds = [];
 
-        $this->dispatch('chart-refresh');
+        return $this->chartData;
     }
 }
 ?>
@@ -129,30 +138,51 @@ new class extends Component {
     </flux:text>
 
     <div
+        wire:ignore
         x-data="window.cookChart(@js($this->chartData))"
         class="relative space-y-4 h-125"
     >
         <canvas x-ref="canvas"></canvas>
 
+        {{-- Drag-selection highlight --}}
+        <div
+            x-show="selection.startX !== null && selection.endX !== null"
+            x-bind:style="selectionOverlayStyle()"
+            class="absolute top-0 bottom-0 bg-blue-500/15 border-x border-blue-500 pointer-events-none"
+            x-cloak
+        ></div>
+
         {{-- Context menu --}}
         <div
             x-show="menu.open"
             @click.outside="menu.open = false"
-            class="fixed z-50 bg-white border rounded shadow"
+            class="fixed z-50 min-w-56 bg-white border rounded shadow py-1"
             :style="`left:${menu.x}px;top:${menu.y}px`"
+            x-cloak
         >
             <template x-if="!selection.active">
-                <div>
-                    <button @click="deletePoint()">Delete this point</button>
-                    <button @click="deleteBefore()">Delete before</button>
-                    <button @click="deleteAfter()">Delete after</button>
+                <div class="flex flex-col">
+                    <button type="button" class="px-3 py-1.5 text-left text-sm hover:bg-gray-100" @click="deletePoint()">
+                        Delete this point
+                    </button>
+                    <button type="button" class="px-3 py-1.5 text-left text-sm hover:bg-gray-100" @click="deleteBefore()">
+                        Delete all before this point
+                    </button>
+                    <button type="button" class="px-3 py-1.5 text-left text-sm hover:bg-gray-100" @click="deleteAfter()">
+                        Delete all after this point
+                    </button>
                 </div>
             </template>
 
             <template x-if="selection.active">
-                <button @click="deleteSelected()">
-                    Delete selected points
-                </button>
+                <div class="flex flex-col">
+                    <button type="button" class="px-3 py-1.5 text-left text-sm hover:bg-gray-100" @click="deleteSelected()">
+                        Delete <span x-text="selection.ids.length"></span> selected points
+                    </button>
+                    <button type="button" class="px-3 py-1.5 text-left text-sm hover:bg-gray-100" @click="menu.open = false; clearSelection()">
+                        Clear selection
+                    </button>
+                </div>
             </template>
         </div>
     </div>
