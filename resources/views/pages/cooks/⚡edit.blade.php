@@ -1,13 +1,16 @@
 <?php
 
 use App\Filament\Schemas\CookSection;
+use Filament\Actions\Concerns\InteractsWithActions;
+use Filament\Actions\Contracts\HasActions;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Schemas\Schema;
 use App\Models\Cook;
 use Livewire\Component;
 
-new class extends Component implements HasForms {
+new class extends Component implements HasActions, HasForms {
+    use InteractsWithActions;
     use InteractsWithForms;
 
     public Cook $cook;
@@ -31,7 +34,14 @@ new class extends Component implements HasForms {
                 CookSection::make()
             ]);
     }
-};
+
+    public function update(): void
+    {
+        $data = $this->form->getState();
+        $this->cook->update($data);
+        $this->redirectRoute('cooks.view', $this->cook);
+    }
+}
 ?>
 
 <flux:container>
@@ -39,7 +49,19 @@ new class extends Component implements HasForms {
         Edit Cook
     </flux:heading>
 
-    <div class="my-6">
+    <div class="max-w-3xl my-6">
         {{ $this->form }}
+
+        <div class="flex justify-end gap-4 my-6">
+            <flux:button href="{{ route('cooks.view', $this->cook) }}">
+                Cancel
+            </flux:button>
+
+            <flux:button variant="primary" wire:click="update">
+                Update
+            </flux:button>
+        </div>
     </div>
+
+    <x-filament-actions::modals />
 </flux:container>

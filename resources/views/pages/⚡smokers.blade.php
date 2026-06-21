@@ -23,6 +23,7 @@ use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Contracts\HasTable;
 use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\TernaryFilter;
+use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
@@ -73,7 +74,7 @@ class extends Component implements HasActions, HasForms, HasTable {
             ->query(Smoker::query()->withTrashed())
             ->emptyStateIcon('heroicon-o-fire')
             ->emptyStateHeading('No Smokers')
-            ->emptyStateDescription('Add a new smoker to get started cooking .')
+            ->emptyStateDescription('Add a new smoker to get started cooking.')
             ->emptyStateActions([
                 $this->createForm('add_smoker_empty')
             ])
@@ -106,6 +107,11 @@ class extends Component implements HasActions, HasForms, HasTable {
                         ->modalDescription('It will be unavailable in new cooks but remain listed here. You can undo this any time.')
                         ->modalSubmitActionLabel('Archive')
                         ->visible(fn(Smoker $record) => !$record->trashed()),
+                    Action::make('activate')
+                        ->icon('heroicon-o-trash')
+                        ->color('info')
+                        ->visible(fn(Smoker $record) => !$record->exists())
+                        ->action(fn(Smoker $record) => $record->restore()),
                     Action::make('forceDelete')
                         ->label('Delete Permanently')
                         ->icon('heroicon-o-trash')
@@ -134,12 +140,11 @@ class extends Component implements HasActions, HasForms, HasTable {
 
             // Filters
             ->filters([
-                TernaryFilter::make('active')
-                    ->queries(
-                        true: fn(Builder $query) => $query->withoutTrashed(),
-                        false: fn(Builder $query) => $query->onlyTrashed(),
-                        blank: fn(Builder $query) => $query,
-                    ),
+                TrashedFilter::make()
+                    ->label('Smokers')
+                    ->placeholder('Active only')
+                    ->falseLabel('Archived only')
+                    ->trueLabel('All'),
             ])
             ->modifyQueryUsing(
                 fn(Builder $query) => $query->withoutGlobalScopes([

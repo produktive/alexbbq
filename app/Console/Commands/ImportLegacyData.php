@@ -6,6 +6,7 @@ use App\Models\Cook;
 use App\Models\Reading;
 use App\Models\Smoker;
 use App\Models\User;
+use Carbon\CarbonImmutable;
 use Illuminate\Console\Attributes\Description;
 use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
@@ -95,8 +96,6 @@ class ImportLegacyData extends Command
                         'time' => $reading->time,
                         'probe_food' => $reading->probe1,
                         'probe_bbq' => $reading->probe2,
-                        'probe3' => $reading->probe3,
-                        'probe4' => $reading->probe4,
                     ];
                 }
 

@@ -7,6 +7,10 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Reading extends Model
 {
+    protected $casts = [
+        'time' => 'datetime',
+    ];
+
     public function cook(): BelongsTo
     {
         return $this->belongsTo(Cook::class);

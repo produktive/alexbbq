@@ -89,3 +89,7 @@ p.fi-ta-text-description {
 .dark p.fi-ta-text-description {
     color: var(--color-white);
 }
+
+#cook-description a {
+    color: deeppink;
+}

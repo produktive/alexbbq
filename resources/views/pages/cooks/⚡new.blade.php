@@ -73,24 +73,19 @@ class extends Component implements HasActions, HasForms {
             background: rgb(234 88 12);
         }
     </style>
-    <flux:heading
-        level="1"
-        size="xl"
-    >
+    <flux:heading level="1" size="xl">
         Start New Cook
     </flux:heading>
+
     <div class="max-w-3xl my-6">
         {{ $this->form }}
 
         <div class="flex justify-end my-6">
-            <flux:button
-                variant="primary"
-                wire:click="save"
-            >
+            <flux:button variant="primary" wire:click="save">
                 Start Recording
             </flux:button>
         </div>
     </div>
 
-    <x-filament-actions::modals/>
+    <x-filament-actions::modals />
 </flux:container>

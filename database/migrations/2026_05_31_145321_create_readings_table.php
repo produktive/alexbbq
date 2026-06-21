@@ -18,8 +18,6 @@ return new class extends Migration
             $table->timestamp('time');
             $table->integer('probe_food')->nullable();
             $table->integer('probe_bbq')->nullable();
-            $table->integer('probe3')->nullable();
-            $table->integer('probe4')->nullable();
         });
     }
 

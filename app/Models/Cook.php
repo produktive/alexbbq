@@ -9,6 +9,15 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Cook extends Model
 {
+    protected $fillable = [
+        'smoker_id',
+        'title',
+        'description',
+    ];
+//    protected $casts = [
+//        'created_at' => 'datetime',
+//    ];
+
     public function readings(): HasMany
     {
         return $this->hasMany(Reading::class);
@@ -17,13 +26,6 @@ class Cook extends Model
     public function smoker(): BelongsTo
     {
         return $this->belongsTo(Smoker::class);
-    }
-
-    public function endedAt(): ?Carbon
-    {
-        return $this->readings()
-            ->latest()
-            ->value('created_at');
     }
 
     public function getDurationSeconds(): int

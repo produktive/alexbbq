@@ -40,7 +40,8 @@ class extends Component implements HasActions, HasForms, HasTable {
                     ->label('Description')
                     ->description(fn(Cook $record): string => $record->title, position: 'above')
                     ->wrap()
-                    ->lineClamp(2),
+                    ->lineClamp(2)
+                    ->grow(),
             ])
             ->defaultSort('created_at', 'desc')
             ->recordActions([

@@ -5,3 +5,5 @@
  */
 
 import './echo';
+import cookChart from './cook-chart';
+window.cookChart = cookChart;
