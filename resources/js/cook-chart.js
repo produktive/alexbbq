@@ -88,6 +88,33 @@ function cssChartAreaBox(chart) {
     };
 }
 
+function pointHasNote(context) {
+    return Boolean(context.raw?.note);
+}
+
+function notedPointRadius(context) {
+    return pointHasNote(context) ? 7 : 4;
+}
+
+function notedPointStyle(context) {
+    return pointHasNote(context) ? 'rectRot' : 'circle';
+}
+
+function notedPointBorderWidth(context) {
+    return pointHasNote(context) ? 2 : 1;
+}
+
+function notedPointBorderColor(context) {
+    return pointHasNote(context) ? '#d97706' : context.dataset.borderColor;
+}
+
+const DATASET_POINT_STYLE = {
+    pointRadius: notedPointRadius,
+    pointStyle: notedPointStyle,
+    pointBorderWidth: notedPointBorderWidth,
+    pointBorderColor: notedPointBorderColor,
+};
+
 export default function cookChart(data, canModify = false) {
     // Chart.js instances are deeply circular. They must never live on Alpine /
     // Livewire reactive state or Livewire 4's toRaw() recurses infinitely
@@ -105,6 +132,7 @@ export default function cookChart(data, canModify = false) {
             x: 0,
             y: 0,
             pointId: null,
+            pointNote: null,
         },
 
         selection: {
@@ -134,11 +162,13 @@ export default function cookChart(data, canModify = false) {
                                 label: 'Food',
                                 data: data.food,
                                 pointHitRadius: 8,
+                                ...DATASET_POINT_STYLE,
                             },
                             {
                                 label: 'BBQ',
                                 data: data.bbq,
                                 pointHitRadius: 8,
+                                ...DATASET_POINT_STYLE,
                             },
                         ],
                     },
@@ -168,6 +198,16 @@ export default function cookChart(data, canModify = false) {
 
                                     label: (context) => {
                                         return `${context.dataset.label}: ${context.parsed.y}°`;
+                                    },
+
+                                    afterBody: (items) => {
+                                        const note = items[0]?.raw?.note;
+
+                                        if (!note) {
+                                            return [];
+                                        }
+
+                                        return ['', note];
                                     },
                                 },
                             },
@@ -387,6 +427,7 @@ export default function cookChart(data, canModify = false) {
 
             if (withinActiveSelection) {
                 this.menu.pointId = null;
+                this.menu.pointNote = null;
             } else {
                 const point = this.nearestPoint(e);
 
@@ -397,11 +438,51 @@ export default function cookChart(data, canModify = false) {
 
                 this.clearSelection();
                 this.menu.pointId = Number(point.id);
+                this.menu.pointNote = point.note || null;
             }
 
-            this.menu.x = e.clientX;
-            this.menu.y = e.clientY;
+            this.menu.x = 0;
+            this.menu.y = 0;
             this.menu.open = true;
+
+            this.$nextTick(() => this.positionContextMenu(e));
+        },
+
+        positionContextMenu(e) {
+            const root = this.$refs.root;
+            const menuEl = this.$refs.menu;
+
+            if (!root || !menuEl) {
+                return;
+            }
+
+            const rootRect = root.getBoundingClientRect();
+            const relX = e.clientX - rootRect.left;
+            const relY = e.clientY - rootRect.top;
+            const menuW = menuEl.offsetWidth;
+            const menuH = menuEl.offsetHeight;
+            const pad = 4;
+
+            let left = relX;
+
+            // Keep the menu inside the chart: anchor its right edge at the
+            // click when opening to the right would overflow.
+            if (left + menuW > rootRect.width - pad) {
+                left = relX - menuW;
+            }
+
+            left = Math.max(pad, Math.min(left, rootRect.width - menuW - pad));
+
+            let top = relY;
+
+            if (top + menuH > rootRect.height - pad) {
+                top = rootRect.height - menuH - pad;
+            }
+
+            top = Math.max(pad, top);
+
+            this.menu.x = left;
+            this.menu.y = top;
         },
 
         onKeyDown(e) {
@@ -432,6 +513,17 @@ export default function cookChart(data, canModify = false) {
             delete chart.options.scales.x.max;
 
             chart.update();
+        },
+
+        addNote() {
+            if (!canModify) return;
+
+            const id = this.menu.pointId;
+            if (!id) return;
+
+            this.menu.open = false;
+
+            this.$wire.mountAction('addNote', { id });
         },
 
         removePoint() {

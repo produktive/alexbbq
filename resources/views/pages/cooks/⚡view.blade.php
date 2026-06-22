@@ -4,6 +4,7 @@ use App\Models\Cook;
 use Filament\Actions\Action;
 use Filament\Actions\Concerns\InteractsWithActions;
 use Filament\Actions\Contracts\HasActions;
+use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Concerns\InteractsWithSchemas;
 use Filament\Schemas\Contracts\HasSchemas;
 use Livewire\Attributes\Computed;
@@ -84,12 +85,14 @@ new class extends Component implements HasActions, HasSchemas {
                 'x' => $r->time->getTimestamp() - $start->getTimestamp(),
                 'y' => $this->cleanTemp($r->probe_food),
                 'id' => $r->id,
+                'note' => $r->note,
             ])->values()->all(),
 
             'bbq' => $readings->map(fn ($r) => [
                 'x' => $r->time->getTimestamp() - $start->getTimestamp(),
                 'y' => $this->cleanTemp($r->probe_bbq),
                 'id' => $r->id,
+                'note' => $r->note,
             ])->values()->all(),
         ];
     }
@@ -172,6 +175,20 @@ new class extends Component implements HasActions, HasSchemas {
         return $this->afterReadingsChanged();
     }
 
+    private function performSaveNote(int $id, ?string $note): ?array
+    {
+        $this->ensureCanModifyReadings();
+
+        $reading = $this->cook->readings()->findOrFail($id);
+
+        $reading->note = filled($note) ? $note : null;
+        $reading->save();
+
+        $this->cook->unsetRelation('readings');
+
+        return $this->buildChartData();
+    }
+
     public function deletePointAction(): Action
     {
         return Action::make('deletePoint')
@@ -225,6 +242,32 @@ new class extends Component implements HasActions, HasSchemas {
                 $this->notifyChartUpdated($this->performDeleteSelected($ids));
             });
     }
+
+    public function addNoteAction(): Action
+    {
+        return Action::make('addNote')
+            ->modalHeading(fn (array $arguments): string => blank($this->cook->readings()->find((int) $arguments['id'])?->note)
+                ? 'Add note'
+                : 'Edit note')
+            ->modalDescription('Add a brief note to this reading. It will appear on the chart and in the tooltip.')
+            ->modalSubmitActionLabel('Save')
+            ->schema([
+                TextInput::make('note')
+                    ->label('Note')
+                    ->maxLength(255)
+                    ->placeholder('e.g. Wrapped in foil'),
+            ])
+            ->fillForm(function (array $arguments): array {
+                $reading = $this->cook->readings()->findOrFail((int) $arguments['id']);
+
+                return [
+                    'note' => $reading->note ?? '',
+                ];
+            })
+            ->action(function (array $arguments, array $data): void {
+                $this->notifyChartUpdated($this->performSaveNote((int) $arguments['id'], $data['note'] ?? null));
+            });
+    }
 }
 ?>
 <flux:container>
@@ -244,6 +287,7 @@ new class extends Component implements HasActions, HasSchemas {
     <div
         wire:ignore
         x-data="window.cookChart(@js($this->chartData), @js(auth()->check()))"
+        x-ref="root"
         class="relative h-125"
     >
         <div class="relative h-full">
@@ -261,21 +305,32 @@ new class extends Component implements HasActions, HasSchemas {
         {{-- Context menu (authenticated users only) --}}
         @auth
         <div
+            x-ref="menu"
             x-show="menu.open"
             @click.outside="menu.open = false"
-            class="fixed z-50 min-w-56 bg-white border rounded shadow py-1"
+            class="absolute z-50 min-w-56 bg-white border rounded shadow py-1"
             :style="`left:${menu.x}px;top:${menu.y}px`"
             x-cloak
         >
             <template x-if="!selection.active">
                 <div class="flex flex-col">
-                    <button type="button" class="px-3 py-1.5 text-left text-sm hover:bg-gray-100" @click="removePoint()">
+                    <button type="button" class="flex w-full items-center gap-2 px-3 py-1.5 text-left text-sm hover:bg-gray-100" @click="addNote()">
+                        <flux:icon.pencil-square variant="mini" class="size-4 shrink-0 text-gray-500" />
+                        <span x-text="menu.pointNote ? 'Edit note' : 'Add note'"></span>
+                    </button>
+
+                    <div class="my-1 border-t border-gray-200"></div>
+
+                    <button type="button" class="flex w-full items-center gap-2 px-3 py-1.5 text-left text-sm hover:bg-gray-100" @click="removePoint()">
+                        <flux:icon.trash variant="mini" class="size-4 shrink-0 text-gray-500" />
                         Delete this point
                     </button>
-                    <button type="button" class="px-3 py-1.5 text-left text-sm hover:bg-gray-100" @click="removeBefore()">
+                    <button type="button" class="flex w-full items-center gap-2 px-3 py-1.5 text-left text-sm hover:bg-gray-100" @click="removeBefore()">
+                        <flux:icon.chevron-double-left variant="mini" class="size-4 shrink-0 text-gray-500" />
                         Delete all before this point
                     </button>
-                    <button type="button" class="px-3 py-1.5 text-left text-sm hover:bg-gray-100" @click="removeAfter()">
+                    <button type="button" class="flex w-full items-center gap-2 px-3 py-1.5 text-left text-sm hover:bg-gray-100" @click="removeAfter()">
+                        <flux:icon.chevron-double-right variant="mini" class="size-4 shrink-0 text-gray-500" />
                         Delete all after this point
                     </button>
                 </div>
@@ -283,10 +338,12 @@ new class extends Component implements HasActions, HasSchemas {
 
             <template x-if="selection.active">
                 <div class="flex flex-col">
-                    <button type="button" class="px-3 py-1.5 text-left text-sm hover:bg-gray-100" @click="removeSelected()">
+                    <button type="button" class="flex w-full items-center gap-2 px-3 py-1.5 text-left text-sm hover:bg-gray-100" @click="removeSelected()">
+                        <flux:icon.trash variant="mini" class="size-4 shrink-0 text-gray-500" />
                         Delete <span x-text="selection.ids.length"></span> selected points
                     </button>
-                    <button type="button" class="px-3 py-1.5 text-left text-sm hover:bg-gray-100" @click="menu.open = false; clearSelection()">
+                    <button type="button" class="flex w-full items-center gap-2 px-3 py-1.5 text-left text-sm hover:bg-gray-100" @click="menu.open = false; clearSelection()">
+                        <flux:icon.x-mark variant="mini" class="size-4 shrink-0 text-gray-500" />
                         Clear selection
                     </button>
                 </div>

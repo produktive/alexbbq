@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Reading extends Model
 {
+    public $timestamps = false;
+
     protected $casts = [
         'time' => 'datetime',
     ];
