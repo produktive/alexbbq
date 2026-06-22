@@ -2,8 +2,6 @@
 
 use App\Models\Cook;
 use App\Models\Reading;
-use Carbon\Carbon;
-use Carbon\CarbonInterval;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
 
@@ -27,6 +25,11 @@ new class extends Component {
 
     #[Computed]
     public function chartData(): array
+    {
+        return $this->buildChartData();
+    }
+
+    private function buildChartData(): array
     {
         $readings = $this->cook
             ->readings()
@@ -84,42 +87,54 @@ new class extends Component {
         ];
     }
 
-    public function deletePoint(int $id): array
+    private function afterReadingsChanged(): array
     {
-        Reading::whereKey($id)->delete();
+        $this->cook->syncStartTimeFromReadings();
+        $this->cook->refresh();
 
-        return $this->chartData;
+        return $this->buildChartData();
     }
 
-    public function deleteBefore(int $id): array
+    public function deletePoint(int $id): ?array
+    {
+        if (Reading::whereKey($id)->delete() === 0) {
+            return null;
+        }
+
+        return $this->afterReadingsChanged();
+    }
+
+    public function deleteBefore(int $id): ?array
     {
         $reading = Reading::findOrFail($id);
 
-        $this->cook->readings()
-            ->where('time', '<', $reading->time)
-            ->delete();
+        if ($this->cook->readings()->where('time', '<', $reading->time)->delete() === 0) {
+            return null;
+        }
 
-        return $this->chartData;
+        return $this->afterReadingsChanged();
     }
 
-    public function deleteAfter(int $id): array
+    public function deleteAfter(int $id): ?array
     {
         $reading = Reading::findOrFail($id);
 
-        $this->cook->readings()
-            ->where('time', '>', $reading->time)
-            ->delete();
+        if ($this->cook->readings()->where('time', '>', $reading->time)->delete() === 0) {
+            return null;
+        }
 
-        return $this->chartData;
+        return $this->afterReadingsChanged();
     }
 
-    public function deleteSelectedPoints(array $ids): array
+    public function deleteSelectedPoints(array $ids): ?array
     {
-        Reading::whereIn('id', $ids)->delete();
+        if (Reading::whereIn('id', $ids)->delete() === 0) {
+            return null;
+        }
 
         $this->selectedReadingIds = [];
 
-        return $this->chartData;
+        return $this->afterReadingsChanged();
     }
 }
 ?>
@@ -130,11 +145,11 @@ new class extends Component {
     </flux:heading>
 
     <flux:text size="md" class="my-2">
-        Began {{ $this->cook->created_at->format('F j, Y \a\t g:i A') }}
+        Began {{ $this->cook->getBeganAt()->format('F j, Y \a\t g:i A') }}
     </flux:text>
 
     <flux:text size="sm" class="my-2">
-        {{ CarbonInterval::seconds($this->cook->getDurationSeconds())->cascade() }}
+        {{ $this->cook->getDurationLabel() }}
     </flux:text>
 
     <div
@@ -162,13 +177,13 @@ new class extends Component {
         >
             <template x-if="!selection.active">
                 <div class="flex flex-col">
-                    <button type="button" class="px-3 py-1.5 text-left text-sm hover:bg-gray-100" @click="deletePoint()">
+                    <button type="button" class="px-3 py-1.5 text-left text-sm hover:bg-gray-100" @click="removePoint()">
                         Delete this point
                     </button>
-                    <button type="button" class="px-3 py-1.5 text-left text-sm hover:bg-gray-100" @click="deleteBefore()">
+                    <button type="button" class="px-3 py-1.5 text-left text-sm hover:bg-gray-100" @click="removeBefore()">
                         Delete all before this point
                     </button>
-                    <button type="button" class="px-3 py-1.5 text-left text-sm hover:bg-gray-100" @click="deleteAfter()">
+                    <button type="button" class="px-3 py-1.5 text-left text-sm hover:bg-gray-100" @click="removeAfter()">
                         Delete all after this point
                     </button>
                 </div>
@@ -176,7 +191,7 @@ new class extends Component {
 
             <template x-if="selection.active">
                 <div class="flex flex-col">
-                    <button type="button" class="px-3 py-1.5 text-left text-sm hover:bg-gray-100" @click="deleteSelected()">
+                    <button type="button" class="px-3 py-1.5 text-left text-sm hover:bg-gray-100" @click="removeSelected()">
                         Delete <span x-text="selection.ids.length"></span> selected points
                     </button>
                     <button type="button" class="px-3 py-1.5 text-left text-sm hover:bg-gray-100" @click="menu.open = false; clearSelection()">

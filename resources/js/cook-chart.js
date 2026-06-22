@@ -25,9 +25,16 @@ function formatClock(startSecondsOfDay, elapsedSeconds) {
 const MIN_DRAG_PX = 6;
 
 export default function cookChart(data) {
-    return {
-        chart: null,
+    // Chart.js instances are deeply circular. They must never live on Alpine /
+    // Livewire reactive state or Livewire 4's toRaw() recurses infinitely
+    // when a $wire action is invoked from this component.
+    let chart = null;
 
+    // Bound handler references, kept so destroy() removes exactly what init()
+    // attached. Also kept off reactive state for the same reason.
+    let handlers = {};
+
+    return {
         menu: {
             open: false,
             x: 0,
@@ -43,13 +50,9 @@ export default function cookChart(data) {
             ids: [],
         },
 
-        // Bound handler references, kept so destroy() removes exactly what
-        // init() attached.
-        _handlers: {},
-
         init() {
             this.$nextTick(() => {
-                this.chart = new Chart(this.$refs.canvas, {
+                chart = new Chart(this.$refs.canvas, {
                     type: 'line',
 
                     data: {
@@ -111,44 +114,51 @@ export default function cookChart(data) {
         destroy() {
             const canvas = this.$refs.canvas;
 
-            if (canvas && this._handlers.mousedown) {
-                canvas.removeEventListener('mousedown', this._handlers.mousedown);
-                canvas.removeEventListener('mousemove', this._handlers.mousemove);
-                canvas.removeEventListener('contextmenu', this._handlers.contextmenu);
+            if (canvas && handlers.mousedown) {
+                canvas.removeEventListener('mousedown', handlers.mousedown);
+                canvas.removeEventListener('mousemove', handlers.mousemove);
+                canvas.removeEventListener('contextmenu', handlers.contextmenu);
             }
 
-            if (this._handlers.mouseup) {
-                window.removeEventListener('mouseup', this._handlers.mouseup);
+            if (handlers.mouseup) {
+                window.removeEventListener('mouseup', handlers.mouseup);
             }
 
-            if (this._handlers.keydown) {
-                window.removeEventListener('keydown', this._handlers.keydown);
+            if (handlers.keydown) {
+                window.removeEventListener('keydown', handlers.keydown);
+            }
+
+            handlers = {};
+
+            if (chart) {
+                chart.destroy();
+                chart = null;
             }
         },
 
         bindCanvasEvents() {
             const canvas = this.$refs.canvas;
 
-            this._handlers.mousedown = (e) => this.onMouseDown(e);
-            this._handlers.mousemove = (e) => this.onMouseMove(e);
-            this._handlers.mouseup = (e) => this.onMouseUp(e);
-            this._handlers.contextmenu = (e) => this.onContextMenu(e);
-            this._handlers.keydown = (e) => this.onKeyDown(e);
+            handlers.mousedown = (e) => this.onMouseDown(e);
+            handlers.mousemove = (e) => this.onMouseMove(e);
+            handlers.mouseup = (e) => this.onMouseUp(e);
+            handlers.contextmenu = (e) => this.onContextMenu(e);
+            handlers.keydown = (e) => this.onKeyDown(e);
 
-            canvas.addEventListener('mousedown', this._handlers.mousedown);
-            canvas.addEventListener('mousemove', this._handlers.mousemove);
+            canvas.addEventListener('mousedown', handlers.mousedown);
+            canvas.addEventListener('mousemove', handlers.mousemove);
             // Listen on window (not just the canvas) so a drag that ends
             // outside the canvas bounds still finalizes the selection.
-            window.addEventListener('mouseup', this._handlers.mouseup);
-            canvas.addEventListener('contextmenu', this._handlers.contextmenu);
-            window.addEventListener('keydown', this._handlers.keydown);
+            window.addEventListener('mouseup', handlers.mouseup);
+            canvas.addEventListener('contextmenu', handlers.contextmenu);
+            window.addEventListener('keydown', handlers.keydown);
         },
 
         // Converts a mouse event's screen position into a value on the
         // chart's x-axis (elapsed seconds since the first reading).
         dataXFromEvent(e) {
             const rect = this.$refs.canvas.getBoundingClientRect();
-            return this.chart.scales.x.getValueForPixel(e.clientX - rect.left);
+            return chart.scales.x.getValueForPixel(e.clientX - rect.left);
         },
 
         onMouseDown(e) {
@@ -174,8 +184,8 @@ export default function cookChart(data) {
 
             this.selection.dragging = false;
 
-            const startPx = this.chart.scales.x.getPixelForValue(this.selection.startX);
-            const endPx = this.chart.scales.x.getPixelForValue(this.selection.endX);
+            const startPx = chart.scales.x.getPixelForValue(this.selection.startX);
+            const endPx = chart.scales.x.getPixelForValue(this.selection.endX);
 
             if (Math.abs(endPx - startPx) < MIN_DRAG_PX) {
                 this.clearSelection();
@@ -188,11 +198,11 @@ export default function cookChart(data) {
             // Both datasets share the same x values/ids - one Reading feeds
             // one Food point and one BBQ point - so reading ids off either
             // dataset is enough.
-            const points = this.chart.data.datasets[0].data ?? [];
+            const points = chart.data.datasets[0].data ?? [];
 
             this.selection.ids = points
                 .filter((point) => point.x >= lo && point.x <= hi)
-                .map((point) => point.id);
+                .map((point) => Number(point.id));
 
             this.selection.active = this.selection.ids.length > 0;
 
@@ -217,15 +227,15 @@ export default function cookChart(data) {
 
         // Style binding for the highlighted drag-selection overlay div.
         selectionOverlayStyle() {
-            if (!this.chart || this.selection.startX === null || this.selection.endX === null) {
+            if (!chart || this.selection.startX === null || this.selection.endX === null) {
                 return 'display:none';
             }
 
             const lo = Math.min(this.selection.startX, this.selection.endX);
             const hi = Math.max(this.selection.startX, this.selection.endX);
 
-            const left = this.chart.scales.x.getPixelForValue(lo);
-            const right = this.chart.scales.x.getPixelForValue(hi);
+            const left = chart.scales.x.getPixelForValue(lo);
+            const right = chart.scales.x.getPixelForValue(hi);
 
             return `left:${left}px;width:${Math.max(right - left, 1)}px`;
         },
@@ -236,7 +246,7 @@ export default function cookChart(data) {
         // means clicking empty space correctly returns nothing, even on a
         // dense chart where points are only a few pixels apart.
         nearestPoint(e) {
-            const matches = this.chart.getElementsAtEventForMode(
+            const matches = chart.getElementsAtEventForMode(
                 e,
                 'nearest',
                 { intersect: true },
@@ -247,7 +257,7 @@ export default function cookChart(data) {
 
             const { datasetIndex, index } = matches[0];
 
-            return this.chart.data.datasets[datasetIndex].data[index];
+            return chart.data.datasets[datasetIndex].data[index];
         },
 
         onContextMenu(e) {
@@ -266,7 +276,7 @@ export default function cookChart(data) {
                 }
 
                 this.clearSelection();
-                this.menu.pointId = point.id;
+                this.menu.pointId = Number(point.id);
             }
 
             this.menu.x = e.clientX;
@@ -289,47 +299,53 @@ export default function cookChart(data) {
         // deleting the first reading shifts every remaining point's
         // elapsed-time offset).
         refreshChart(fresh) {
-            if (!fresh || !this.chart) return;
+            if (!fresh || !chart) return;
 
             data.startSecondsOfDay = fresh.startSecondsOfDay;
 
-            this.chart.data.datasets[0].data = fresh.food;
-            this.chart.data.datasets[1].data = fresh.bbq;
-            this.chart.update();
+            chart.data.datasets[0].data = fresh.food;
+            chart.data.datasets[1].data = fresh.bbq;
+            chart.update();
         },
 
-        async deletePoint() {
-            if (!this.menu.pointId) return;
+        async removePoint() {
+            const id = this.menu.pointId;
+            if (!id) return;
 
-            const fresh = await this.$wire.deletePoint(this.menu.pointId);
             this.menu.open = false;
+
+            const fresh = await this.$wire.call('deletePoint', id);
             this.refreshChart(fresh);
         },
 
-        async deleteBefore() {
-            if (!this.menu.pointId) return;
+        async removeBefore() {
+            const id = this.menu.pointId;
+            if (!id) return;
 
-            const fresh = await this.$wire.deleteBefore(this.menu.pointId);
             this.menu.open = false;
+
+            const fresh = await this.$wire.call('deleteBefore', id);
             this.refreshChart(fresh);
         },
 
-        async deleteAfter() {
-            if (!this.menu.pointId) return;
+        async removeAfter() {
+            const id = this.menu.pointId;
+            if (!id) return;
 
-            const fresh = await this.$wire.deleteAfter(this.menu.pointId);
             this.menu.open = false;
+
+            const fresh = await this.$wire.call('deleteAfter', id);
             this.refreshChart(fresh);
         },
 
-        async deleteSelected() {
+        async removeSelected() {
             if (!this.selection.ids.length) return;
 
-            const ids = [...this.selection.ids];
+            const ids = this.selection.ids.map(Number);
             this.menu.open = false;
             this.clearSelection();
 
-            const fresh = await this.$wire.deleteSelectedPoints(ids);
+            const fresh = await this.$wire.call('deleteSelectedPoints', ids);
             this.refreshChart(fresh);
         },
     };
