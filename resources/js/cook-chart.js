@@ -24,7 +24,71 @@ function formatClock(startSecondsOfDay, elapsedSeconds) {
 // range selection instead of an accidental click.
 const MIN_DRAG_PX = 6;
 
-export default function cookChart(data) {
+// Chart.js layout coordinates use chart.width/chart.height (CSS pixels).
+// canvas.width/canvas.height are backing-store pixels — do not mix them.
+function cssScale(chart) {
+    const canvas = chart.canvas;
+    const rect = canvas.getBoundingClientRect();
+
+    return {
+        x: rect.width / chart.width,
+        y: rect.height / chart.height,
+    };
+}
+
+function chartPointFromEvent(e, chart) {
+    const canvas = chart.canvas;
+    const rect = canvas.getBoundingClientRect();
+    const { x: scaleX, y: scaleY } = cssScale(chart);
+
+    return {
+        x: (e.clientX - rect.left) / scaleX,
+        y: (e.clientY - rect.top) / scaleY,
+    };
+}
+
+function isInChartArea(e, chart) {
+    const { x, y } = chartPointFromEvent(e, chart);
+    const { left, right, top, bottom } = chart.chartArea;
+
+    return x >= left && x <= right && y >= top && y <= bottom;
+}
+
+function clampChartX(x, chart) {
+    const { left, right } = chart.chartArea;
+
+    return Math.max(left, Math.min(right, x));
+}
+
+function clampDataX(value, chart) {
+    const scale = chart.scales.x;
+
+    return Math.max(scale.min, Math.min(scale.max, value));
+}
+
+function dataXFromChartX(chartX, chart) {
+    return clampDataX(chart.scales.x.getValueForPixel(clampChartX(chartX, chart)), chart);
+}
+
+function cssXFromDataValue(chart, value) {
+    const { x: scaleX } = cssScale(chart);
+
+    return chart.scales.x.getPixelForValue(value) * scaleX;
+}
+
+function cssChartAreaBox(chart) {
+    const { x: scaleX, y: scaleY } = cssScale(chart);
+    const { left, top, right, bottom } = chart.chartArea;
+
+    return {
+        left: left * scaleX,
+        top: top * scaleY,
+        width: (right - left) * scaleX,
+        height: (bottom - top) * scaleY,
+    };
+}
+
+export default function cookChart(data, canModify = false) {
     // Chart.js instances are deeply circular. They must never live on Alpine /
     // Livewire reactive state or Livewire 4's toRaw() recurses infinitely
     // when a $wire action is invoked from this component.
@@ -33,6 +97,7 @@ export default function cookChart(data) {
     // Bound handler references, kept so destroy() removes exactly what init()
     // attached. Also kept off reactive state for the same reason.
     let handlers = {};
+    let chartUpdateListener = null;
 
     return {
         menu: {
@@ -48,9 +113,17 @@ export default function cookChart(data) {
             startX: null,
             endX: null,
             ids: [],
+            overlayStyle: 'display:none',
         },
 
         init() {
+            if (canModify) {
+                chartUpdateListener = this.$wire.on('cook-chart-updated', async () => {
+                    const fresh = await this.$wire.call('refreshChartData');
+                    this.refreshChart(fresh);
+                });
+            }
+
             this.$nextTick(() => {
                 chart = new Chart(this.$refs.canvas, {
                     type: 'line',
@@ -124,11 +197,20 @@ export default function cookChart(data) {
                 window.removeEventListener('mouseup', handlers.mouseup);
             }
 
+            if (handlers.dragMove) {
+                window.removeEventListener('mousemove', handlers.dragMove);
+            }
+
             if (handlers.keydown) {
                 window.removeEventListener('keydown', handlers.keydown);
             }
 
             handlers = {};
+
+            if (chartUpdateListener) {
+                chartUpdateListener();
+                chartUpdateListener = null;
+            }
 
             if (chart) {
                 chart.destroy();
@@ -142,6 +224,7 @@ export default function cookChart(data) {
             handlers.mousedown = (e) => this.onMouseDown(e);
             handlers.mousemove = (e) => this.onMouseMove(e);
             handlers.mouseup = (e) => this.onMouseUp(e);
+            handlers.dragMove = (e) => this.onMouseMove(e);
             handlers.contextmenu = (e) => this.onContextMenu(e);
             handlers.keydown = (e) => this.onKeyDown(e);
 
@@ -157,12 +240,38 @@ export default function cookChart(data) {
         // Converts a mouse event's screen position into a value on the
         // chart's x-axis (elapsed seconds since the first reading).
         dataXFromEvent(e) {
-            const rect = this.$refs.canvas.getBoundingClientRect();
-            return chart.scales.x.getValueForPixel(e.clientX - rect.left);
+            const { x } = chartPointFromEvent(e, chart);
+
+            return dataXFromChartX(x, chart);
+        },
+
+        updateSelectionOverlay() {
+            if (!chart || this.selection.startX === null || this.selection.endX === null) {
+                this.selection.overlayStyle = 'display:none';
+                return;
+            }
+
+            const area = cssChartAreaBox(chart);
+            const xScale = chart.scales.x;
+            const lo = Math.max(xScale.min, Math.min(this.selection.startX, this.selection.endX));
+            const hi = Math.min(xScale.max, Math.max(this.selection.startX, this.selection.endX));
+
+            let left = cssXFromDataValue(chart, lo);
+            let right = cssXFromDataValue(chart, hi);
+
+            // Keep the highlight within the plot area horizontally.
+            left = Math.max(area.left, Math.min(left, area.left + area.width));
+            right = Math.max(area.left, Math.min(right, area.left + area.width));
+
+            this.selection.overlayStyle = `left:${left}px;width:${Math.max(right - left, 1)}px;top:${area.top}px;height:${area.height}px`;
         },
 
         onMouseDown(e) {
+            if (!canModify) return;
+
             if (e.button !== 0) return; // left button only - right button is handled by contextmenu
+
+            if (!chart?.chartArea || !isInChartArea(e, chart)) return;
 
             this.menu.open = false;
 
@@ -171,29 +280,40 @@ export default function cookChart(data) {
             this.selection.ids = [];
             this.selection.startX = this.dataXFromEvent(e);
             this.selection.endX = this.selection.startX;
+            this.updateSelectionOverlay();
+
+            window.addEventListener('mousemove', handlers.dragMove);
         },
 
         onMouseMove(e) {
             if (!this.selection.dragging) return;
 
             this.selection.endX = this.dataXFromEvent(e);
+            this.updateSelectionOverlay();
         },
 
         onMouseUp() {
             if (!this.selection.dragging) return;
 
             this.selection.dragging = false;
+            window.removeEventListener('mousemove', handlers.dragMove);
 
-            const startPx = chart.scales.x.getPixelForValue(this.selection.startX);
-            const endPx = chart.scales.x.getPixelForValue(this.selection.endX);
+            const startPx = cssXFromDataValue(chart, this.selection.startX);
+            const endPx = cssXFromDataValue(chart, this.selection.endX);
 
             if (Math.abs(endPx - startPx) < MIN_DRAG_PX) {
                 this.clearSelection();
                 return;
             }
 
-            const lo = Math.min(this.selection.startX, this.selection.endX);
-            const hi = Math.max(this.selection.startX, this.selection.endX);
+            const lo = Math.max(
+                chart.scales.x.min,
+                Math.min(this.selection.startX, this.selection.endX)
+            );
+            const hi = Math.min(
+                chart.scales.x.max,
+                Math.max(this.selection.startX, this.selection.endX)
+            );
 
             // Both datasets share the same x values/ids - one Reading feeds
             // one Food point and one BBQ point - so reading ids off either
@@ -208,7 +328,10 @@ export default function cookChart(data) {
 
             if (!this.selection.active) {
                 this.clearSelection();
+                return;
             }
+
+            this.updateSelectionOverlay();
         },
 
         clearSelection() {
@@ -217,27 +340,22 @@ export default function cookChart(data) {
             this.selection.startX = null;
             this.selection.endX = null;
             this.selection.ids = [];
+            this.selection.overlayStyle = 'display:none';
+
+            window.removeEventListener('mousemove', handlers.dragMove);
         },
 
         isWithinSelection(x) {
-            const lo = Math.min(this.selection.startX, this.selection.endX);
-            const hi = Math.max(this.selection.startX, this.selection.endX);
+            const lo = Math.max(
+                chart.scales.x.min,
+                Math.min(this.selection.startX, this.selection.endX)
+            );
+            const hi = Math.min(
+                chart.scales.x.max,
+                Math.max(this.selection.startX, this.selection.endX)
+            );
+
             return x >= lo && x <= hi;
-        },
-
-        // Style binding for the highlighted drag-selection overlay div.
-        selectionOverlayStyle() {
-            if (!chart || this.selection.startX === null || this.selection.endX === null) {
-                return 'display:none';
-            }
-
-            const lo = Math.min(this.selection.startX, this.selection.endX);
-            const hi = Math.max(this.selection.startX, this.selection.endX);
-
-            const left = chart.scales.x.getPixelForValue(lo);
-            const right = chart.scales.x.getPixelForValue(hi);
-
-            return `left:${left}px;width:${Math.max(right - left, 1)}px`;
         },
 
         // Finds the data point the cursor is actually hovering over (within
@@ -261,6 +379,8 @@ export default function cookChart(data) {
         },
 
         onContextMenu(e) {
+            if (!canModify) return;
+
             e.preventDefault();
 
             const withinActiveSelection = this.selection.active && this.isWithinSelection(this.dataXFromEvent(e));
@@ -305,48 +425,58 @@ export default function cookChart(data) {
 
             chart.data.datasets[0].data = fresh.food;
             chart.data.datasets[1].data = fresh.bbq;
+
+            // Force Chart.js to recompute x bounds from the refreshed data so
+            // the first remaining point becomes x=0 and axis labels reset.
+            delete chart.options.scales.x.min;
+            delete chart.options.scales.x.max;
+
             chart.update();
         },
 
-        async removePoint() {
+        removePoint() {
+            if (!canModify) return;
+
             const id = this.menu.pointId;
             if (!id) return;
 
             this.menu.open = false;
 
-            const fresh = await this.$wire.call('deletePoint', id);
-            this.refreshChart(fresh);
+            this.$wire.mountAction('deletePoint', { id });
         },
 
-        async removeBefore() {
+        removeBefore() {
+            if (!canModify) return;
+
             const id = this.menu.pointId;
             if (!id) return;
 
             this.menu.open = false;
 
-            const fresh = await this.$wire.call('deleteBefore', id);
-            this.refreshChart(fresh);
+            this.$wire.mountAction('deleteBefore', { id });
         },
 
-        async removeAfter() {
+        removeAfter() {
+            if (!canModify) return;
+
             const id = this.menu.pointId;
             if (!id) return;
 
             this.menu.open = false;
 
-            const fresh = await this.$wire.call('deleteAfter', id);
-            this.refreshChart(fresh);
+            this.$wire.mountAction('deleteAfter', { id });
         },
 
-        async removeSelected() {
+        removeSelected() {
+            if (!canModify) return;
+
             if (!this.selection.ids.length) return;
 
             const ids = this.selection.ids.map(Number);
             this.menu.open = false;
             this.clearSelection();
 
-            const fresh = await this.$wire.call('deleteSelectedPoints', ids);
-            this.refreshChart(fresh);
+            this.$wire.mountAction('deleteSelected', { ids });
         },
     };
 }

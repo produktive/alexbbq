@@ -1,11 +1,18 @@
 <?php
 
 use App\Models\Cook;
-use App\Models\Reading;
+use Filament\Actions\Action;
+use Filament\Actions\Concerns\InteractsWithActions;
+use Filament\Actions\Contracts\HasActions;
+use Filament\Schemas\Concerns\InteractsWithSchemas;
+use Filament\Schemas\Contracts\HasSchemas;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
 
-new class extends Component {
+new class extends Component implements HasActions, HasSchemas {
+
+    use InteractsWithActions;
+    use InteractsWithSchemas;
 
     public Cook $cook;
 
@@ -87,26 +94,50 @@ new class extends Component {
         ];
     }
 
+    private function ensureCanModifyReadings(): void
+    {
+        abort_unless(auth()->check(), 403);
+    }
+
     private function afterReadingsChanged(): array
     {
         $this->cook->syncStartTimeFromReadings();
         $this->cook->refresh();
+        $this->cook->unsetRelation('readings');
 
         return $this->buildChartData();
     }
 
-    public function deletePoint(int $id): ?array
+    private function notifyChartUpdated(?array $chart): void
     {
-        if (Reading::whereKey($id)->delete() === 0) {
+        if ($chart !== null) {
+            // Signal only — chart data is fetched via refreshChartData() so it
+            // is JSON-encoded like the initial @js() payload, not wire-wrapped.
+            $this->dispatch('cook-chart-updated');
+        }
+    }
+
+    public function refreshChartData(): array
+    {
+        return $this->buildChartData();
+    }
+
+    private function performDeletePoint(int $id): ?array
+    {
+        $this->ensureCanModifyReadings();
+
+        if ($this->cook->readings()->whereKey($id)->delete() === 0) {
             return null;
         }
 
         return $this->afterReadingsChanged();
     }
 
-    public function deleteBefore(int $id): ?array
+    private function performDeleteBefore(int $id): ?array
     {
-        $reading = Reading::findOrFail($id);
+        $this->ensureCanModifyReadings();
+
+        $reading = $this->cook->readings()->findOrFail($id);
 
         if ($this->cook->readings()->where('time', '<', $reading->time)->delete() === 0) {
             return null;
@@ -115,9 +146,11 @@ new class extends Component {
         return $this->afterReadingsChanged();
     }
 
-    public function deleteAfter(int $id): ?array
+    private function performDeleteAfter(int $id): ?array
     {
-        $reading = Reading::findOrFail($id);
+        $this->ensureCanModifyReadings();
+
+        $reading = $this->cook->readings()->findOrFail($id);
 
         if ($this->cook->readings()->where('time', '>', $reading->time)->delete() === 0) {
             return null;
@@ -126,15 +159,71 @@ new class extends Component {
         return $this->afterReadingsChanged();
     }
 
-    public function deleteSelectedPoints(array $ids): ?array
+    private function performDeleteSelected(array $ids): ?array
     {
-        if (Reading::whereIn('id', $ids)->delete() === 0) {
+        $this->ensureCanModifyReadings();
+
+        if ($this->cook->readings()->whereIn('id', $ids)->delete() === 0) {
             return null;
         }
 
         $this->selectedReadingIds = [];
 
         return $this->afterReadingsChanged();
+    }
+
+    public function deletePointAction(): Action
+    {
+        return Action::make('deletePoint')
+            ->requiresConfirmation()
+            ->modalHeading('Delete this point?')
+            ->modalDescription('This reading will be permanently removed from the cook chart.')
+            ->modalSubmitActionLabel('Delete')
+            ->color('danger')
+            ->action(function (array $arguments): void {
+                $this->notifyChartUpdated($this->performDeletePoint((int) $arguments['id']));
+            });
+    }
+
+    public function deleteBeforeAction(): Action
+    {
+        return Action::make('deleteBefore')
+            ->requiresConfirmation()
+            ->modalHeading('Delete all points before this one?')
+            ->modalDescription('Every reading recorded before this point will be permanently removed.')
+            ->modalSubmitActionLabel('Delete')
+            ->color('danger')
+            ->action(function (array $arguments): void {
+                $this->notifyChartUpdated($this->performDeleteBefore((int) $arguments['id']));
+            });
+    }
+
+    public function deleteAfterAction(): Action
+    {
+        return Action::make('deleteAfter')
+            ->requiresConfirmation()
+            ->modalHeading('Delete all points after this one?')
+            ->modalDescription('Every reading recorded after this point will be permanently removed.')
+            ->modalSubmitActionLabel('Delete')
+            ->color('danger')
+            ->action(function (array $arguments): void {
+                $this->notifyChartUpdated($this->performDeleteAfter((int) $arguments['id']));
+            });
+    }
+
+    public function deleteSelectedAction(): Action
+    {
+        return Action::make('deleteSelected')
+            ->requiresConfirmation()
+            ->modalHeading(fn (array $arguments): string => 'Delete '.count($arguments['ids']).' selected points?')
+            ->modalDescription('The selected readings will be permanently removed from the cook chart.')
+            ->modalSubmitActionLabel('Delete')
+            ->color('danger')
+            ->action(function (array $arguments): void {
+                $ids = array_map(intval(...), $arguments['ids']);
+
+                $this->notifyChartUpdated($this->performDeleteSelected($ids));
+            });
     }
 }
 ?>
@@ -154,20 +243,23 @@ new class extends Component {
 
     <div
         wire:ignore
-        x-data="window.cookChart(@js($this->chartData))"
-        class="relative space-y-4 h-125"
+        x-data="window.cookChart(@js($this->chartData), @js(auth()->check()))"
+        class="relative h-125"
     >
-        <canvas x-ref="canvas"></canvas>
+        <div class="relative h-full">
+            <canvas x-ref="canvas" class="block h-full w-full"></canvas>
 
-        {{-- Drag-selection highlight --}}
-        <div
-            x-show="selection.startX !== null && selection.endX !== null"
-            x-bind:style="selectionOverlayStyle()"
-            class="absolute top-0 bottom-0 bg-blue-500/15 border-x border-blue-500 pointer-events-none"
-            x-cloak
-        ></div>
+            {{-- Drag-selection highlight --}}
+            <div
+                x-show="selection.dragging || selection.active"
+                x-bind:style="selection.overlayStyle"
+                class="pointer-events-none absolute bg-blue-500/15 border-x border-blue-500"
+                x-cloak
+            ></div>
+        </div>
 
-        {{-- Context menu --}}
+        {{-- Context menu (authenticated users only) --}}
+        @auth
         <div
             x-show="menu.open"
             @click.outside="menu.open = false"
@@ -200,6 +292,7 @@ new class extends Component {
                 </div>
             </template>
         </div>
+        @endauth
     </div>
 
     <div id="cook-description" class="my-2">
@@ -212,6 +305,8 @@ new class extends Component {
                 Edit Cook
             </flux:button>
         </div>
+
+        <x-filament-actions::modals />
     @endauth
 
 </flux:container>
