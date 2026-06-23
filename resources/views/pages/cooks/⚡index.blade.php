@@ -23,6 +23,11 @@ new
 class extends Component implements HasActions, HasForms, HasTable {
     use InteractsWithActions, InteractsWithForms, InteractsWithTable;
 
+    private function cookHasDescription(Cook $record): bool
+    {
+        return filled($record->getRawOriginal('description'));
+    }
+
     public function table(Table $table): Table
     {
         return $table
@@ -35,10 +40,18 @@ class extends Component implements HasActions, HasForms, HasTable {
                     ->sortable()
                     ->wrap(),
                 TextColumn::make('description')
-                    ->formatStateUsing(fn(string $state): string => html_entity_decode(strip_tags($state)))
-                    ->color('gray')
+                    ->state(function (Cook $record): string {
+                        $text = trim(html_entity_decode(strip_tags($record->renderRichContent('description'))));
+
+                        return $text !== '' ? $text : $record->title;
+                    })
+                    ->color(fn (Cook $record): ?string => $this->cookHasDescription($record) ? 'gray' : null)
+                    ->extraAttributes(fn (Cook $record): array => $this->cookHasDescription($record) ? [] : ['class' => 'cook-list-title-only'])
                     ->label('Description')
-                    ->description(fn(Cook $record): string => $record->title, position: 'above')
+                    ->description(
+                        fn (Cook $record): ?string => $this->cookHasDescription($record) ? $record->title : null,
+                        position: 'above',
+                    )
                     ->wrap()
                     ->lineClamp(2)
                     ->grow(),

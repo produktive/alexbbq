@@ -1,6 +1,7 @@
 <?php
 
 use App\Filament\Schemas\CookSection;
+use App\Support\RichEditorDocument;
 use Filament\Actions\Concerns\InteractsWithActions;
 use Filament\Actions\Contracts\HasActions;
 use Filament\Forms\Concerns\InteractsWithForms;
@@ -38,6 +39,11 @@ new class extends Component implements HasActions, HasForms {
     public function update(): void
     {
         $data = $this->form->getState();
+
+        if (array_key_exists('description', $data)) {
+            $data['description'] = RichEditorDocument::sanitizeHtml($data['description']);
+        }
+
         $this->cook->update($data);
         $this->redirectRoute('cooks.view', $this->cook);
     }

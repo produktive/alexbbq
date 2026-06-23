@@ -6,4 +6,7 @@
 
 import './echo';
 import cookChart from './cook-chart';
+import cookDescriptionGallery from './cook-description-gallery';
+
 window.cookChart = cookChart;
+window.cookDescriptionGallery = cookDescriptionGallery;

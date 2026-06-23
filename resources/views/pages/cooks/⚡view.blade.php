@@ -4,7 +4,6 @@ use App\Models\Cook;
 use Filament\Actions\Action;
 use Filament\Actions\Concerns\InteractsWithActions;
 use Filament\Actions\Contracts\HasActions;
-use Filament\Forms\Components\RichEditor\RichContentRenderer;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Concerns\InteractsWithSchemas;
 use Filament\Schemas\Contracts\HasSchemas;
@@ -340,9 +339,73 @@ new class extends Component implements HasActions, HasSchemas {
         @endauth
     </div>
 
-    <article id="cook-description" class="prose my-6">
-        {!! RichContentRenderer::make($this->cook->description)->toHtml() !!}
-    </article>
+    <div x-data="cookDescriptionGallery()" class="my-6">
+        <article
+            id="cook-description"
+            x-ref="content"
+            class="prose cook-description dark:prose-invert"
+            :class="{ 'is-processed': processed }"
+        >
+            {!! $this->cook->renderRichContent('description') !!}
+        </article>
+
+        <template x-teleport="body">
+            <div
+                x-show="lightboxOpen"
+                x-cloak
+                x-transition.opacity
+                class="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-4"
+                @keydown.escape.window="closeLightbox()"
+                @keydown.arrow-right.window="lightboxOpen && next()"
+                @keydown.arrow-left.window="lightboxOpen && prev()"
+            >
+                <button
+                    type="button"
+                    class="absolute inset-0 cursor-default"
+                    aria-label="Close lightbox"
+                    @click="closeLightbox()"
+                ></button>
+
+                <button
+                    type="button"
+                    class="absolute end-4 top-4 z-10 rounded-full bg-black/50 p-2 text-white hover:bg-black/70"
+                    aria-label="Close"
+                    @click="closeLightbox()"
+                >
+                    <flux:icon.x-mark variant="mini" class="size-5"/>
+                </button>
+
+                <template x-if="hasMultiple()">
+                    <button
+                        type="button"
+                        class="absolute start-2 top-1/2 z-10 -translate-y-1/2 rounded-full bg-black/50 p-2 text-white hover:bg-black/70 sm:start-4"
+                        aria-label="Previous image"
+                        @click.stop="prev()"
+                    >
+                        <flux:icon.chevron-left variant="mini" class="size-6"/>
+                    </button>
+                </template>
+
+                <img
+                    :src="lightboxSrc()"
+                    :alt="lightboxAlt()"
+                    class="relative z-[1] max-h-[90vh] max-w-[90vw] rounded-lg object-contain shadow-2xl"
+                    @click.stop
+                >
+
+                <template x-if="hasMultiple()">
+                    <button
+                        type="button"
+                        class="absolute end-2 top-1/2 z-10 -translate-y-1/2 rounded-full bg-black/50 p-2 text-white hover:bg-black/70 sm:end-4"
+                        aria-label="Next image"
+                        @click.stop="next()"
+                    >
+                        <flux:icon.chevron-right variant="mini" class="size-6"/>
+                    </button>
+                </template>
+            </div>
+        </template>
+    </div>
 
     @auth
         <div class="flex justify-end">

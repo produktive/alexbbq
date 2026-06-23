@@ -25,7 +25,7 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
-    /*--font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';*/
+    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
 
     --color-zinc-50: #fafafa;
     --color-zinc-100: #f5f5f5;
@@ -81,15 +81,33 @@ select:focus[data-flux-control] {
     @apply size-4;
 } */
 
-p.fi-ta-text-description {
+p.fi-ta-text-description,
+.fi-ta-text.cook-list-title-only .fi-ta-text-item {
     color: var(--color-zinc-800);
     font-weight: 500;
 }
 
-.dark p.fi-ta-text-description {
+.dark p.fi-ta-text-description,
+.dark .fi-ta-text.cook-list-title-only .fi-ta-text-item {
     color: var(--color-white);
 }
 
 #cook-description a {
     color: deeppink;
+}
+
+.cook-description:not(.is-processed) img {
+    @apply max-h-24 max-w-24 cursor-pointer rounded-lg object-cover;
+}
+
+.cook-description-gallery {
+    @apply mt-4 grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-5;
+}
+
+.cook-description-thumb {
+    @apply aspect-square w-full overflow-hidden rounded-lg border border-zinc-200 bg-zinc-100 p-0 transition hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent dark:border-zinc-700 dark:bg-zinc-800;
+}
+
+.cook-description-thumb img {
+    @apply size-full object-cover;
 }
