@@ -284,59 +284,58 @@ new class extends Component implements HasActions, HasSchemas {
             <div
                 x-ref="menu"
                 x-show="menu.open"
-                @click.outside="menu.open = false"
+                @click.outside="menu.open = false; menu.positioned = false"
                 class="absolute z-50 min-w-56 rounded border border-zinc-200 bg-white py-1 text-zinc-900 shadow dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
+                :class="{ invisible: !menu.positioned }"
                 :style="`left:${menu.x}px;top:${menu.y}px`"
                 x-cloak
             >
-                <template x-if="!selection.active">
-                    <div class="flex flex-col">
-                        <button type="button"
-                                class="flex w-full items-center gap-2 px-3 py-1.5 text-left text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800"
-                                @click="mountPointAction('addNote')">
-                            <flux:icon.pencil-square variant="mini" class="size-4 shrink-0 text-zinc-500 dark:text-zinc-400"/>
-                            <span x-text="menu.pointNote ? 'Edit note' : 'Add note'"></span>
-                        </button>
+                <div x-show="!selection.active" class="flex flex-col">
+                    <button type="button"
+                            class="flex w-full items-center gap-2 px-3 py-1.5 text-left text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                            @click="mountPointAction('addNote')">
+                        <flux:icon.pencil-square variant="mini" class="size-4 shrink-0 text-zinc-500 dark:text-zinc-400"/>
+                        <span x-text="menu.pointNote ? 'Edit note' : 'Add note'"></span>
+                    </button>
 
-                        <div class="my-1 border-t border-zinc-200 dark:border-zinc-700"></div>
+                    <div class="my-1 border-t border-zinc-200 dark:border-zinc-700"></div>
 
-                        <button type="button"
-                                class="flex w-full items-center gap-2 px-3 py-1.5 text-left text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800"
-                                @click="mountPointAction('deletePoint')">
-                            <flux:icon.trash variant="mini" class="size-4 shrink-0 text-zinc-500 dark:text-zinc-400"/>
-                            Delete this point
-                        </button>
-                        <button type="button"
-                                class="flex w-full items-center gap-2 px-3 py-1.5 text-left text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800"
-                                @click="mountPointAction('deleteBefore')">
-                            <flux:icon.chevron-double-left variant="mini" class="size-4 shrink-0 text-zinc-500 dark:text-zinc-400"/>
-                            Delete all before this point
-                        </button>
-                        <button type="button"
-                                class="flex w-full items-center gap-2 px-3 py-1.5 text-left text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800"
-                                @click="mountPointAction('deleteAfter')">
-                            <flux:icon.chevron-double-right variant="mini" class="size-4 shrink-0 text-zinc-500 dark:text-zinc-400"/>
-                            Delete all after this point
-                        </button>
-                    </div>
-                </template>
+                    <button type="button"
+                            class="flex w-full items-center gap-2 px-3 py-1.5 text-left text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                            @click="mountPointAction('deletePoint')">
+                        <flux:icon.trash variant="mini" class="size-4 shrink-0 text-zinc-500 dark:text-zinc-400"/>
+                        Delete this point
+                    </button>
+                    <button type="button"
+                            x-show="menu.canDeleteBefore"
+                            class="flex w-full items-center gap-2 px-3 py-1.5 text-left text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                            @click="mountPointAction('deleteBefore')">
+                        <flux:icon.chevron-double-left variant="mini" class="size-4 shrink-0 text-zinc-500 dark:text-zinc-400"/>
+                        Delete all before this point
+                    </button>
+                    <button type="button"
+                            x-show="menu.canDeleteAfter"
+                            class="flex w-full items-center gap-2 px-3 py-1.5 text-left text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                            @click="mountPointAction('deleteAfter')">
+                        <flux:icon.chevron-double-right variant="mini" class="size-4 shrink-0 text-zinc-500 dark:text-zinc-400"/>
+                        Delete all after this point
+                    </button>
+                </div>
 
-                <template x-if="selection.active">
-                    <div class="flex flex-col">
-                        <button type="button"
-                                class="flex w-full items-center gap-2 px-3 py-1.5 text-left text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800"
-                                @click="removeSelected()">
-                            <flux:icon.trash variant="mini" class="size-4 shrink-0 text-zinc-500 dark:text-zinc-400"/>
-                            <span x-text="`Delete ${selection.ids.length} selected points`"></span>
-                        </button>
-                        <button type="button"
-                                class="flex w-full items-center gap-2 px-3 py-1.5 text-left text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800"
-                                @click="menu.open = false; clearSelection()">
-                            <flux:icon.x-mark variant="mini" class="size-4 shrink-0 text-zinc-500 dark:text-zinc-400"/>
-                            Clear selection
-                        </button>
-                    </div>
-                </template>
+                <div x-show="selection.active" class="flex flex-col">
+                    <button type="button"
+                            class="flex w-full items-center gap-2 px-3 py-1.5 text-left text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                            @click="removeSelected()">
+                        <flux:icon.trash variant="mini" class="size-4 shrink-0 text-zinc-500 dark:text-zinc-400"/>
+                        <span x-text="`Delete ${selection.ids.length} selected points`"></span>
+                    </button>
+                    <button type="button"
+                            class="flex w-full items-center gap-2 px-3 py-1.5 text-left text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                            @click="menu.open = false; menu.positioned = false; clearSelection()">
+                        <flux:icon.x-mark variant="mini" class="size-4 shrink-0 text-zinc-500 dark:text-zinc-400"/>
+                        Clear selection
+                    </button>
+                </div>
             </div>
         @endauth
     </div>

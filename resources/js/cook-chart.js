@@ -16,6 +16,7 @@ function formatClock(startSecondsOfDay, elapsedSeconds) {
 }
 
 const MIN_DRAG_PX = 6;
+const MENU_MIN_WIDTH = 224; // matches min-w-56
 
 // Chart.js layout coordinates use chart.width/chart.height (CSS pixels).
 function cssScale(chart) {
@@ -98,10 +99,13 @@ export default function cookChart(data, canModify = false) {
     return {
         menu: {
             open: false,
+            positioned: false,
             x: 0,
             y: 0,
             pointId: null,
             pointNote: null,
+            canDeleteBefore: false,
+            canDeleteAfter: false,
         },
 
         selection: {
@@ -269,6 +273,7 @@ export default function cookChart(data, canModify = false) {
             }
 
             this.menu.open = false;
+            this.menu.positioned = false;
 
             this.selection.dragging = true;
             this.selection.active = false;
@@ -353,7 +358,10 @@ export default function cookChart(data, canModify = false) {
 
             const { datasetIndex, index } = matches[0];
 
-            return chart.data.datasets[datasetIndex].data[index];
+            return {
+                point: chart.data.datasets[datasetIndex].data[index],
+                index,
+            };
         },
 
         onContextMenu(e) {
@@ -364,24 +372,46 @@ export default function cookChart(data, canModify = false) {
             if (withinActiveSelection) {
                 this.menu.pointId = null;
                 this.menu.pointNote = null;
+                this.menu.canDeleteBefore = false;
+                this.menu.canDeleteAfter = false;
             } else {
-                const point = this.nearestPoint(e);
+                const hit = this.nearestPoint(e);
 
-                if (!point) {
+                if (!hit) {
                     this.menu.open = false;
                     return;
                 }
 
+                const { point, index } = hit;
+                const seriesLength = chart.data.datasets[0].data.length;
+
                 this.clearSelection();
                 this.menu.pointId = Number(point.id);
                 this.menu.pointNote = point.note || null;
+                this.menu.canDeleteBefore = index > 0;
+                this.menu.canDeleteAfter = index < seriesLength - 1;
             }
 
-            this.menu.x = 0;
-            this.menu.y = 0;
+            this.menu.positioned = false;
+            this.scheduleContextMenuPosition(e);
+        },
+
+        scheduleContextMenuPosition(e) {
             this.menu.open = true;
 
-            this.$nextTick(() => this.positionContextMenu(e));
+            this.$nextTick(() => {
+                this.positionContextMenu(e);
+
+                if (this.$refs.menu?.offsetWidth > 0) {
+                    this.menu.positioned = true;
+                    return;
+                }
+
+                requestAnimationFrame(() => {
+                    this.positionContextMenu(e);
+                    this.menu.positioned = true;
+                });
+            });
         },
 
         positionContextMenu(e) {
@@ -395,8 +425,8 @@ export default function cookChart(data, canModify = false) {
             const rootRect = root.getBoundingClientRect();
             const relX = e.clientX - rootRect.left;
             const relY = e.clientY - rootRect.top;
-            const menuW = menuEl.offsetWidth;
-            const menuH = menuEl.offsetHeight;
+            const menuW = menuEl.offsetWidth || menuEl.scrollWidth || MENU_MIN_WIDTH;
+            const menuH = menuEl.offsetHeight || menuEl.scrollHeight || 0;
             const pad = 4;
 
             let left = relX;
@@ -425,6 +455,7 @@ export default function cookChart(data, canModify = false) {
             }
 
             this.menu.open = false;
+            this.menu.positioned = false;
             this.clearSelection();
         },
 
@@ -451,6 +482,7 @@ export default function cookChart(data, canModify = false) {
             }
 
             this.menu.open = false;
+            this.menu.positioned = false;
             this.$wire.mountAction(name, { id });
         },
 
@@ -461,6 +493,7 @@ export default function cookChart(data, canModify = false) {
 
             const ids = this.selection.ids.map(Number);
             this.menu.open = false;
+            this.menu.positioned = false;
             this.clearSelection();
 
             this.$wire.mountAction('deleteSelected', { ids });
