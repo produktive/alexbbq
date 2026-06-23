@@ -19,7 +19,7 @@ use Livewire\Attributes\Title;
 use Livewire\Component;
 
 new
-#[Title('List Cooks')]
+#[Title('Cooks')]
 class extends Component implements HasActions, HasForms, HasTable {
     use InteractsWithActions, InteractsWithForms, InteractsWithTable;
 
@@ -74,7 +74,13 @@ class extends Component implements HasActions, HasForms, HasTable {
 ?>
 
 <flux:container>
-    <flux:heading level="1" size="xl">Cooks</flux:heading>
+    <flux:heading level="1" size="xl">
+        Cooks
+    </flux:heading>
+
+    <flux:text>
+        View your previous cook charts.
+    </flux:text>
 
     <div class="my-6">
         {{ $this->table }}

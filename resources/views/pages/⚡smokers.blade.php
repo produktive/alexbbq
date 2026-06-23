@@ -156,7 +156,13 @@ class extends Component implements HasActions, HasForms, HasTable {
 ?>
 
 <flux:container>
-    <flux:heading level="1" size="xl">Smokers</flux:heading>
+    <flux:heading level="1" size="xl">
+        Smokers
+    </flux:heading>
+
+    <flux:text>
+        Manage your smokers here. You can archive, delete, or restore them.
+    </flux:text>
 
     <div class="max-w-3xl my-6">
         {{ $this->table }}
