@@ -6,6 +6,7 @@ use Carbon\Carbon;
 use Carbon\CarbonInterval;
 use Filament\Forms\Components\RichEditor\Models\Concerns\InteractsWithRichContent;
 use Filament\Forms\Components\RichEditor\Models\Contracts\HasRichContent;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -32,7 +33,15 @@ class Cook extends Model implements HasRichContent
         'smoker_id',
         'title',
         'description',
+        'ended_at',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'ended_at' => 'datetime',
+        ];
+    }
 
     protected function setUpRichContent(): void
     {
@@ -46,6 +55,26 @@ class Cook extends Model implements HasRichContent
         return $this->hasMany(Reading::class);
     }
 
+    public function scopeActive(Builder $query): Builder
+    {
+        return $query->whereNull('ended_at');
+    }
+
+    public static function active(): ?self
+    {
+        return static::query()->active()->latest('id')->first();
+    }
+
+    public static function mostRecent(): ?self
+    {
+        return static::query()->latest('id')->first();
+    }
+
+    public function isActive(): bool
+    {
+        return $this->ended_at === null;
+    }
+
     public function smoker(): BelongsTo
     {
         return $this->belongsTo(Smoker::class);
@@ -53,7 +82,7 @@ class Cook extends Model implements HasRichContent
 
     public function getBeganAt(): Carbon
     {
-        $firstReadingTime = $this->readings()->min('time');
+        $firstReadingTime = $this->readingTimeBounds()['min'];
 
         if ($firstReadingTime !== null) {
             return Carbon::parse($firstReadingTime);
@@ -64,8 +93,7 @@ class Cook extends Model implements HasRichContent
 
     public function getDurationSeconds(): int
     {
-        $start = $this->readings()->min('time');
-        $end = $this->readings()->max('time');
+        ['min' => $start, 'max' => $end] = $this->readingTimeBounds();
 
         if (! $start || ! $end) {
             return 0;
@@ -74,14 +102,64 @@ class Cook extends Model implements HasRichContent
         return Carbon::parse($start)->diffInSeconds($end);
     }
 
+    public function getElapsedSeconds(): int
+    {
+        $start = $this->readingTimeBounds()['min'];
+
+        if (! $start) {
+            return 0;
+        }
+
+        return Carbon::parse($start)->diffInSeconds(now());
+    }
+
     public function getDurationLabel(): string
     {
         return (string) CarbonInterval::seconds($this->getDurationSeconds())->cascade();
     }
 
+    public function syncEndedAtFromReadings(): bool
+    {
+        $lastReadingTime = $this->readingTimeBounds()['max'];
+
+        if ($lastReadingTime === null) {
+            return false;
+        }
+
+        $endedAt = Carbon::parse($lastReadingTime);
+
+        if ($this->ended_at?->equalTo($endedAt)) {
+            return false;
+        }
+
+        $this->ended_at = $endedAt;
+        $this->saveQuietly();
+
+        return true;
+    }
+
+    public static function syncAllEndedAtFromReadings(bool $onlyMissing = false): int
+    {
+        $query = static::query()->orderBy('id');
+
+        if ($onlyMissing) {
+            $query->whereNull('ended_at');
+        }
+
+        $updated = 0;
+
+        $query->each(function (self $cook) use (&$updated): void {
+            if ($cook->syncEndedAtFromReadings()) {
+                $updated++;
+            }
+        });
+
+        return $updated;
+    }
+
     public function syncStartTimeFromReadings(): void
     {
-        $firstReadingTime = $this->readings()->min('time');
+        $firstReadingTime = $this->readingTimeBounds()['min'];
 
         if ($firstReadingTime === null) {
             return;
@@ -95,5 +173,27 @@ class Cook extends Model implements HasRichContent
 
         $this->created_at = $start;
         $this->saveQuietly();
+    }
+
+    /**
+     * @return array{min: ?string, max: ?string}
+     */
+    private function readingTimeBounds(): array
+    {
+        if ($this->relationLoaded('readings') && $this->readings->isNotEmpty()) {
+            return [
+                'min' => $this->readings->min('time')?->toDateTimeString(),
+                'max' => $this->readings->max('time')?->toDateTimeString(),
+            ];
+        }
+
+        $bounds = $this->readings()
+            ->selectRaw('MIN(time) as min_time, MAX(time) as max_time')
+            ->first();
+
+        return [
+            'min' => $bounds?->min_time,
+            'max' => $bounds?->max_time,
+        ];
     }
 }

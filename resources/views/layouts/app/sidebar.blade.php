@@ -48,7 +48,9 @@
 
         <flux:spacer/>
 
-        <flux:dropdown position="top" align="end">
+        <div class="flex items-center gap-3">
+            <livewire:live-cook-indicator />
+            <flux:dropdown position="top" align="end">
             <flux:profile
                 :initials="auth()->user()->initials()"
                 icon-trailing="chevron-down"
@@ -94,7 +96,8 @@
                     </flux:menu.item>
                 </form>
             </flux:menu>
-        </flux:dropdown>
+            </flux:dropdown>
+        </div>
     </flux:header>
 
     {{ $slot }}

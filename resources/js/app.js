@@ -7,6 +7,8 @@
 import './echo';
 import cookChart from './cook-chart';
 import cookDescriptionGallery from './cook-description-gallery';
+import liveCookTimer from './live-cook-timer';
 
 window.cookChart = cookChart;
 window.cookDescriptionGallery = cookDescriptionGallery;
+window.liveCookTimer = liveCookTimer;

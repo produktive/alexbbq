@@ -2,7 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 
-Route::view('/', 'home')->name('home');
+Route::livewire('/', 'pages::home')->name('home');
 Route::livewire('/cooks', 'pages::cooks.index')->name('cooks');
 Route::view('/stats', 'stats')->name('stats');
 

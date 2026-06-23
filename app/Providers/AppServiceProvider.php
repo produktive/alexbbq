@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Models\Reading;
+use App\Observers\ReadingObserver;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
@@ -23,6 +25,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        Reading::observe(ReadingObserver::class);
+
         $this->configureDefaults();
     }
 

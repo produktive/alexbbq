@@ -1,6 +1,5 @@
 <?php
 
-use App\Models\Cook;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -14,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('readings', function (Blueprint $table) {
             $table->id();
-            $table->foreignIdFor(Cook::class)->constrained()->cascadeOnDelete();
+            $table->foreignId('cook_id')->constrained()->cascadeOnDelete();
             $table->timestamp('time');
             $table->integer('probe_food')->nullable();
             $table->integer('probe_bbq')->nullable();

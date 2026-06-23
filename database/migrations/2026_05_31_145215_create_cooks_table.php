@@ -17,6 +17,7 @@ return new class extends Migration
             $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete();
             $table->string('title');
             $table->text('description')->nullable();
+            $table->timestamp('ended_at')->nullable();
             $table->timestamps();
         });
     }

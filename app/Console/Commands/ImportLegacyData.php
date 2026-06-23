@@ -6,7 +6,6 @@ use App\Models\Cook;
 use App\Models\Reading;
 use App\Models\Smoker;
 use App\Models\User;
-use Carbon\CarbonImmutable;
 use Illuminate\Console\Attributes\Description;
 use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
@@ -20,7 +19,7 @@ class ImportLegacyData extends Command
     {
         $old = DB::connection('old_sqlite');
 
-        $user = User::first();
+        $user = User::query()->first();
 
         if (! $user) {
             $this->error('No users exist in the new database. Create a user first.');
@@ -28,66 +27,45 @@ class ImportLegacyData extends Command
             return self::FAILURE;
         }
 
-        /**
-         * -------------------------
-         * SMOKERS
-         * -------------------------
-         */
         $this->info('Importing smokers...');
 
         foreach ($old->table('smokers')->get() as $smoker) {
-            Smoker::unguarded(function () use ($smoker) {
-                Smoker::updateOrCreate(
-                    ['id' => $smoker->id],
-                    [
-                        'name' => $smoker->desc,
-                    ]
-                );
-            });
+            Smoker::unguarded(fn () => Smoker::updateOrCreate(
+                ['id' => $smoker->id],
+                ['name' => $smoker->desc],
+            ));
         }
 
-        /**
-         * -------------------------
-         * COOKS + ID MAP
-         * -------------------------
-         */
         $this->info('Importing cooks...');
 
-        $cookIdMap = [];
+        $cookIds = [];
 
         foreach ($old->table('cooks')->orderBy('id')->get() as $cook) {
-            $newCook = Cook::unguarded(function () use ($cook, $user) {
-                return Cook::create([
-                    'id' => $cook->id,
+            Cook::unguarded(fn () => Cook::updateOrCreate(
+                ['id' => $cook->id],
+                [
                     'smoker_id' => $cook->smoker,
                     'user_id' => $user->id,
                     'title' => 'Imported Cook #'.$cook->id,
                     'description' => $cook->note,
+                    'ended_at' => filled($cook->end) ? $cook->end : null,
                     'created_at' => $cook->start,
                     'updated_at' => now(),
-                ]);
-            });
+                ],
+            ));
 
-            $cookIdMap[$cook->id] = true;
+            $cookIds[$cook->id] = true;
         }
 
-        /**
-         * -------------------------
-         * READINGS
-         * -------------------------
-         */
         $this->info('Importing readings...');
 
         $old->table('readings')
             ->orderBy('time')
-            ->chunk(1000, function ($rows) use ($cookIdMap) {
-
+            ->chunk(1000, function ($rows) use ($cookIds): void {
                 $insert = [];
 
                 foreach ($rows as $reading) {
-
-                    // skip orphan cook references
-                    if (! isset($cookIdMap[$reading->cookid])) {
+                    if (! isset($cookIds[$reading->cookid])) {
                         continue;
                     }
 
@@ -99,12 +77,16 @@ class ImportLegacyData extends Command
                     ];
                 }
 
-                if (! empty($insert)) {
+                if ($insert !== []) {
                     Reading::insert($insert);
                 }
             });
 
-        $this->info('Import complete.');
+        $this->info('Syncing ended_at from readings where needed...');
+
+        $updated = Cook::syncAllEndedAtFromReadings(onlyMissing: true);
+
+        $this->info("Import complete. Synced ended_at for {$updated} cook(s).");
 
         return self::SUCCESS;
     }

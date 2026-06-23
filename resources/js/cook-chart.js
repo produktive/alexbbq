@@ -91,7 +91,7 @@ const DATASET_POINT_STYLE = {
     pointBorderColor: (context) => (pointHasNote(context) ? '#d97706' : context.dataset.borderColor),
 };
 
-export default function cookChart(data, canModify = false) {
+export default function cookChart(data, canModify = false, live = false) {
     let chart = null;
     let handlers = {};
     let chartUpdateListener = null;
@@ -118,7 +118,7 @@ export default function cookChart(data, canModify = false) {
         },
 
         init() {
-            if (canModify) {
+            if (canModify || live) {
                 chartUpdateListener = this.$wire.on('cook-chart-updated', async () => {
                     this.refreshChart(await this.$wire.call('refreshChartData'));
                 });

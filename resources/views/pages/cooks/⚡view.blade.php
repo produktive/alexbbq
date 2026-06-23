@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Cook;
+use App\Support\CookChartData;
 use Filament\Actions\Action;
 use Filament\Actions\Concerns\InteractsWithActions;
 use Filament\Actions\Contracts\HasActions;
@@ -22,53 +23,16 @@ new class extends Component implements HasActions, HasSchemas {
         return $this->view()->title($this->cook->title);
     }
 
-    private function cleanTemp(?int $value): ?int
-    {
-        return $value === 0 ? null : $value;
-    }
-
     #[Computed]
     public function chartData(): array
     {
-        $readings = $this->cook
-            ->readings()
-            ->orderBy('time')
-            ->get();
-
-        if ($readings->isEmpty()) {
-            return [
-                'startSecondsOfDay' => 0,
-                'food' => [],
-                'bbq' => [],
-            ];
-        }
-
-        $start = $readings->first()->time;
-        $food = [];
-        $bbq = [];
-
-        foreach ($readings as $reading) {
-            $point = [
-                'x' => $reading->time->getTimestamp() - $start->getTimestamp(),
-                'id' => $reading->id,
-                'note' => $reading->note,
-            ];
-
-            $food[] = [...$point, 'y' => $this->cleanTemp($reading->probe_food)];
-            $bbq[] = [...$point, 'y' => $this->cleanTemp($reading->probe_bbq)];
-        }
-
-        return [
-            // Seconds-since-midnight of the first reading, plus each point's
-            // elapsed-seconds offset — never through a JS Date (timezone bug).
-            'startSecondsOfDay' => $start->hour * 3600 + $start->minute * 60 + $start->second,
-            'food' => $food,
-            'bbq' => $bbq,
-        ];
+        return CookChartData::fromCook($this->cook);
     }
 
     public function refreshChartData(): array
     {
+        unset($this->chartData);
+
         return $this->chartData;
     }
 

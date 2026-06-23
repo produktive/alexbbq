@@ -9,6 +9,14 @@ class Reading extends Model
 {
     public $timestamps = false;
 
+    protected $fillable = [
+        'cook_id',
+        'time',
+        'probe_food',
+        'probe_bbq',
+        'note',
+    ];
+
     protected $casts = [
         'time' => 'datetime',
     ];

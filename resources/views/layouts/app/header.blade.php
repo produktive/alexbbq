@@ -34,7 +34,10 @@
 
     <flux:spacer/>
 
-    <x-desktop-user-menu/>
+    <div class="flex items-center gap-3">
+        <livewire:live-cook-indicator />
+        <x-desktop-user-menu/>
+    </div>
 </flux:header>
 
 <!-- Mobile Menu -->
