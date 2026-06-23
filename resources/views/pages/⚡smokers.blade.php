@@ -10,6 +10,7 @@ use Filament\Actions\Contracts\HasActions;
 use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
+use Filament\Actions\RestoreAction;
 use Filament\Actions\ViewAction;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Concerns\InteractsWithForms;
@@ -107,11 +108,9 @@ class extends Component implements HasActions, HasForms, HasTable {
                         ->modalDescription('It will be unavailable in new cooks but remain listed here. You can undo this any time.')
                         ->modalSubmitActionLabel('Archive')
                         ->visible(fn(Smoker $record) => !$record->trashed()),
-                    Action::make('activate')
-                        ->icon('heroicon-o-trash')
-                        ->color('info')
-                        ->visible(fn(Smoker $record) => !$record->exists())
-                        ->action(fn(Smoker $record) => $record->restore()),
+                    RestoreAction::make()
+                        ->requiresConfirmation(false)
+                        ->modal(false),
                     Action::make('forceDelete')
                         ->label('Delete Permanently')
                         ->icon('heroicon-o-trash')

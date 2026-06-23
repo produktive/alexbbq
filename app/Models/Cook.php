@@ -15,9 +15,6 @@ class Cook extends Model
         'title',
         'description',
     ];
-//    protected $casts = [
-//        'created_at' => 'datetime',
-//    ];
 
     public function readings(): HasMany
     {

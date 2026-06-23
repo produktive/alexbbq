@@ -4,6 +4,7 @@ use App\Models\Cook;
 use Filament\Actions\Action;
 use Filament\Actions\Concerns\InteractsWithActions;
 use Filament\Actions\Contracts\HasActions;
+use Filament\Forms\Components\RichEditor\RichContentRenderer;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Concerns\InteractsWithSchemas;
 use Filament\Schemas\Contracts\HasSchemas;
@@ -17,10 +18,6 @@ new class extends Component implements HasActions, HasSchemas {
 
     public Cook $cook;
 
-    public array $selectedReadingIds = [];
-
-    public ?int $selectedReadingId = null;
-
     public function render()
     {
         return $this->view()->title($this->cook->title);
@@ -33,11 +30,6 @@ new class extends Component implements HasActions, HasSchemas {
 
     #[Computed]
     public function chartData(): array
-    {
-        return $this->buildChartData();
-    }
-
-    private function buildChartData(): array
     {
         $readings = $this->cook
             ->readings()
@@ -53,48 +45,32 @@ new class extends Component implements HasActions, HasSchemas {
         }
 
         $start = $readings->first()->time;
+        $food = [];
+        $bbq = [];
+
+        foreach ($readings as $reading) {
+            $point = [
+                'x' => $reading->time->getTimestamp() - $start->getTimestamp(),
+                'id' => $reading->id,
+                'note' => $reading->note,
+            ];
+
+            $food[] = [...$point, 'y' => $this->cleanTemp($reading->probe_food)];
+            $bbq[] = [...$point, 'y' => $this->cleanTemp($reading->probe_bbq)];
+        }
 
         return [
-            // Seconds-since-midnight of the first reading's clock time, taken
-            // at face value (no timezone conversion). The frontend uses this
-            // plus each point's elapsed-seconds offset to rebuild wall-clock
-            // labels via plain arithmetic - never through a JS Date object,
-            // which would apply the browser's local timezone.
+            // Seconds-since-midnight of the first reading, plus each point's
+            // elapsed-seconds offset — never through a JS Date (timezone bug).
             'startSecondsOfDay' => $start->hour * 3600 + $start->minute * 60 + $start->second,
-
-            // 'x' is a duration (seconds elapsed since the first reading),
-            // not a timestamp - this is what gives the line chart correct,
-            // proportional spacing between points instead of treating every
-            // reading as evenly spaced.
-            //
-            // Using a plain timestamp subtraction here rather than
-            // diffInSeconds(): Carbon's diffIn*() methods changed their
-            // default sign convention between major versions (absolute in
-            // Carbon 2, signed in Carbon 3), which silently flipped the
-            // direction of every point after the first.
-            // ->all() at the end matters here: ->values() alone still
-            // returns a Collection, and Collections get wrapped by
-            // Livewire's wire-protocol serializer (so they can be hydrated
-            // back into Collection instances later). That wrapping is
-            // invisible in @js() on first page load - it just JSON-encodes
-            // whatever it's given - but it DOES show up when this same
-            // array is sent as a dispatch() event payload, since dispatch
-            // payloads go through Livewire's normal wire serialization.
-            // Plain arrays avoid that wrapping entirely.
-            'food' => $readings->map(fn ($r) => [
-                'x' => $r->time->getTimestamp() - $start->getTimestamp(),
-                'y' => $this->cleanTemp($r->probe_food),
-                'id' => $r->id,
-                'note' => $r->note,
-            ])->values()->all(),
-
-            'bbq' => $readings->map(fn ($r) => [
-                'x' => $r->time->getTimestamp() - $start->getTimestamp(),
-                'y' => $this->cleanTemp($r->probe_bbq),
-                'id' => $r->id,
-                'note' => $r->note,
-            ])->values()->all(),
+            'food' => $food,
+            'bbq' => $bbq,
         ];
+    }
+
+    public function refreshChartData(): array
+    {
+        return $this->chartData;
     }
 
     private function ensureCanModifyReadings(): void
@@ -102,80 +78,95 @@ new class extends Component implements HasActions, HasSchemas {
         abort_unless(auth()->check(), 403);
     }
 
-    private function afterReadingsChanged(): array
+    private function afterReadingsChanged(): void
     {
         $this->cook->syncStartTimeFromReadings();
         $this->cook->refresh();
         $this->cook->unsetRelation('readings');
-
-        return $this->buildChartData();
     }
 
-    private function notifyChartUpdated(?array $chart): void
+    private function notifyChartUpdated(bool $changed): void
     {
-        if ($chart !== null) {
-            // Signal only — chart data is fetched via refreshChartData() so it
-            // is JSON-encoded like the initial @js() payload, not wire-wrapped.
+        if ($changed) {
             $this->dispatch('cook-chart-updated');
         }
     }
 
-    public function refreshChartData(): array
+    private function confirmDeleteAction(
+        string         $name,
+        string|Closure $heading,
+        string         $description,
+        callable       $perform,
+    ): Action
     {
-        return $this->buildChartData();
+        return Action::make($name)
+            ->requiresConfirmation()
+            ->modalHeading($heading)
+            ->modalDescription($description)
+            ->modalSubmitActionLabel('Delete')
+            ->color('danger')
+            ->action(function (array $arguments) use ($perform): void {
+                $this->notifyChartUpdated($perform($arguments));
+            });
     }
 
-    private function performDeletePoint(int $id): ?array
+    private function performDeletePoint(int $id): bool
     {
         $this->ensureCanModifyReadings();
 
         if ($this->cook->readings()->whereKey($id)->delete() === 0) {
-            return null;
+            return false;
         }
 
-        return $this->afterReadingsChanged();
+        $this->afterReadingsChanged();
+
+        return true;
     }
 
-    private function performDeleteBefore(int $id): ?array
+    private function performDeleteBefore(int $id): bool
     {
         $this->ensureCanModifyReadings();
 
         $reading = $this->cook->readings()->findOrFail($id);
 
         if ($this->cook->readings()->where('time', '<', $reading->time)->delete() === 0) {
-            return null;
+            return false;
         }
 
-        return $this->afterReadingsChanged();
+        $this->afterReadingsChanged();
+
+        return true;
     }
 
-    private function performDeleteAfter(int $id): ?array
+    private function performDeleteAfter(int $id): bool
     {
         $this->ensureCanModifyReadings();
 
         $reading = $this->cook->readings()->findOrFail($id);
 
         if ($this->cook->readings()->where('time', '>', $reading->time)->delete() === 0) {
-            return null;
+            return false;
         }
 
-        return $this->afterReadingsChanged();
+        $this->afterReadingsChanged();
+
+        return true;
     }
 
-    private function performDeleteSelected(array $ids): ?array
+    private function performDeleteSelected(array $ids): bool
     {
         $this->ensureCanModifyReadings();
 
         if ($this->cook->readings()->whereIn('id', $ids)->delete() === 0) {
-            return null;
+            return false;
         }
 
-        $this->selectedReadingIds = [];
+        $this->afterReadingsChanged();
 
-        return $this->afterReadingsChanged();
+        return true;
     }
 
-    private function performSaveNote(int $id, ?string $note): ?array
+    private function performSaveNote(int $id, ?string $note): bool
     {
         $this->ensureCanModifyReadings();
 
@@ -186,67 +177,53 @@ new class extends Component implements HasActions, HasSchemas {
 
         $this->cook->unsetRelation('readings');
 
-        return $this->buildChartData();
+        return true;
     }
 
     public function deletePointAction(): Action
     {
-        return Action::make('deletePoint')
-            ->requiresConfirmation()
-            ->modalHeading('Delete this point?')
-            ->modalDescription('This reading will be permanently removed from the cook chart.')
-            ->modalSubmitActionLabel('Delete')
-            ->color('danger')
-            ->action(function (array $arguments): void {
-                $this->notifyChartUpdated($this->performDeletePoint((int) $arguments['id']));
-            });
+        return $this->confirmDeleteAction(
+            'deletePoint',
+            'Delete this point?',
+            'This reading will be permanently removed from the cook chart.',
+            fn(array $arguments) => $this->performDeletePoint((int)$arguments['id']),
+        );
     }
 
     public function deleteBeforeAction(): Action
     {
-        return Action::make('deleteBefore')
-            ->requiresConfirmation()
-            ->modalHeading('Delete all points before this one?')
-            ->modalDescription('Every reading recorded before this point will be permanently removed.')
-            ->modalSubmitActionLabel('Delete')
-            ->color('danger')
-            ->action(function (array $arguments): void {
-                $this->notifyChartUpdated($this->performDeleteBefore((int) $arguments['id']));
-            });
+        return $this->confirmDeleteAction(
+            'deleteBefore',
+            'Delete all points before this one?',
+            'Every reading recorded before this point will be permanently removed.',
+            fn(array $arguments) => $this->performDeleteBefore((int)$arguments['id']),
+        );
     }
 
     public function deleteAfterAction(): Action
     {
-        return Action::make('deleteAfter')
-            ->requiresConfirmation()
-            ->modalHeading('Delete all points after this one?')
-            ->modalDescription('Every reading recorded after this point will be permanently removed.')
-            ->modalSubmitActionLabel('Delete')
-            ->color('danger')
-            ->action(function (array $arguments): void {
-                $this->notifyChartUpdated($this->performDeleteAfter((int) $arguments['id']));
-            });
+        return $this->confirmDeleteAction(
+            'deleteAfter',
+            'Delete all points after this one?',
+            'Every reading recorded after this point will be permanently removed.',
+            fn(array $arguments) => $this->performDeleteAfter((int)$arguments['id']),
+        );
     }
 
     public function deleteSelectedAction(): Action
     {
-        return Action::make('deleteSelected')
-            ->requiresConfirmation()
-            ->modalHeading(fn (array $arguments): string => 'Delete '.count($arguments['ids']).' selected points?')
-            ->modalDescription('The selected readings will be permanently removed from the cook chart.')
-            ->modalSubmitActionLabel('Delete')
-            ->color('danger')
-            ->action(function (array $arguments): void {
-                $ids = array_map(intval(...), $arguments['ids']);
-
-                $this->notifyChartUpdated($this->performDeleteSelected($ids));
-            });
+        return $this->confirmDeleteAction(
+            'deleteSelected',
+            fn(array $arguments): string => 'Delete ' . count($arguments['ids']) . ' selected points?',
+            'The selected readings will be permanently removed from the cook chart.',
+            fn(array $arguments) => $this->performDeleteSelected(array_map(intval(...), $arguments['ids'])),
+        );
     }
 
     public function addNoteAction(): Action
     {
         return Action::make('addNote')
-            ->modalHeading(fn (array $arguments): string => blank($this->cook->readings()->find((int) $arguments['id'])?->note)
+            ->modalHeading(fn(array $arguments): string => blank($this->cook->readings()->find((int)$arguments['id'])?->note)
                 ? 'Add note'
                 : 'Edit note')
             ->modalDescription('Add a brief note to this reading. It will appear on the chart and in the tooltip.')
@@ -258,14 +235,14 @@ new class extends Component implements HasActions, HasSchemas {
                     ->placeholder('e.g. Wrapped in foil'),
             ])
             ->fillForm(function (array $arguments): array {
-                $reading = $this->cook->readings()->findOrFail((int) $arguments['id']);
+                $reading = $this->cook->readings()->findOrFail((int)$arguments['id']);
 
                 return [
                     'note' => $reading->note ?? '',
                 ];
             })
             ->action(function (array $arguments, array $data): void {
-                $this->notifyChartUpdated($this->performSaveNote((int) $arguments['id'], $data['note'] ?? null));
+                $this->notifyChartUpdated($this->performSaveNote((int)$arguments['id'], $data['note'] ?? null));
             });
     }
 }
@@ -304,57 +281,69 @@ new class extends Component implements HasActions, HasSchemas {
 
         {{-- Context menu (authenticated users only) --}}
         @auth
-        <div
-            x-ref="menu"
-            x-show="menu.open"
-            @click.outside="menu.open = false"
-            class="absolute z-50 min-w-56 bg-white border rounded shadow py-1"
-            :style="`left:${menu.x}px;top:${menu.y}px`"
-            x-cloak
-        >
-            <template x-if="!selection.active">
-                <div class="flex flex-col">
-                    <button type="button" class="flex w-full items-center gap-2 px-3 py-1.5 text-left text-sm hover:bg-gray-100" @click="addNote()">
-                        <flux:icon.pencil-square variant="mini" class="size-4 shrink-0 text-gray-500" />
-                        <span x-text="menu.pointNote ? 'Edit note' : 'Add note'"></span>
-                    </button>
+            <div
+                x-ref="menu"
+                x-show="menu.open"
+                @click.outside="menu.open = false"
+                class="absolute z-50 min-w-56 rounded border border-zinc-200 bg-white py-1 text-zinc-900 shadow dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
+                :style="`left:${menu.x}px;top:${menu.y}px`"
+                x-cloak
+            >
+                <template x-if="!selection.active">
+                    <div class="flex flex-col">
+                        <button type="button"
+                                class="flex w-full items-center gap-2 px-3 py-1.5 text-left text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                                @click="mountPointAction('addNote')">
+                            <flux:icon.pencil-square variant="mini" class="size-4 shrink-0 text-zinc-500 dark:text-zinc-400"/>
+                            <span x-text="menu.pointNote ? 'Edit note' : 'Add note'"></span>
+                        </button>
 
-                    <div class="my-1 border-t border-gray-200"></div>
+                        <div class="my-1 border-t border-zinc-200 dark:border-zinc-700"></div>
 
-                    <button type="button" class="flex w-full items-center gap-2 px-3 py-1.5 text-left text-sm hover:bg-gray-100" @click="removePoint()">
-                        <flux:icon.trash variant="mini" class="size-4 shrink-0 text-gray-500" />
-                        Delete this point
-                    </button>
-                    <button type="button" class="flex w-full items-center gap-2 px-3 py-1.5 text-left text-sm hover:bg-gray-100" @click="removeBefore()">
-                        <flux:icon.chevron-double-left variant="mini" class="size-4 shrink-0 text-gray-500" />
-                        Delete all before this point
-                    </button>
-                    <button type="button" class="flex w-full items-center gap-2 px-3 py-1.5 text-left text-sm hover:bg-gray-100" @click="removeAfter()">
-                        <flux:icon.chevron-double-right variant="mini" class="size-4 shrink-0 text-gray-500" />
-                        Delete all after this point
-                    </button>
-                </div>
-            </template>
+                        <button type="button"
+                                class="flex w-full items-center gap-2 px-3 py-1.5 text-left text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                                @click="mountPointAction('deletePoint')">
+                            <flux:icon.trash variant="mini" class="size-4 shrink-0 text-zinc-500 dark:text-zinc-400"/>
+                            Delete this point
+                        </button>
+                        <button type="button"
+                                class="flex w-full items-center gap-2 px-3 py-1.5 text-left text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                                @click="mountPointAction('deleteBefore')">
+                            <flux:icon.chevron-double-left variant="mini" class="size-4 shrink-0 text-zinc-500 dark:text-zinc-400"/>
+                            Delete all before this point
+                        </button>
+                        <button type="button"
+                                class="flex w-full items-center gap-2 px-3 py-1.5 text-left text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                                @click="mountPointAction('deleteAfter')">
+                            <flux:icon.chevron-double-right variant="mini" class="size-4 shrink-0 text-zinc-500 dark:text-zinc-400"/>
+                            Delete all after this point
+                        </button>
+                    </div>
+                </template>
 
-            <template x-if="selection.active">
-                <div class="flex flex-col">
-                    <button type="button" class="flex w-full items-center gap-2 px-3 py-1.5 text-left text-sm hover:bg-gray-100" @click="removeSelected()">
-                        <flux:icon.trash variant="mini" class="size-4 shrink-0 text-gray-500" />
-                        Delete <span x-text="selection.ids.length"></span> selected points
-                    </button>
-                    <button type="button" class="flex w-full items-center gap-2 px-3 py-1.5 text-left text-sm hover:bg-gray-100" @click="menu.open = false; clearSelection()">
-                        <flux:icon.x-mark variant="mini" class="size-4 shrink-0 text-gray-500" />
-                        Clear selection
-                    </button>
-                </div>
-            </template>
-        </div>
+                <template x-if="selection.active">
+                    <div class="flex flex-col">
+                        <button type="button"
+                                class="flex w-full items-center gap-2 px-3 py-1.5 text-left text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                                @click="removeSelected()">
+                            <flux:icon.trash variant="mini" class="size-4 shrink-0 text-zinc-500 dark:text-zinc-400"/>
+                            <span x-text="`Delete ${selection.ids.length} selected points`"></span>
+                        </button>
+                        <button type="button"
+                                class="flex w-full items-center gap-2 px-3 py-1.5 text-left text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                                @click="menu.open = false; clearSelection()">
+                            <flux:icon.x-mark variant="mini" class="size-4 shrink-0 text-zinc-500 dark:text-zinc-400"/>
+                            Clear selection
+                        </button>
+                    </div>
+                </template>
+            </div>
         @endauth
     </div>
 
-    <div id="cook-description" class="my-2">
-        {!! $this->cook->description !!}
-    </div>
+    <article id="cook-description" class="prose my-6">
+        {!! RichContentRenderer::make($this->cook->description)->toHtml() !!}
+    </article>
 
     @auth
         <div class="flex justify-end">
@@ -363,7 +352,7 @@ new class extends Component implements HasActions, HasSchemas {
             </flux:button>
         </div>
 
-        <x-filament-actions::modals />
+        <x-filament-actions::modals/>
     @endauth
 
 </flux:container>
