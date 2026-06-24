@@ -111,3 +111,11 @@ p.fi-ta-text-description,
 .cook-description-thumb img {
     @apply size-full object-cover;
 }
+
+.bbq-slider .noUi-connect {
+    background: rgb(34 197 94);
+}
+
+.food-slider .noUi-connect {
+    background: rgb(234 88 12);
+}

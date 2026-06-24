@@ -133,13 +133,13 @@ export default function cookChart(data, canModify = false, live = false) {
                             {
                                 label: 'Food',
                                 data: data.food,
-                                pointHitRadius: 2,
+                                pointHitRadius: 0,
                                 ...DATASET_POINT_STYLE,
                             },
                             {
                                 label: 'BBQ',
                                 data: data.bbq,
-                                pointHitRadius: 2,
+                                pointHitRadius: 0,
                                 ...DATASET_POINT_STYLE,
                             },
                         ],

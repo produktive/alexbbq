@@ -1,7 +1,6 @@
 <?php
 
 use App\Models\Cook;
-use Livewire\Attributes\On;
 use Livewire\Component;
 
 new class extends Component {
@@ -15,14 +14,9 @@ new class extends Component {
         $this->syncActiveCook();
     }
 
-    #[On('echo:live,.live-cook-changed')]
-    public function onLiveCookChanged(array $event): void
+    public function pollLiveCookIndicator(): void
     {
-        match ($event['action'] ?? null) {
-            'started' => $this->syncActiveCook(),
-            'ended' => $this->reset('cookId', 'beganAt'),
-            default => null,
-        };
+        $this->syncActiveCook();
     }
 
     private function syncActiveCook(): void
@@ -34,7 +28,7 @@ new class extends Component {
     }
 }
 ?>
-<div>
+<div wire:poll.12s.visible="pollLiveCookIndicator">
     @if ($cookId)
         <a href="{{ route('home') }}" wire:navigate>
             <x-live-cook-timer :began-at="$beganAt" />

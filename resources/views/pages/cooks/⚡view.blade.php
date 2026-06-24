@@ -29,11 +29,36 @@ new class extends Component implements HasActions, HasSchemas {
         return CookChartData::fromCook($this->cook);
     }
 
+    #[Computed]
+    public function isLive(): bool
+    {
+        return $this->cook->isActive();
+    }
+
     public function refreshChartData(): array
     {
         unset($this->chartData);
 
         return $this->chartData;
+    }
+
+    public function pollLiveCookView(): void
+    {
+        if (! $this->isLive) {
+            return;
+        }
+
+        $this->cook->refresh();
+
+        if (! $this->cook->isActive()) {
+            unset($this->isLive);
+
+            return;
+        }
+
+        $this->cook->unsetRelation('readings');
+        unset($this->chartData);
+        $this->dispatch('cook-chart-updated');
     }
 
     private function ensureCanModifyReadings(): void
@@ -210,7 +235,7 @@ new class extends Component implements HasActions, HasSchemas {
     }
 }
 ?>
-<flux:container>
+<flux:container wire:poll.12s.visible="pollLiveCookView">
 
     <flux:heading level="1" size="xl" class="my-2">
         {{ $this->cook->title }}
@@ -226,7 +251,7 @@ new class extends Component implements HasActions, HasSchemas {
 
     <div
         wire:ignore
-        x-data="window.cookChart(@js($this->chartData), @js(auth()->check()))"
+        x-data="window.cookChart(@js($this->chartData), @js(auth()->check()), @js($this->isLive))"
         x-ref="root"
         class="relative h-125"
     >

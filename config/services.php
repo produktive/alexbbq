@@ -35,8 +35,4 @@ return [
         ],
     ],
 
-    'maverick' => [
-        'broadcast_token' => env('MAVERICK_BROADCAST_TOKEN'),
-    ],
-
 ];

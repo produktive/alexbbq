@@ -1,13 +1,14 @@
 <?php
 
+use App\Livewire\Concerns\PollsLiveCookData;
 use App\Models\Cook;
 use App\Support\CookChartData;
 use Livewire\Attributes\Computed;
-use Livewire\Attributes\On;
 use Livewire\Attributes\Title;
 use Livewire\Component;
 
-new #[Title('Live Cook')] class extends Component {
+new class extends Component {
+    use PollsLiveCookData;
 
     public ?int $displayCookId = null;
 
@@ -46,36 +47,9 @@ new #[Title('Live Cook')] class extends Component {
 
         return $this->chartData;
     }
-
-    #[On('echo:live,.live-cook-changed')]
-    public function onLiveCookChanged(array $event): void
-    {
-        $action = $event['action'] ?? null;
-        $cookId = isset($event['cook_id']) ? (int) $event['cook_id'] : null;
-
-        if ($action === 'started') {
-            $this->displayCookId = $cookId;
-        }
-
-        unset($this->displayCook, $this->chartData, $this->isLive);
-    }
-
-    #[On('echo:live,.reading-added')]
-    public function onReadingAdded(array $event): void
-    {
-        $cookId = isset($event['cook_id']) ? (int) $event['cook_id'] : null;
-
-        if (! $this->isLive || $this->displayCookId !== $cookId) {
-            return;
-        }
-
-        $this->displayCook?->unsetRelation('readings');
-        unset($this->displayCook, $this->chartData);
-        $this->dispatch('cook-chart-updated');
-    }
 }
 ?>
-<flux:container>
+<flux:container wire:poll.12s.visible="pollLiveCookUpdates">
     @if ($this->displayCook)
         @auth
             @if ($this->isLive)
@@ -160,14 +134,14 @@ new #[Title('Live Cook')] class extends Component {
                     <img
                         :src="lightboxSrc()"
                         :alt="lightboxAlt()"
-                        class="relative z-[1] max-h-[90vh] max-w-[90vw] rounded-lg object-contain shadow-2xl"
+                        class="relative z-1 max-h-[90vh] max-w-[90vw] rounded-lg object-contain shadow-2xl"
                         @click.stop
                     >
 
                     <template x-if="hasMultiple()">
                         <button
                             type="button"
-                            class="absolute end-2 top-1/2 z-10 -translate-y-1/2 rounded-full bg-black/50 p-2 text-white hover:bg-black/70 sm:end-4"
+                            class="absolute inset-e-2 top-1/2 z-10 -translate-y-1/2 rounded-full bg-black/50 p-2 text-white hover:bg-black/70 sm:inset-e-4"
                             aria-label="Next image"
                             @click.stop="next()"
                         >

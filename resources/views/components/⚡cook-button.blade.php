@@ -25,7 +25,7 @@ new class extends Component implements HasActions, HasForms {
 
     public function mount(): void
     {
-        $this->live = Process::run('pgrep Table')->successful();
+        $this->live = Process::run('pgrep maverick')->successful();
     }
 
     #[Computed]
@@ -49,7 +49,7 @@ new class extends Component implements HasActions, HasForms {
     public function toggleCook(): void
     {
         if ($this->live) {
-            $this->live = !Process::run('pkill Table')->successful();
+            $this->live = ! Process::run('pkill maverick')->successful();
             return;
         }
 

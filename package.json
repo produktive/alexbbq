@@ -24,8 +24,6 @@
     },
     "devDependencies": {
         "@37signals/lexxy": "^0.8.5-beta",
-        "laravel-echo": "^2.3.7",
-        "pusher-js": "^8.5.0",
         "trix": "^2.1.16"
     }
 }

@@ -2,23 +2,17 @@
 
 use App\Filament\Schemas\AlertsSection;
 use App\Filament\Schemas\CookSection;
-use App\Models\Cook;
-use App\Filament\Plugins\LinkNewTabPlugin;
-use Filament\Actions\Action;
+use App\Models\UserSettings;
 use Filament\Actions\Concerns\InteractsWithActions;
 use Filament\Actions\Contracts\HasActions;
-use Filament\Forms\Components\Select;
-use Filament\Schemas\Components\Section;
+use Filament\Forms\Concerns\InteractsWithForms;
+use Filament\Forms\Contracts\HasForms;
 use Filament\Schemas\Schema;
-use Filament\Support\Icons\Heroicon;
+use Flux\Flux;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Process;
 use Livewire\Attributes\Title;
 use Livewire\Component;
-use Livewire\Attributes\Computed;
-use Filament\Forms\Components\RichEditor;
-use Filament\Forms\Components\TextInput;
-use Filament\Forms\Contracts\HasForms;
-use Filament\Forms\Concerns\InteractsWithForms;
 
 new
 #[Title('Start New Cook')]
@@ -27,18 +21,20 @@ class extends Component implements HasActions, HasForms {
     use InteractsWithForms;
 
     public bool $live = false;
+
     public ?array $data = [];
 
     public function mount(): void
     {
-        $this->live = Process::run('pgrep Table')->successful();
+        $this->live = Process::run('pgrep maverick')->successful();
 
         if ($this->live) {
             $this->redirectRoute('home', navigate: true);
+
             return;
         }
 
-        $this->form->fill();
+        $this->form->fill(UserSettings::forUser(Auth::user())->toAlertFormState());
     }
 
     public function form(Schema $form): Schema
@@ -47,32 +43,41 @@ class extends Component implements HasActions, HasForms {
             ->statePath('data')
             ->components([
                 CookSection::make(),
-                AlertsSection::make(collapse: true),
+                AlertsSection::make(collapse: true, includeFrequency: true),
             ]);
     }
 
     public function save(): void
     {
         $state = $this->form->getState();
-        dd($state);
 
-        // Save your model here
-        // Example:
-        // Post::create($state);
+        $settings = UserSettings::forUser(Auth::user());
+        $settings->fillFromAlertFormState($state);
+        $settings->save();
+
+        $maverick = base_path('maverick');
+
+        if (! is_file($maverick) || ! is_executable($maverick)) {
+            Flux::toast(
+                variant: 'warning',
+                text: __('Alert settings saved. Maverick is not available on this machine.'),
+            );
+
+            $this->redirectRoute('home', navigate: true);
+
+            return;
+        }
+
+        Process::path(base_path())->start($maverick);
+
+        Flux::toast(variant: 'success', text: __('Cook recording started.'));
+
+        $this->redirectRoute('home', navigate: true);
     }
 }
 ?>
 
 <flux:container>
-    <style>
-        .bbq-slider .noUi-connect {
-            background: rgb(34 197 94); /* green */
-        }
-
-        .food-slider .noUi-connect {
-            background: rgb(234 88 12);
-        }
-    </style>
     <flux:heading level="1" size="xl">
         Start New Cook
     </flux:heading>
