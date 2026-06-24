@@ -67,6 +67,28 @@ test('home page shows live chart for active cook', function () {
     $response->assertDontSee('No cooks yet');
 });
 
+test('home page syncs display cook during hydration', function () {
+    $smoker = Smoker::query()->create(['name' => 'Backyard']);
+
+    $ended = Cook::query()->create([
+        'smoker_id' => $smoker->id,
+        'title' => 'Old Ribs',
+        'ended_at' => now()->subHour(),
+    ]);
+
+    $component = Livewire::test('pages::home')
+        ->assertSet('displayCookId', $ended->id);
+
+    Cook::query()->create([
+        'smoker_id' => $smoker->id,
+        'title' => 'New Brisket',
+        'ended_at' => null,
+    ]);
+
+    $component->call('refreshChartData')
+        ->assertSet('displayCookId', Cook::active()?->id);
+});
+
 test('home page poll refreshes chart data for active cook', function () {
     $smoker = Smoker::query()->create(['name' => 'Backyard']);
 

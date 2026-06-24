@@ -1,8 +1,10 @@
 @props(['beganAt'])
 
 <div
+    wire:ignore
+    data-live-cook-timer
     {{ $attributes->class('inline-flex items-center gap-2 rounded-full border border-red-500/30 bg-red-500/10 px-3 py-1 text-sm font-medium text-red-600 dark:text-red-400') }}
-    x-data="window.liveCookTimer(@js($beganAt))"
+    x-data="liveCookTimer(@js($beganAt))"
 >
     <span class="relative flex size-2">
         <span class="absolute inline-flex size-full animate-ping rounded-full bg-red-400 opacity-75"></span>

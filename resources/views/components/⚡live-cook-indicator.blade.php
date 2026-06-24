@@ -37,7 +37,7 @@ new class extends Component {
 ?>
 <div wire:poll.12s.visible="pollLiveCookIndicator">
     @if ($cookId)
-        <a href="{{ route('home') }}" wire:navigate>
+        <a href="{{ route('home') }}" wire:navigate wire:key="live-cook-indicator-{{ $cookId }}">
             <x-live-cook-timer :began-at="$beganAt" />
         </a>
     @endif

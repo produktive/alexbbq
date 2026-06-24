@@ -14,7 +14,24 @@ new class extends Component {
 
     public function mount(): void
     {
-        $this->displayCookId = Cook::active()?->id ?? Cook::mostRecent()?->id;
+        $this->syncDisplayCook();
+    }
+
+    public function hydrate(): void
+    {
+        $this->syncDisplayCook();
+    }
+
+    private function syncDisplayCook(): void
+    {
+        $preferredId = Cook::active()?->id ?? Cook::mostRecent()?->id;
+
+        if ($this->displayCookId === $preferredId) {
+            return;
+        }
+
+        $this->displayCookId = $preferredId;
+        unset($this->displayCook, $this->chartData, $this->isLive);
     }
 
     #[Computed]
@@ -53,7 +70,10 @@ new class extends Component {
     @if ($this->displayCook)
         @auth
             @if ($this->isLive)
-                <div class="my-2 hidden justify-end lg:flex">
+                <div
+                    wire:key="live-cook-timer-{{ $this->displayCook->id }}"
+                    class="my-2 hidden justify-end lg:flex"
+                >
                     <x-live-cook-timer :began-at="$this->displayCook->getBeganAt()->toIso8601String()" />
                 </div>
             @endif

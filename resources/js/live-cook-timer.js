@@ -14,6 +14,7 @@ function formatElapsed(seconds) {
 
 export default function liveCookTimer(beganAtIso) {
     return {
+        beganAtIso,
         elapsed: formatElapsed(0),
         timer: null,
 
@@ -29,7 +30,7 @@ export default function liveCookTimer(beganAtIso) {
         },
 
         tick() {
-            const beganAt = Date.parse(beganAtIso);
+            const beganAt = Date.parse(this.beganAtIso);
 
             if (Number.isNaN(beganAt)) {
                 this.elapsed = formatElapsed(0);
@@ -40,4 +41,22 @@ export default function liveCookTimer(beganAtIso) {
             this.elapsed = formatElapsed((Date.now() - beganAt) / 1000);
         },
     };
+}
+
+export function registerLiveCookTimer(Alpine) {
+    Alpine.data('liveCookTimer', liveCookTimer);
+}
+
+export function initLiveCookTimers() {
+    if (!window.Alpine) {
+        return;
+    }
+
+    document.querySelectorAll('[data-live-cook-timer]').forEach((element) => {
+        if (element._x_dataStack?.length) {
+            return;
+        }
+
+        window.Alpine.initTree(element);
+    });
 }
