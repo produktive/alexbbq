@@ -26,8 +26,10 @@ class TemperatureAlertNotification extends Notification
     {
         return (new WebPushMessage)
             ->title($this->title)
-            ->icon('/favicon.svg')
+            ->icon(url('/favicon.svg'))
             ->body($this->body)
+            ->tag('temperature-alert')
+            ->renotify()
             ->action('View Cook', 'view_cook', $this->url)
             ->data(['url' => $this->url]);
     }

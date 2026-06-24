@@ -41,14 +41,16 @@ const subscribeToPush = async () => {
         throw new Error('Push notifications are not configured on the server.');
     }
 
-    let subscription = await registration.pushManager.getSubscription();
+    const existingSubscription = await registration.pushManager.getSubscription();
 
-    if (!subscription) {
-        subscription = await registration.pushManager.subscribe({
-            userVisibleOnly: true,
-            applicationServerKey: urlBase64ToUint8Array(publicKey),
-        });
+    if (existingSubscription) {
+        await existingSubscription.unsubscribe();
     }
+
+    const subscription = await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(publicKey),
+    });
 
     const payload = subscription.toJSON();
 

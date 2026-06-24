@@ -7,10 +7,16 @@ use App\Models\User;
 use App\Models\UserSettings;
 use App\Services\TemperatureAlertService;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Event;
+use NotificationChannels\WebPush\Events\NotificationFailed;
+use NotificationChannels\WebPush\Events\NotificationSent;
 
 class DiagnoseTemperatureAlerts extends Command
 {
-    protected $signature = 'alerts:diagnose {reading? : Reading ID to evaluate (defaults to latest)} {--send : Actually send notifications}';
+    protected $signature = 'alerts:diagnose
+                            {reading? : Reading ID to evaluate (defaults to latest)}
+                            {--send : Actually send notifications}
+                            {--force : Ignore alert cooldown and clear last-sent timestamps}';
 
     protected $description = 'Inspect alert configuration and optionally evaluate a reading';
 
@@ -74,12 +80,51 @@ class DiagnoseTemperatureAlerts extends Command
             return self::SUCCESS;
         }
 
+        if ($this->option('force')) {
+            UserSettings::query()->update([
+                'last_food_alert_at' => null,
+                'last_bbq_alert_at' => null,
+            ]);
+
+            $this->line('Cleared alert cooldown timestamps.');
+        }
+
+        $sent = 0;
+        $failures = [];
+
+        Event::listen(NotificationSent::class, function () use (&$sent): void {
+            $sent++;
+        });
+
+        Event::listen(NotificationFailed::class, function (NotificationFailed $event) use (&$failures): void {
+            $failures[] = $event->report->getReason()
+                .' (HTTP '.$event->report->getResponse()?->getStatusCode().')';
+        });
+
         $this->newLine();
         $this->info('Evaluating alerts...');
-        $alerts->evaluate($reading);
-        $this->info('Done. Check storage/logs/laravel.log if nothing arrived on your device.');
 
-        return self::SUCCESS;
+        try {
+            $alerts->evaluate($reading);
+        } finally {
+            Event::forget(NotificationSent::class);
+            Event::forget(NotificationFailed::class);
+        }
+
+        if ($sent > 0) {
+            $this->info("Push delivery succeeded for {$sent} subscription(s).");
+        } elseif ($failures !== []) {
+            $this->error('Push delivery failed:');
+            foreach ($failures as $failure) {
+                $this->line("  - {$failure}");
+            }
+            $this->warn('Disable and re-enable push notifications in the browser, then run this again.');
+        } else {
+            $this->warn('No push was attempted (probe in range, cooldown active, or no violation).');
+            $this->line('Try again with --force if cooldown may be blocking sends.');
+        }
+
+        return $failures === [] ? self::SUCCESS : self::FAILURE;
     }
 
     private function resolveReading(): ?Reading

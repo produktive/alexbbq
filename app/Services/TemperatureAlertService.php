@@ -6,7 +6,10 @@ use App\Models\Reading;
 use App\Models\User;
 use App\Models\UserSettings;
 use App\Notifications\TemperatureAlertNotification;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Log;
+use NotificationChannels\WebPush\Events\NotificationFailed;
+use NotificationChannels\WebPush\Events\NotificationSent;
 
 class TemperatureAlertService
 {
@@ -107,20 +110,47 @@ class TemperatureAlertService
             return;
         }
 
-        try {
-            $user->notify(new TemperatureAlertNotification(
-                title: 'Temperature Alert',
-                body: $violation,
-                url: $url,
-            ));
-        } catch (\Throwable $exception) {
-            report($exception);
-
+        if (! $this->sendAlert($user, $violation, $url)) {
             return;
         }
 
         $settings->{$lastAlertColumn} = now();
         $settings->saveQuietly();
+    }
+
+    private function sendAlert(User $user, string $body, string $url): bool
+    {
+        $delivered = false;
+
+        Event::listen(NotificationSent::class, function () use (&$delivered): void {
+            $delivered = true;
+        });
+
+        Event::listen(NotificationFailed::class, function (NotificationFailed $event): void {
+            Log::warning('Web push delivery failed.', [
+                'endpoint' => $event->subscription->endpoint,
+                'reason' => $event->report->getReason(),
+                'expired' => $event->report->isSubscriptionExpired(),
+                'status_code' => $event->report->getResponse()?->getStatusCode(),
+            ]);
+        });
+
+        try {
+            $user->notify(new TemperatureAlertNotification(
+                title: 'Temperature Alert',
+                body: $body,
+                url: $url,
+            ));
+        } catch (\Throwable $exception) {
+            report($exception);
+
+            return false;
+        } finally {
+            Event::forget(NotificationSent::class);
+            Event::forget(NotificationFailed::class);
+        }
+
+        return $delivered;
     }
 
     private function violationMessage(string $probeLabel, int $temperature, int $min, int $max): ?string
