@@ -26,7 +26,7 @@
                           :current="request()->routeIs('cooks')"
                           icon="presentation-chart-line"
                           wire:navigate
-                          badge="{{ Cook::count() }}"
+                          badge="{{ Cook::finishedCount() }}"
         >
             {{ __('Cooks') }}
         </flux:navbar.item>
@@ -51,26 +51,14 @@
 
     <flux:sidebar.nav>
         <flux:sidebar.group :heading="__('Platform')">
-            <flux:sidebar.item icon="layout-grid" :href="route('home')" :current="request()->routeIs('home')"
-                               wire:navigate>
-                {{ __('Home')  }}
+            <flux:sidebar.item icon="home" :href="route('home')" :current="request()->routeIs('home')" wire:navigate>
+                {{ __('Home') }}
             </flux:sidebar.item>
-            <flux:sidebar.item icon="layout-grid" :href="route('cooks')" :current="request()->routeIs('cooks')"
-                               wire:navigate>
-                {{ __('Cooks')  }}
+            <flux:sidebar.item icon="presentation-chart-line" :href="route('cooks')" :current="request()->routeIs('cooks')"
+                               wire:navigate badge="{{ Cook::finishedCount() }}">
+                {{ __('Cooks') }}
             </flux:sidebar.item>
         </flux:sidebar.group>
-    </flux:sidebar.nav>
-
-    <flux:spacer/>
-
-    <flux:sidebar.nav>
-        <flux:sidebar.item icon="folder-git-2" href="https://github.com/laravel/livewire-starter-kit" target="_blank">
-            {{ __('Repository') }}
-        </flux:sidebar.item>
-        <flux:sidebar.item icon="book-open-text" href="https://laravel.com/docs/starter-kits#livewire" target="_blank">
-            {{ __('Documentation') }}
-        </flux:sidebar.item>
     </flux:sidebar.nav>
 </flux:sidebar>
 

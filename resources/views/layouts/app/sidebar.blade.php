@@ -18,7 +18,7 @@
                     {{ __('Dashboard') }}
                 </flux:sidebar.item>
 
-                <flux:sidebar.item icon="presentation-chart-line" :href="route('cooks')" :current="request()->routeIs('cooks')" badge="{{ Cook::count() }}">
+                <flux:sidebar.item icon="presentation-chart-line" :href="route('cooks')" :current="request()->routeIs('cooks')" badge="{{ Cook::finishedCount() }}">
                     {{ __('Cooks') }}
                 </flux:sidebar.item>
 

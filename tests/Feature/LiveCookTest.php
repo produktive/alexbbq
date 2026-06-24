@@ -169,6 +169,25 @@ test('cook view poll refreshes chart data for finished cook', function () {
         ->assertNotDispatched('cook-chart-updated');
 });
 
+test('menu cook count excludes the active cook', function () {
+    $smoker = Smoker::query()->create(['name' => 'Backyard']);
+
+    Cook::query()->create([
+        'smoker_id' => $smoker->id,
+        'title' => 'Finished Ribs',
+        'ended_at' => now()->subDay(),
+    ]);
+
+    Cook::query()->create([
+        'smoker_id' => $smoker->id,
+        'title' => 'Live Brisket',
+        'ended_at' => null,
+    ]);
+
+    expect(Cook::finishedCount())->toBe(1)
+        ->and(Cook::count())->toBe(2);
+});
+
 test('active cook is hidden from cooks index', function () {
     $smoker = Smoker::query()->create(['name' => 'Backyard']);
 

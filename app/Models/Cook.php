@@ -75,6 +75,11 @@ class Cook extends Model implements HasRichContent
         return static::query()->latest('id')->first();
     }
 
+    public static function finishedCount(): int
+    {
+        return static::query()->finished()->count();
+    }
+
     public function isActive(): bool
     {
         return $this->ended_at === null;
