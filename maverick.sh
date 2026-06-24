@@ -19,6 +19,7 @@ case "${1:-}" in
         fi
 
         mkdir -p "$(dirname "$LOG")"
+        chmod +x "$DIR/maverick-artisan.sh" 2>/dev/null || true
         export MAVERICK_PHP="${MAVERICK_PHP:-$(command -v php8.4 || command -v php)}"
         export MAVERICK_ARTISAN_USER="${MAVERICK_ARTISAN_USER:-www-data}"
         nohup "$MAVERICK" >> "$LOG" 2>&1 &

@@ -144,18 +144,8 @@ static int change_to_project_root(void) {
 
 static void run_artisan_command(const char *command, sqlite3_int64 id) {
         char root[PATH_MAX];
-        char shell[PATH_MAX * 2 + 512];
-        const char *php = getenv("MAVERICK_PHP");
-        const char *user = getenv("MAVERICK_ARTISAN_USER");
+        char shell[PATH_MAX + 256];
         int length;
-
-        if (php == NULL || php[0] == '\0') {
-                php = "php";
-        }
-
-        if (user == NULL || user[0] == '\0') {
-                user = "www-data";
-        }
 
         if (getcwd(root, sizeof(root)) == NULL) {
                 fprintf(stderr, "Failed to resolve project root for artisan command.\n");
@@ -165,17 +155,14 @@ static void run_artisan_command(const char *command, sqlite3_int64 id) {
         length = snprintf(
                 shell,
                 sizeof(shell),
-                "sudo -nu %s %s %s/artisan %s %lld >> %s/storage/logs/maverick-artisan.log 2>&1",
-                user,
-                php,
+                "%s/maverick-artisan.sh %s %lld",
                 root,
                 command,
-                id,
-                root
+                id
         );
 
         if (length < 0 || (size_t) length >= sizeof(shell)) {
-                fprintf(stderr, "Artisan command path too long.\n");
+                fprintf(stderr, "Artisan wrapper path too long.\n");
                 return;
         }
 

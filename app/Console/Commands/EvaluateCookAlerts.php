@@ -24,6 +24,8 @@ class EvaluateCookAlerts extends Command
 
         $alerts->evaluate($reading);
 
+        $this->info('Evaluated alerts for reading #'.$reading->id.'.');
+
         return self::SUCCESS;
     }
 }

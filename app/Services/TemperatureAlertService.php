@@ -6,6 +6,7 @@ use App\Models\Reading;
 use App\Models\User;
 use App\Models\UserSettings;
 use App\Notifications\TemperatureAlertNotification;
+use Illuminate\Support\Facades\Log;
 
 class TemperatureAlertService
 {
@@ -24,6 +25,17 @@ class TemperatureAlertService
             ->each(function (User $user) use ($reading, $cook): void {
                 $this->evaluateForUser($user, $reading, route('home'));
             });
+
+        Log::info('Evaluated temperature alerts for reading.', [
+            'reading_id' => $reading->id,
+            'cook_id' => $cook->id,
+            'probe_food' => $reading->probe_food,
+            'probe_bbq' => $reading->probe_bbq,
+            'eligible_users' => User::query()
+                ->whereHas('pushSubscriptions')
+                ->whereHas('alertSettings')
+                ->count(),
+        ]);
     }
 
     private function evaluateForUser(User $user, Reading $reading, string $url): void
