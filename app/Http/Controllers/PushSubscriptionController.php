@@ -16,7 +16,13 @@ class PushSubscriptionController extends Controller
             'contentEncoding' => ['nullable', 'string'],
         ]);
 
-        $request->user()->updatePushSubscription(
+        $user = $request->user();
+
+        $user->pushSubscriptions()
+            ->where('endpoint', '!=', $validated['endpoint'])
+            ->delete();
+
+        $user->updatePushSubscription(
             $validated['endpoint'],
             $validated['keys']['p256dh'],
             $validated['keys']['auth'],

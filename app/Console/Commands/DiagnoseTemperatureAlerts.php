@@ -6,10 +6,8 @@ use App\Models\Reading;
 use App\Models\User;
 use App\Models\UserSettings;
 use App\Services\TemperatureAlertService;
+use App\Support\WebPushResultRecorder;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Event;
-use NotificationChannels\WebPush\Events\NotificationFailed;
-use NotificationChannels\WebPush\Events\NotificationSent;
 
 class DiagnoseTemperatureAlerts extends Command
 {
@@ -53,8 +51,14 @@ class DiagnoseTemperatureAlerts extends Command
         foreach ($users as $user) {
             $settings = $user->alertSettings;
 
+            $subscriptionCount = $user->pushSubscriptions->count();
+
             $this->line("  {$user->email}");
-            $this->line("    push subscriptions: {$user->pushSubscriptions->count()}");
+            $this->line("    push subscriptions: {$subscriptionCount}");
+
+            if ($subscriptionCount > 1) {
+                $this->warn('    Multiple subscriptions detected. Disable and re-enable push on your device to keep only the current one.');
+            }
             $this->line("    food range: {$settings->food_min}-{$settings->food_max}°F");
             $this->line("    bbq range: {$settings->bbq_min}-{$settings->bbq_max}°F");
             $this->line("    alert interval: {$settings->alert_interval_minutes} min");
@@ -89,34 +93,20 @@ class DiagnoseTemperatureAlerts extends Command
             $this->line('Cleared alert cooldown timestamps.');
         }
 
-        $sent = 0;
-        $failures = [];
-
-        Event::listen(NotificationSent::class, function () use (&$sent): void {
-            $sent++;
-        });
-
-        Event::listen(NotificationFailed::class, function (NotificationFailed $event) use (&$failures): void {
-            $failures[] = $event->report->getReason()
-                .' (HTTP '.$event->report->getResponse()?->getStatusCode().')';
-        });
-
         $this->newLine();
         $this->info('Evaluating alerts...');
 
-        try {
-            $alerts->evaluate($reading);
-        } finally {
-            Event::forget(NotificationSent::class);
-            Event::forget(NotificationFailed::class);
-        }
+        [$recorder] = WebPushResultRecorder::measure(fn () => $alerts->evaluate($reading));
 
-        if ($sent > 0) {
-            $this->info("Push delivery succeeded for {$sent} subscription(s).");
-        } elseif ($failures !== []) {
-            $this->error('Push delivery failed:');
-            foreach ($failures as $failure) {
-                $this->line("  - {$failure}");
+        if ($recorder->sent > 0 && $recorder->failed === 0) {
+            $this->info("Push delivery succeeded for {$recorder->sent} subscription(s).");
+        } elseif ($recorder->sent > 0) {
+            $this->warn("Push delivery partially succeeded ({$recorder->sent} ok, {$recorder->failed} failed).");
+            $this->warn('Disable and re-enable push on your device to remove stale subscriptions.');
+        } elseif ($recorder->failed > 0) {
+            $this->error("Push delivery failed for all {$recorder->failed} subscription(s):");
+            foreach (array_slice($recorder->failureReasons, 0, 5) as $failure) {
+                $this->line('  - '.str($failure)->limit(120));
             }
             $this->warn('Disable and re-enable push notifications in the browser, then run this again.');
         } else {
@@ -124,7 +114,7 @@ class DiagnoseTemperatureAlerts extends Command
             $this->line('Try again with --force if cooldown may be blocking sends.');
         }
 
-        return $failures === [] ? self::SUCCESS : self::FAILURE;
+        return $recorder->sent > 0 ? self::SUCCESS : self::FAILURE;
     }
 
     private function resolveReading(): ?Reading

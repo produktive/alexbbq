@@ -344,3 +344,26 @@ test('push subscription endpoint can be stored for authenticated users', functio
 
     expect($user->pushSubscriptions()->count())->toBe(1);
 });
+
+test('storing a push subscription replaces previous subscriptions for the user', function () {
+    $user = User::factory()->create();
+
+    $user->pushSubscriptions()->create([
+        'endpoint' => 'https://example.com/push/old',
+        'public_key' => 'old-public-key',
+        'auth_token' => 'old-auth-token',
+        'content_encoding' => 'aes128gcm',
+    ]);
+
+    $this->actingAs($user)->postJson(route('push-subscriptions.store'), [
+        'endpoint' => 'https://example.com/push/new',
+        'keys' => [
+            'auth' => 'new-auth-token',
+            'p256dh' => 'new-public-key',
+        ],
+        'contentEncoding' => 'aes128gcm',
+    ])->assertNoContent();
+
+    expect($user->pushSubscriptions()->pluck('endpoint')->all())
+        ->toBe(['https://example.com/push/new']);
+});
