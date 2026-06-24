@@ -10,6 +10,7 @@ use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Concerns\InteractsWithSchemas;
 use Filament\Schemas\Contracts\HasSchemas;
 use Livewire\Attributes\Computed;
+use Livewire\Attributes\On;
 use Livewire\Component;
 
 new class extends Component implements HasActions, HasSchemas {
@@ -66,6 +67,13 @@ new class extends Component implements HasActions, HasSchemas {
         if ($reading !== null) {
             app(TemperatureAlertService::class)->evaluate($reading);
         }
+    }
+
+    #[On('cook-stopped')]
+    public function handleCookStopped(): void
+    {
+        $this->cook->refresh();
+        unset($this->isLive, $this->chartData);
     }
 
     private function ensureCanModifyReadings(): void

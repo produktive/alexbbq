@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Cook;
+use Livewire\Attributes\On;
 use Livewire\Component;
 
 new class extends Component {
@@ -15,6 +16,12 @@ new class extends Component {
     }
 
     public function pollLiveCookIndicator(): void
+    {
+        $this->syncActiveCook();
+    }
+
+    #[On('cook-stopped')]
+    public function handleCookStopped(): void
     {
         $this->syncActiveCook();
     }

@@ -5,6 +5,7 @@ namespace App\Livewire\Concerns;
 use App\Models\Cook;
 use App\Models\Reading;
 use App\Services\TemperatureAlertService;
+use Livewire\Attributes\On;
 
 trait PollsLiveCookData
 {
@@ -59,5 +60,11 @@ trait PollsLiveCookData
         }
 
         app(TemperatureAlertService::class)->evaluate($reading);
+    }
+
+    #[On('cook-stopped')]
+    public function handleCookStopped(): void
+    {
+        $this->pollLiveCookUpdates();
     }
 }

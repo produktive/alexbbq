@@ -483,6 +483,26 @@ void readPin (int gpio,int pin_state,uint32_t tick) {
 }
 
 static int start_cook(void) {
+        sqlite3_stmt *stmt = NULL;
+
+        if (sqlite3_prepare_v2(
+                db,
+                "SELECT id FROM cooks WHERE ended_at IS NULL ORDER BY id DESC LIMIT 1",
+                -1,
+                &stmt,
+                NULL
+        ) == SQLITE_OK) {
+                if (sqlite3_step(stmt) == SQLITE_ROW) {
+                        cookID = (unsigned int) sqlite3_column_int(stmt, 0);
+                        sqlite3_finalize(stmt);
+                        printf("Using existing cook ID %u\n", cookID);
+
+                        return 1;
+                }
+
+                sqlite3_finalize(stmt);
+        }
+
         char sql[256];
         char started_at[20];
         int smoker_id;

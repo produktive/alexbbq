@@ -1,31 +1,30 @@
 <?php
 
 use App\Models\Cook;
-use App\Filament\Plugins\LinkNewTabPlugin;
 use App\Models\Smoker;
 use App\Services\MaverickService;
 use Filament\Actions\Action;
 use Filament\Actions\Concerns\InteractsWithActions;
 use Filament\Actions\Contracts\HasActions;
-use Filament\Forms\Components\Select;
-use Filament\Schemas\Schema;
-use Filament\Forms\Components\RichEditor;
-use Filament\Forms\Components\TextInput;
-use Filament\Forms\Contracts\HasForms;
-use Filament\Forms\Concerns\InteractsWithForms;
+use Filament\Support\Icons\Heroicon;
 use Livewire\Attributes\Computed;
+use Livewire\Attributes\On;
 use Livewire\Component;
 
-new class extends Component implements HasActions, HasForms {
+new class extends Component implements HasActions {
     use InteractsWithActions;
-    use InteractsWithForms;
 
     public bool $live = false;
-    public ?array $data = [];
 
     public function mount(): void
     {
-        $this->live = app(MaverickService::class)->isRunning();
+        $this->syncLiveState();
+    }
+
+    #[On('cook-stopped')]
+    public function handleCookStopped(): void
+    {
+        $this->syncLiveState();
     }
 
     #[Computed]
@@ -46,14 +45,26 @@ new class extends Component implements HasActions, HasForms {
         return $this->live ? 'stop-circle' : 'play-circle';
     }
 
-    public function toggleCook(): void
+    public function stopCookAction(): Action
     {
-        if ($this->live) {
-            $this->live = ! app(MaverickService::class)->stop();
+        return Action::make('stopCook')
+            ->label(__('Stop Cook'))
+            ->color('danger')
+            ->icon(Heroicon::StopCircle)
+            ->requiresConfirmation()
+            ->modalHeading(__('Stop recording?'))
+            ->modalDescription(__('This will stop temperature recording for the current cook.'))
+            ->modalSubmitActionLabel(__('Stop Cook'))
+            ->action(function (): void {
+                app(MaverickService::class)->stop();
 
-            return;
-        }
+                $this->syncLiveState();
+                $this->dispatch('cook-stopped');
+            });
+    }
 
+    public function startCook(): void
+    {
         if (! Smoker::query()->exists()) {
             Flux::toast(
                 text: __('Create a smoker to start a cook.'),
@@ -62,29 +73,33 @@ new class extends Component implements HasActions, HasForms {
             );
 
             $this->redirectRoute('smokers', navigate: true);
+
             return;
         }
 
         $this->redirectRoute('cooks.new');
     }
+
+    private function syncLiveState(): void
+    {
+        $this->live = app(MaverickService::class)->isRunning() || Cook::active() !== null;
+    }
 }
 ?>
 
-<flux:sidebar.nav>
-    @if ($this->live)
-        <flux:button
-            variant="danger"
-            :icon="$this->icon"
-            wire:click="toggleCook"
-        >
-            {{ $this->text }}
-        </flux:button>
-    @else
-        <flux:button
-            :icon="$this->icon"
-            wire:click="toggleCook"
-        >
-            {{ $this->text }}
-        </flux:button>
-    @endif
-</flux:sidebar.nav>
+<div>
+    <flux:sidebar.nav>
+        @if ($this->live)
+            {{ ($this->stopCookAction) }}
+        @else
+            <flux:button
+                :icon="$this->icon"
+                wire:click="startCook"
+            >
+                {{ $this->text }}
+            </flux:button>
+        @endif
+    </flux:sidebar.nav>
+
+    <x-filament-actions::modals />
+</div>

@@ -2,6 +2,7 @@
 
 use App\Filament\Schemas\AlertsSection;
 use App\Filament\Schemas\CookSection;
+use App\Models\Cook;
 use App\Models\UserSettings;
 use App\Services\MaverickService;
 use Filament\Actions\Concerns\InteractsWithActions;
@@ -68,7 +69,26 @@ class extends Component implements HasActions, HasForms {
             return;
         }
 
+        if (Cook::active()) {
+            Flux::toast(
+                variant: 'warning',
+                text: __('Alert settings saved. A cook is already in progress.'),
+            );
+
+            $this->redirectRoute('home', navigate: true);
+
+            return;
+        }
+
+        $cook = Cook::query()->create([
+            'smoker_id' => $state['smoker_id'],
+            'title' => $state['title'],
+            'description' => $state['description'] ?? null,
+        ]);
+
         if (! $maverick->start()) {
+            $cook->delete();
+
             Flux::toast(
                 variant: 'warning',
                 text: __('Alert settings saved, but maverick failed to start. Check storage/logs/maverick.log.'),

@@ -3,6 +3,7 @@
 use App\Models\Cook;
 use App\Models\Reading;
 use App\Models\Smoker;
+use Illuminate\Support\Facades\Process;
 use Livewire\Livewire;
 
 test('home page shows idle state when no cooks exist', function () {
@@ -162,4 +163,54 @@ test('active cook helper ignores ended cooks', function () {
     ]);
 
     expect(Cook::active()?->id)->toBe($active->id);
+});
+
+test('maverick service stop finishes the active cook', function () {
+    Process::fake([
+        'pkill -x maverick' => Process::result(),
+    ]);
+
+    $smoker = Smoker::query()->create(['name' => 'Backyard']);
+
+    $cook = Cook::query()->create([
+        'smoker_id' => $smoker->id,
+        'title' => 'Brisket',
+        'ended_at' => null,
+    ]);
+
+    Reading::query()->create([
+        'cook_id' => $cook->id,
+        'time' => now()->subMinutes(5),
+        'probe_food' => 165,
+        'probe_bbq' => 225,
+    ]);
+
+    app(\App\Services\MaverickService::class)->stop();
+
+    $cook->refresh();
+
+    expect($cook->ended_at)->not->toBeNull();
+});
+
+test('home page clears live state when cook stopped event fires', function () {
+    $smoker = Smoker::query()->create(['name' => 'Backyard']);
+
+    $cook = Cook::query()->create([
+        'smoker_id' => $smoker->id,
+        'title' => 'Brisket',
+        'ended_at' => null,
+    ]);
+
+    Reading::query()->create([
+        'cook_id' => $cook->id,
+        'time' => now(),
+        'probe_food' => 165,
+        'probe_bbq' => 225,
+    ]);
+
+    Livewire::test('pages::home')
+        ->assertSet('displayCookId', $cook->id)
+        ->tap(fn () => $cook->update(['ended_at' => now()]))
+        ->dispatch('cook-stopped')
+        ->assertSet('displayCookId', $cook->id);
 });

@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Cook;
 use Illuminate\Support\Facades\Process;
 
 class MaverickService
@@ -44,10 +45,28 @@ class MaverickService
     public function stop(): bool
     {
         if ($this->usesSudo()) {
-            return Process::run($this->sudoCommand('stop'))->successful();
+            Process::run($this->sudoCommand('stop'));
+        } else {
+            Process::run('pkill -x maverick');
         }
 
-        return Process::run('pkill -x maverick')->successful();
+        return $this->finishActiveCook();
+    }
+
+    public function finishActiveCook(): bool
+    {
+        $cook = Cook::active();
+
+        if ($cook === null) {
+            return true;
+        }
+
+        if (! $cook->syncEndedAtFromReadings()) {
+            $cook->ended_at = now();
+            $cook->saveQuietly();
+        }
+
+        return true;
     }
 
     public function usesSudo(): bool

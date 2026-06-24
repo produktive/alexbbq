@@ -185,26 +185,40 @@ test('start cook page saves alert settings when recording starts', function () {
         'pgrep -x maverick' => Process::result(exitCode: 1),
     ]);
 
-    $user = User::factory()->create();
-    Smoker::query()->create(['name' => 'Backyard']);
+    $binary = base_path('maverick');
+    file_put_contents($binary, '');
+    chmod($binary, 0755);
 
-    Livewire::actingAs($user)
-        ->test('pages::cooks.new')
-        ->set('data.smoker_id', Smoker::query()->value('id'))
-        ->set('data.title', 'Brisket')
-        ->set('data.food', [160, 200])
-        ->set('data.bbq', [230, 270])
-        ->set('data.alert_interval_minutes', 1)
-        ->call('save')
-        ->assertRedirect(route('home'));
+    try {
+        $user = User::factory()->create();
+        $smoker = Smoker::query()->create(['name' => 'Backyard']);
 
-    $settings = UserSettings::forUser($user->fresh());
+        Livewire::actingAs($user)
+            ->test('pages::cooks.new')
+            ->set('data.smoker_id', $smoker->id)
+            ->set('data.title', 'Brisket')
+            ->set('data.description', '<p>Low and slow</p>')
+            ->set('data.food', [160, 200])
+            ->set('data.bbq', [230, 270])
+            ->set('data.alert_interval_minutes', 1)
+            ->call('save')
+            ->assertRedirect(route('home'));
 
-    expect($settings->food_min)->toBe(160)
-        ->and($settings->food_max)->toBe(200)
-        ->and($settings->bbq_min)->toBe(230)
-        ->and($settings->bbq_max)->toBe(270)
-        ->and($settings->alert_interval_minutes)->toBe(1);
+        $settings = UserSettings::forUser($user->fresh());
+        $cook = Cook::query()->where('title', 'Brisket')->first();
+
+        expect($settings->food_min)->toBe(160)
+            ->and($settings->food_max)->toBe(200)
+            ->and($settings->bbq_min)->toBe(230)
+            ->and($settings->bbq_max)->toBe(270)
+            ->and($settings->alert_interval_minutes)->toBe(1)
+            ->and($cook)->not->toBeNull()
+            ->and($cook->smoker_id)->toBe($smoker->id)
+            ->and($cook->description)->toBe('<p>Low and slow</p>')
+            ->and($cook->ended_at)->toBeNull();
+    } finally {
+        @unlink($binary);
+    }
 });
 
 test('evaluate cook alerts command evaluates a reading', function () {
