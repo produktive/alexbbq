@@ -33,6 +33,44 @@ test('alert settings can be saved from the alerts page', function () {
         ->and($settings->alert_interval_minutes)->toBe(10);
 });
 
+test('temperature alert is sent when bbq probe is below minimum', function () {
+    Notification::fake();
+
+    $user = User::factory()->create();
+    UserSettings::forUser($user)->update([
+        'bbq_min' => 230,
+        'bbq_max' => 275,
+        'alert_interval_minutes' => 1,
+    ]);
+
+    $user->pushSubscriptions()->create([
+        'endpoint' => 'https://example.com/push/bbq-low',
+        'public_key' => 'test-public-key',
+        'auth_token' => 'test-auth-token',
+        'content_encoding' => 'aesgcm',
+    ]);
+
+    $smoker = Smoker::query()->create(['name' => 'Backyard']);
+    $cook = Cook::query()->create([
+        'smoker_id' => $smoker->id,
+        'title' => 'Brisket',
+        'ended_at' => null,
+    ]);
+
+    $reading = Reading::withoutEvents(fn () => Reading::query()->create([
+        'cook_id' => $cook->id,
+        'time' => now(),
+        'probe_food' => 73,
+        'probe_bbq' => 71,
+    ]));
+
+    app(TemperatureAlertService::class)->evaluate($reading);
+
+    Notification::assertSentTo($user, TemperatureAlertNotification::class, function (TemperatureAlertNotification $notification) {
+        return str_contains($notification->body, 'BBQ probe is 71°F');
+    });
+});
+
 test('temperature alert is sent when food probe is out of range', function () {
     Notification::fake();
 

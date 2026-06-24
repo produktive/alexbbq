@@ -95,11 +95,17 @@ class TemperatureAlertService
             return;
         }
 
-        $user->notify(new TemperatureAlertNotification(
-            title: 'Temperature Alert',
-            body: $violation,
-            url: $url,
-        ));
+        try {
+            $user->notify(new TemperatureAlertNotification(
+                title: 'Temperature Alert',
+                body: $violation,
+                url: $url,
+            ));
+        } catch (\Throwable $exception) {
+            report($exception);
+
+            return;
+        }
 
         $settings->{$lastAlertColumn} = now();
         $settings->saveQuietly();

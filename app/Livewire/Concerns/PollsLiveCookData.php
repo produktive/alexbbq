@@ -17,6 +17,7 @@ trait PollsLiveCookData
         if ($activeCookId !== null && $this->displayCookId !== $activeCookId) {
             $this->displayCookId = $activeCookId;
             $this->resetLiveCookComputedProperties();
+            $this->evaluateAlertsForCook($activeCookId);
 
             return;
         }

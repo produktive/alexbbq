@@ -143,15 +143,34 @@ static int change_to_project_root(void) {
 }
 
 static void run_artisan_command(const char *command, sqlite3_int64 id) {
-        char shell[512];
+        char shell[1024];
+        char root[PATH_MAX];
+        const char *php = getenv("MAVERICK_PHP");
+        const char *user = getenv("MAVERICK_ARTISAN_USER");
+
+        if (php == NULL || php[0] == '\0') {
+                php = "php";
+        }
+
+        if (user == NULL || user[0] == '\0') {
+                user = "www-data";
+        }
+
+        if (getcwd(root, sizeof(root)) == NULL) {
+                fprintf(stderr, "Failed to resolve project root for artisan command.\n");
+                return;
+        }
 
         snprintf(
                 shell,
                 sizeof(shell),
-                "%s artisan %s %lld > /dev/null 2>&1",
-                "php",
+                "sudo -nu %s %s %s/artisan %s %lld >> %s/storage/logs/maverick-artisan.log 2>&1",
+                user,
+                php,
+                root,
                 command,
-                id
+                id,
+                root
         );
 
         system(shell);
