@@ -69,7 +69,7 @@ class extends Component implements HasForms {
 
     <div class="max-w-3xl my-6 space-y-6">
         <flux:card class="space-y-4">
-            <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div class="flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                     <flux:heading size="lg">Push Notifications</flux:heading>
                     <flux:text>
@@ -80,6 +80,7 @@ class extends Component implements HasForms {
                 <flux:badge
                     :color="$pushEnabled ? 'green' : 'zinc'"
                     size="sm"
+                    class="w-fit shrink-0"
                 >
                     {{ $pushEnabled ? __('Enabled on this device') : __('Not enabled') }}
                 </flux:badge>

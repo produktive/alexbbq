@@ -135,3 +135,7 @@ p.fi-ta-text-description,
 .food-slider .noUi-connect {
     background: rgb(234 88 12);
 }
+
+[data-flux-container] {
+    @apply max-lg:!px-3;
+}
