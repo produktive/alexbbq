@@ -133,7 +133,7 @@ new class extends Component {
 
                     <button
                         type="button"
-                        class="absolute end-4 top-4 z-10 rounded-full bg-black/50 p-2 text-white hover:bg-black/70"
+                        class="absolute inset-e-4 top-4 z-10 rounded-full bg-black/50 p-2 text-white hover:bg-black/70"
                         aria-label="Close"
                         @click="closeLightbox()"
                     >
@@ -143,7 +143,7 @@ new class extends Component {
                     <template x-if="hasMultiple()">
                         <button
                             type="button"
-                            class="absolute start-2 top-1/2 z-10 -translate-y-1/2 rounded-full bg-black/50 p-2 text-white hover:bg-black/70 sm:start-4"
+                            class="absolute inset-s-2 top-1/2 z-10 -translate-y-1/2 rounded-full bg-black/50 p-2 text-white hover:bg-black/70 sm:inset-s-4"
                             aria-label="Previous image"
                             @click.stop="prev()"
                         >
