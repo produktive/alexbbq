@@ -108,7 +108,7 @@ new class extends Component {
             <article
                 id="cook-description"
                 x-ref="content"
-                class="prose cook-description dark:prose-invert"
+                class="cook-description"
                 :class="{ 'is-processed': processed }"
             >
                 {!! $this->displayCook->renderRichContent('description') !!}

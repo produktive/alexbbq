@@ -96,6 +96,22 @@ p.fi-ta-text-description,
     color: deeppink;
 }
 
+#cook-description ul {
+    @apply list-disc ps-6;
+}
+
+#cook-description ol {
+    @apply list-decimal ps-6;
+}
+
+#cook-description li + li {
+    @apply mt-1;
+}
+
+#cook-description p + p {
+    @apply mt-4;
+}
+
 .cook-description:not(.is-processed) img {
     @apply max-h-24 max-w-24 cursor-pointer rounded-lg object-cover;
 }

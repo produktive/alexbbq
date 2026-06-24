@@ -354,6 +354,7 @@ new class extends Component implements HasActions, HasSchemas {
         <article
             id="cook-description"
             x-ref="content"
+            class="cook-description"
             :class="{ 'is-processed': processed }"
         >
             {!! $this->cook->renderRichContent('description') !!}
