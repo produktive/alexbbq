@@ -126,25 +126,95 @@ test('live cook indicator poll syncs active cook state', function () {
         ->assertSet('cookId', null);
 });
 
-test('cook view poll refreshes chart data for active cook', function () {
+test('cook view poll refreshes chart data for finished cook', function () {
     $smoker = Smoker::query()->create(['name' => 'Backyard']);
 
     $cook = Cook::query()->create([
         'smoker_id' => $smoker->id,
         'title' => 'Brisket',
-        'ended_at' => null,
+        'ended_at' => now()->subHour(),
     ]);
 
     Reading::withoutEvents(fn () => Reading::query()->create([
         'cook_id' => $cook->id,
-        'time' => now(),
+        'time' => now()->subHour(),
         'probe_food' => 165,
         'probe_bbq' => 225,
     ]));
 
     Livewire::test('pages::cooks.view', ['cook' => $cook])
         ->call('pollLiveCookView')
-        ->assertDispatched('cook-chart-updated');
+        ->assertNotDispatched('cook-chart-updated');
+});
+
+test('active cook is hidden from cooks index', function () {
+    $smoker = Smoker::query()->create(['name' => 'Backyard']);
+
+    Cook::query()->create([
+        'smoker_id' => $smoker->id,
+        'title' => 'Live Brisket',
+        'ended_at' => null,
+    ]);
+
+    $finished = Cook::query()->create([
+        'smoker_id' => $smoker->id,
+        'title' => 'Finished Ribs',
+        'ended_at' => now()->subDay(),
+    ]);
+
+    $this->get(route('cooks'))
+        ->assertOk()
+        ->assertSee('Finished Ribs')
+        ->assertDontSee('Live Brisket');
+});
+
+test('active cook view page returns not found', function () {
+    $smoker = Smoker::query()->create(['name' => 'Backyard']);
+
+    $cook = Cook::query()->create([
+        'smoker_id' => $smoker->id,
+        'title' => 'Live Brisket',
+        'ended_at' => null,
+    ]);
+
+    $this->get(route('cooks.view', $cook))->assertNotFound();
+});
+
+test('active cook edit page returns not found', function () {
+    $user = \App\Models\User::factory()->create();
+    $smoker = Smoker::query()->create(['name' => 'Backyard']);
+
+    $cook = Cook::query()->create([
+        'smoker_id' => $smoker->id,
+        'title' => 'Live Brisket',
+        'ended_at' => null,
+    ]);
+
+    $this->actingAs($user)
+        ->get(route('cooks.edit', $cook))
+        ->assertNotFound();
+});
+
+test('home page hides view full cook link while cook is live', function () {
+    $smoker = Smoker::query()->create(['name' => 'Backyard']);
+
+    Cook::query()->create([
+        'smoker_id' => $smoker->id,
+        'title' => 'Brisket',
+        'ended_at' => null,
+    ]);
+
+    Reading::query()->create([
+        'cook_id' => Cook::active()->id,
+        'time' => now(),
+        'probe_food' => 165,
+        'probe_bbq' => 225,
+    ]);
+
+    $this->get(route('home'))
+        ->assertOk()
+        ->assertSee('Brisket')
+        ->assertDontSee('View Full Cook');
 });
 
 test('active cook helper ignores ended cooks', function () {

@@ -153,9 +153,11 @@ new class extends Component {
         </div>
 
         <div class="flex justify-end">
-            <flux:button href="{{ route('cooks.view', $this->displayCook) }}">
-                View Full Cook
-            </flux:button>
+            @unless ($this->isLive)
+                <flux:button href="{{ route('cooks.view', $this->displayCook) }}">
+                    View Full Cook
+                </flux:button>
+            @endunless
         </div>
     @else
         <flux:heading level="1" size="xl" class="my-2">

@@ -29,7 +29,7 @@ class extends Component implements HasActions, HasForms, HasTable {
     public function table(Table $table): Table
     {
         return $table
-            ->query(Cook::query())
+            ->query(Cook::query()->finished())
             ->columns([
                 TextColumn::make('created_at')
                     ->formatStateUsing(fn ($state) => $state->format('M j, Y') . "<br>" . $state->format('g:i a'))

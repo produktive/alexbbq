@@ -29,7 +29,7 @@ class CookSection
                             ->pluck('name', 'smokers.id')
                             ->toArray()
                     )
-                    ->default(Cook::mostRecent()?->smoker_id ?? Smoker::query()->value('id')),
+                    ->default(Smoker::defaultForNewCook()),
 
                 TextInput::make('title')
                     ->required()

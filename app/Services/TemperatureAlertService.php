@@ -22,7 +22,7 @@ class TemperatureAlertService
             ->whereHas('alertSettings')
             ->with('alertSettings')
             ->each(function (User $user) use ($reading, $cook): void {
-                $this->evaluateForUser($user, $reading, route('cooks.view', $cook));
+                $this->evaluateForUser($user, $reading, route('home'));
             });
     }
 

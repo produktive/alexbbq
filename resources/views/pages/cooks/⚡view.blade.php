@@ -20,6 +20,13 @@ new class extends Component implements HasActions, HasSchemas {
 
     public Cook $cook;
 
+    public function mount(Cook $cook): void
+    {
+        abort_if($cook->isActive(), 404);
+
+        $this->cook = $cook;
+    }
+
     public function render()
     {
         return $this->view()->title($this->cook->title);

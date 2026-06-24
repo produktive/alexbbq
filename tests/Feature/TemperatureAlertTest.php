@@ -159,6 +159,40 @@ test('temperature alert cooldown resets when probe returns to range', function (
     Notification::assertSentTo($user, TemperatureAlertNotification::class);
 });
 
+test('start cook page defaults smoker to last used smoker', function () {
+    Process::fake([
+        'pgrep -x maverick' => Process::result(exitCode: 1),
+    ]);
+
+    $user = User::factory()->create();
+    $older = Smoker::query()->create(['name' => 'Old']);
+    Smoker::query()->create(['name' => 'New']);
+
+    Cook::query()->create([
+        'smoker_id' => $older->id,
+        'title' => 'Past Cook',
+        'ended_at' => now()->subDay(),
+    ]);
+
+    Livewire::actingAs($user)
+        ->test('pages::cooks.new')
+        ->assertSet('data.smoker_id', $older->id);
+});
+
+test('start cook page defaults smoker to newest smoker when no cooks exist', function () {
+    Process::fake([
+        'pgrep -x maverick' => Process::result(exitCode: 1),
+    ]);
+
+    $user = User::factory()->create();
+    Smoker::query()->create(['name' => 'Old']);
+    $newer = Smoker::query()->create(['name' => 'New']);
+
+    Livewire::actingAs($user)
+        ->test('pages::cooks.new')
+        ->assertSet('data.smoker_id', $newer->id);
+});
+
 test('start cook page loads saved alert settings including frequency', function () {
     Process::fake([
         'pgrep -x maverick' => Process::result(exitCode: 1),

@@ -3,6 +3,7 @@
 use App\Filament\Schemas\AlertsSection;
 use App\Filament\Schemas\CookSection;
 use App\Models\Cook;
+use App\Models\Smoker;
 use App\Models\UserSettings;
 use App\Services\MaverickService;
 use Filament\Actions\Concerns\InteractsWithActions;
@@ -35,7 +36,10 @@ class extends Component implements HasActions, HasForms {
             return;
         }
 
-        $this->form->fill(UserSettings::forUser(Auth::user())->toAlertFormState());
+        $this->form->fill([
+            ...UserSettings::forUser(Auth::user())->toAlertFormState(),
+            'smoker_id' => Smoker::defaultForNewCook(),
+        ]);
     }
 
     public function form(Schema $form): Schema

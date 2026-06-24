@@ -60,6 +60,11 @@ class Cook extends Model implements HasRichContent
         return $query->whereNull('ended_at');
     }
 
+    public function scopeFinished(Builder $query): Builder
+    {
+        return $query->whereNotNull('ended_at');
+    }
+
     public static function active(): ?self
     {
         return static::query()->active()->latest('id')->first();

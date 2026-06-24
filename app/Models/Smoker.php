@@ -18,4 +18,15 @@ class Smoker extends Model
     {
         return $this->hasMany(Cook::class);
     }
+
+    public static function defaultForNewCook(): ?int
+    {
+        $lastUsedSmokerId = Cook::query()->latest('id')->value('smoker_id');
+
+        if ($lastUsedSmokerId !== null) {
+            return (int) $lastUsedSmokerId;
+        }
+
+        return static::query()->latest('id')->value('id');
+    }
 }
