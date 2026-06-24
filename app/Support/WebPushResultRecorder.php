@@ -4,7 +4,10 @@ namespace App\Support;
 
 class WebPushResultRecorder
 {
-    private static ?self $active = null;
+    /**
+     * @var list<self>
+     */
+    private static array $stack = [];
 
     public int $sent = 0;
 
@@ -24,18 +27,27 @@ class WebPushResultRecorder
     public static function measure(callable $callback): array
     {
         $recorder = new self;
-        self::$active = $recorder;
+        self::$stack[] = $recorder;
 
         try {
             return [$recorder, $callback()];
         } finally {
-            self::$active = null;
+            array_pop(self::$stack);
         }
     }
 
-    public static function active(): ?self
+    public static function notifySent(): void
     {
-        return self::$active;
+        foreach (self::$stack as $recorder) {
+            $recorder->recordSent();
+        }
+    }
+
+    public static function notifyFailed(string $reason): void
+    {
+        foreach (self::$stack as $recorder) {
+            $recorder->recordFailed($reason);
+        }
     }
 
     public function recordSent(): void

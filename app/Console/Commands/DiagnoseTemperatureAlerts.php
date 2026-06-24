@@ -63,6 +63,11 @@ class DiagnoseTemperatureAlerts extends Command
             $this->line("    bbq range: {$settings->bbq_min}-{$settings->bbq_max}°F");
             $this->line("    alert interval: {$settings->alert_interval_minutes} min");
             $this->line('    last bbq alert: '.($settings->last_bbq_alert_at?->toDateTimeString() ?? 'never'));
+            $this->line('    last food alert: '.($settings->last_food_alert_at?->toDateTimeString() ?? 'never'));
+
+            foreach ($this->probeViolations($settings, $reading) as $violation) {
+                $this->line("    would alert: {$violation}");
+            }
         }
 
         if ($users->isEmpty()) {
@@ -115,6 +120,55 @@ class DiagnoseTemperatureAlerts extends Command
         }
 
         return $recorder->sent > 0 ? self::SUCCESS : self::FAILURE;
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function probeViolations(UserSettings $settings, Reading $reading): array
+    {
+        $violations = [];
+
+        $foodViolation = $this->violationMessage(
+            'Food',
+            (int) $reading->probe_food,
+            $settings->food_min,
+            $settings->food_max,
+        );
+
+        if ($foodViolation !== null) {
+            $violations[] = $foodViolation;
+        }
+
+        $bbqViolation = $this->violationMessage(
+            'BBQ',
+            (int) $reading->probe_bbq,
+            $settings->bbq_min,
+            $settings->bbq_max,
+        );
+
+        if ($bbqViolation !== null) {
+            $violations[] = $bbqViolation;
+        }
+
+        return $violations;
+    }
+
+    private function violationMessage(string $probeLabel, int $temperature, int $min, int $max): ?string
+    {
+        if ($temperature <= 0) {
+            return null;
+        }
+
+        if ($min > UserSettings::TEMPERATURE_OFF && $temperature < $min) {
+            return "{$probeLabel} probe is {$temperature}°F, below your minimum of {$min}°F.";
+        }
+
+        if ($temperature > $max) {
+            return "{$probeLabel} probe is {$temperature}°F, above your maximum of {$max}°F.";
+        }
+
+        return null;
     }
 
     private function resolveReading(): ?Reading

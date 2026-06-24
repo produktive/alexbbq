@@ -39,14 +39,14 @@ class AppServiceProvider extends ServiceProvider
     protected function registerWebPushListeners(): void
     {
         Event::listen(NotificationSent::class, function (): void {
-            WebPushResultRecorder::active()?->recordSent();
+            WebPushResultRecorder::notifySent();
         });
 
         Event::listen(NotificationFailed::class, function (NotificationFailed $event): void {
             $report = $event->report;
             $reason = $report->getReason();
 
-            WebPushResultRecorder::active()?->recordFailed($reason);
+            WebPushResultRecorder::notifyFailed($reason);
 
             Log::warning('Web push delivery failed.', [
                 'endpoint' => $event->subscription->endpoint,
