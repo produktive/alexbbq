@@ -6,13 +6,16 @@ use App\Services\MaverickService;
 use Filament\Actions\Action;
 use Filament\Actions\Concerns\InteractsWithActions;
 use Filament\Actions\Contracts\HasActions;
+use Filament\Schemas\Concerns\InteractsWithSchemas;
+use Filament\Schemas\Contracts\HasSchemas;
 use Filament\Support\Icons\Heroicon;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\On;
 use Livewire\Component;
 
-new class extends Component implements HasActions {
+new class extends Component implements HasActions, HasSchemas {
     use InteractsWithActions;
+    use InteractsWithSchemas;
 
     public bool $live = false;
 
