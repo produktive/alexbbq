@@ -16,8 +16,21 @@ document.addEventListener('alpine:init', () => {
     registerLiveCookTimer(window.Alpine);
 });
 
+function initFilamentAlpineComponents() {
+    const root = document.querySelector('[data-flux-main]');
+
+    if (! root || ! window.Alpine) {
+        return;
+    }
+
+    window.Alpine.initTree(root);
+}
+
 document.addEventListener('livewire:navigated', () => {
-    requestAnimationFrame(() => initLiveCookTimers());
+    requestAnimationFrame(() => {
+        initFilamentAlpineComponents();
+        initLiveCookTimers();
+    });
 });
 
 if ('serviceWorker' in navigator) {

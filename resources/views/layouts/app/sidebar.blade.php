@@ -19,7 +19,7 @@
 
                 <livewire:cooks-nav-item />
 
-                <flux:sidebar.item icon="bell-alert" :href="route('alerts')" :current="request()->routeIs('alerts')">
+                <flux:sidebar.item icon="bell-alert" :href="route('alerts')" :current="request()->routeIs('alerts')" wire:navigate>
                     {{ __('Alerts') }}
                 </flux:sidebar.item>
 

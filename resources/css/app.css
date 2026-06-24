@@ -136,6 +136,10 @@ p.fi-ta-text-description,
     background: rgb(234 88 12);
 }
 
+[data-flux-main] {
+    @apply max-lg:!p-3;
+}
+
 [data-flux-container] {
-    @apply max-lg:!px-3;
+    @apply max-lg:!px-1.5;
 }

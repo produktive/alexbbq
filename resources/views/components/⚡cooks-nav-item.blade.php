@@ -7,11 +7,11 @@ use Livewire\Component;
 new class extends Component {
     public string $variant = 'sidebar';
 
-    public bool $navigate = false;
+    public bool $navigate = true;
 
     public int $count = 0;
 
-    public function mount(string $variant = 'sidebar', bool $navigate = false): void
+    public function mount(string $variant = 'sidebar', bool $navigate = true): void
     {
         $this->variant = $variant;
         $this->navigate = $navigate;
