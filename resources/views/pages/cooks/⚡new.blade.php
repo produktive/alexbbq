@@ -3,6 +3,7 @@
 use App\Filament\Schemas\AlertsSection;
 use App\Filament\Schemas\CookSection;
 use App\Models\UserSettings;
+use App\Services\MaverickService;
 use Filament\Actions\Concerns\InteractsWithActions;
 use Filament\Actions\Contracts\HasActions;
 use Filament\Forms\Concerns\InteractsWithForms;
@@ -10,7 +11,6 @@ use Filament\Forms\Contracts\HasForms;
 use Filament\Schemas\Schema;
 use Flux\Flux;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Process;
 use Livewire\Attributes\Title;
 use Livewire\Component;
 
@@ -26,7 +26,7 @@ class extends Component implements HasActions, HasForms {
 
     public function mount(): void
     {
-        $this->live = Process::run('pgrep maverick')->successful();
+        $this->live = app(MaverickService::class)->isRunning();
 
         if ($this->live) {
             $this->redirectRoute('home', navigate: true);
@@ -55,9 +55,9 @@ class extends Component implements HasActions, HasForms {
         $settings->fillFromAlertFormState($state);
         $settings->save();
 
-        $maverick = base_path('maverick');
+        $maverick = app(MaverickService::class);
 
-        if (! is_file($maverick) || ! is_executable($maverick)) {
+        if (! $maverick->isAvailable()) {
             Flux::toast(
                 variant: 'warning',
                 text: __('Alert settings saved. Maverick is not available on this machine.'),
@@ -68,7 +68,16 @@ class extends Component implements HasActions, HasForms {
             return;
         }
 
-        Process::path(base_path())->start($maverick);
+        if (! $maverick->start()) {
+            Flux::toast(
+                variant: 'warning',
+                text: __('Alert settings saved, but maverick failed to start. Check storage/logs/maverick.log.'),
+            );
+
+            $this->redirectRoute('home', navigate: true);
+
+            return;
+        }
 
         Flux::toast(variant: 'success', text: __('Cook recording started.'));
 

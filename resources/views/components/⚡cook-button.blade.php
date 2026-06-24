@@ -3,18 +3,18 @@
 use App\Models\Cook;
 use App\Filament\Plugins\LinkNewTabPlugin;
 use App\Models\Smoker;
+use App\Services\MaverickService;
 use Filament\Actions\Action;
 use Filament\Actions\Concerns\InteractsWithActions;
 use Filament\Actions\Contracts\HasActions;
 use Filament\Forms\Components\Select;
 use Filament\Schemas\Schema;
-use Illuminate\Support\Facades\Process;
-use Livewire\Component;
-use Livewire\Attributes\Computed;
 use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Forms\Concerns\InteractsWithForms;
+use Livewire\Attributes\Computed;
+use Livewire\Component;
 
 new class extends Component implements HasActions, HasForms {
     use InteractsWithActions;
@@ -25,7 +25,7 @@ new class extends Component implements HasActions, HasForms {
 
     public function mount(): void
     {
-        $this->live = Process::run('pgrep maverick')->successful();
+        $this->live = app(MaverickService::class)->isRunning();
     }
 
     #[Computed]
@@ -49,7 +49,8 @@ new class extends Component implements HasActions, HasForms {
     public function toggleCook(): void
     {
         if ($this->live) {
-            $this->live = ! Process::run('pkill maverick')->successful();
+            $this->live = ! app(MaverickService::class)->stop();
+
             return;
         }
 

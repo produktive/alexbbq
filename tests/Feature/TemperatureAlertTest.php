@@ -161,7 +161,7 @@ test('temperature alert cooldown resets when probe returns to range', function (
 
 test('start cook page loads saved alert settings including frequency', function () {
     Process::fake([
-        'pgrep maverick' => Process::result(exitCode: 1),
+        'pgrep -x maverick' => Process::result(exitCode: 1),
     ]);
 
     $user = User::factory()->create();
@@ -182,7 +182,7 @@ test('start cook page loads saved alert settings including frequency', function 
 
 test('start cook page saves alert settings when recording starts', function () {
     Process::fake([
-        'pgrep maverick' => Process::result(exitCode: 1),
+        'pgrep -x maverick' => Process::result(exitCode: 1),
     ]);
 
     $user = User::factory()->create();
