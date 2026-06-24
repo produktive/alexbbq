@@ -90,7 +90,13 @@ new class extends Component implements HasActions {
 <div>
     <flux:sidebar.nav>
         @if ($this->live)
-            {{ ($this->stopCookAction) }}
+            <flux:button
+                variant="danger"
+                icon="stop-circle"
+                wire:click="mountAction('stopCook')"
+            >
+                {{ __('Stop Cook') }}
+            </flux:button>
         @else
             <flux:button
                 :icon="$this->icon"
