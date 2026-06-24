@@ -2,16 +2,12 @@
 
 namespace App\Notifications;
 
-use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Notification;
 use NotificationChannels\WebPush\WebPushChannel;
 use NotificationChannels\WebPush\WebPushMessage;
 
-class TemperatureAlertNotification extends Notification implements ShouldQueue
+class TemperatureAlertNotification extends Notification
 {
-    use Queueable;
-
     public function __construct(
         public string $title,
         public string $body,

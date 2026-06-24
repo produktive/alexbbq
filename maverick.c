@@ -142,6 +142,21 @@ static int change_to_project_root(void) {
         return 1;
 }
 
+static void run_artisan_command(const char *command, sqlite3_int64 id) {
+        char shell[512];
+
+        snprintf(
+                shell,
+                sizeof(shell),
+                "%s artisan %s %lld > /dev/null 2>&1",
+                "php",
+                command,
+                id
+        );
+
+        system(shell);
+}
+
 static int default_smoker_id(void) {
         sqlite3_stmt *stmt = NULL;
         int smoker_id = 1;
@@ -290,6 +305,7 @@ void outputData() {
                                         zErrMsg = 0;
 				} else {
 					last_db_write=secs;
+                                        run_artisan_command("cook:evaluate-alerts", sqlite3_last_insert_rowid(db));
 				}
 			}
 		}

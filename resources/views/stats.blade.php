@@ -3,42 +3,12 @@
     use Carbon\CarbonInterval;
     use Illuminate\Support\HtmlString;
 
-    $interval = CarbonInterval::seconds(
-            Cook::all()
-            ->sum(fn (Cook $cook) => $cook->getDurationSeconds())
-        )->cascade();
+    $totalSeconds = Cook::query()
+        ->with(['readings:id,cook_id,time'])
+        ->get()
+        ->sum(fn (Cook $cook): int => $cook->getDurationSeconds());
 
-    $lines = [];
-
-    if ($interval->years) {
-        $lines[] = $interval->years . ' year' . ($interval->years > 1 ? 's' : '');
-    }
-
-    if ($interval->months) {
-        $lines[] = $interval->months . ' month' . ($interval->months > 1 ? 's' : '');
-    }
-
-    if ($interval->weeks) {
-        $lines[] = $interval->weeks . ' week' . ($interval->weeks > 1 ? 's' : '');
-    }
-
-    if ($interval->daysExcludeWeeks) {
-        $lines[] = $interval->daysExcludeWeeks . ' day' . ($interval->daysExcludeWeeks > 1 ? 's' : '');
-    }
-
-    if ($interval->hours) {
-        $lines[] = $interval->hours . ' hour' . ($interval->hours > 1 ? 's' : '');
-    }
-
-    if ($interval->minutes) {
-        $lines[] = $interval->minutes . ' minute' . ($interval->minutes > 1 ? 's' : '');
-    }
-
-    if ($interval->seconds) {
-        $lines[] = $interval->seconds . ' second' . ($interval->seconds > 1 ? 's' : '');
-    }
-
-    $human = implode("<br>", $lines);
+    $human = (string) CarbonInterval::seconds($totalSeconds)->cascade();
 @endphp
 <x-layouts::app :title="__('Cook Statistics')">
     <div class="flex h-full w-full flex-1 flex-col gap-4 rounded-xl">
@@ -50,7 +20,7 @@
                 </flux:heading>
 
                 <flux:text>
-                    {{ new HtmlString($human) }}
+                    {{ new HtmlString(nl2br(e($human))) }}
                 </flux:text>
 
             </div>

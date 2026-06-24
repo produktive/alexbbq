@@ -6,9 +6,6 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('user_settings', function (Blueprint $table) {
@@ -23,13 +20,21 @@ return new class extends Migration
             $table->timestamp('last_bbq_alert_at')->nullable();
             $table->timestamps();
         });
+
+        Schema::create('push_subscriptions', function (Blueprint $table) {
+            $table->id();
+            $table->morphs('subscribable', 'push_subscriptions_subscribable_morph_idx');
+            $table->string('endpoint', 500)->unique();
+            $table->string('public_key')->nullable();
+            $table->string('auth_token')->nullable();
+            $table->string('content_encoding')->nullable();
+            $table->timestamps();
+        });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
+        Schema::dropIfExists('push_subscriptions');
         Schema::dropIfExists('user_settings');
     }
 };

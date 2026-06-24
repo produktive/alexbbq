@@ -2,6 +2,7 @@
 
 use App\Models\Cook;
 use App\Support\CookChartData;
+use App\Services\TemperatureAlertService;
 use Filament\Actions\Action;
 use Filament\Actions\Concerns\InteractsWithActions;
 use Filament\Actions\Contracts\HasActions;
@@ -59,6 +60,12 @@ new class extends Component implements HasActions, HasSchemas {
         $this->cook->unsetRelation('readings');
         unset($this->chartData);
         $this->dispatch('cook-chart-updated');
+
+        $reading = $this->cook->readings()->latest('id')->first();
+
+        if ($reading !== null) {
+            app(TemperatureAlertService::class)->evaluate($reading);
+        }
     }
 
     private function ensureCanModifyReadings(): void

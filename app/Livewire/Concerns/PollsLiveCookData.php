@@ -3,6 +3,8 @@
 namespace App\Livewire\Concerns;
 
 use App\Models\Cook;
+use App\Models\Reading;
+use App\Services\TemperatureAlertService;
 
 trait PollsLiveCookData
 {
@@ -32,10 +34,30 @@ trait PollsLiveCookData
         $this->displayCook?->unsetRelation('readings');
         $this->resetLiveCookComputedProperties();
         $this->dispatch('cook-chart-updated');
+
+        $this->evaluateAlertsForCook($this->displayCookId);
     }
 
     protected function resetLiveCookComputedProperties(): void
     {
         unset($this->displayCook, $this->chartData, $this->isLive);
+    }
+
+    protected function evaluateAlertsForCook(?int $cookId): void
+    {
+        if ($cookId === null) {
+            return;
+        }
+
+        $reading = Reading::query()
+            ->where('cook_id', $cookId)
+            ->latest('id')
+            ->first();
+
+        if ($reading === null) {
+            return;
+        }
+
+        app(TemperatureAlertService::class)->evaluate($reading);
     }
 }

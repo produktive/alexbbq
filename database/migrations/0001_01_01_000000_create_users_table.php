@@ -17,7 +17,6 @@ return new class extends Migration
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
-            $table->json('settings')->default('{"probe1": "blue", "probe2": "red"}')->nullable();
             $table->rememberToken();
             $table->timestamps();
         });
