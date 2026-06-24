@@ -24,16 +24,16 @@ new class extends Component implements HasActions, HasSchemas {
         $this->syncLiveState();
     }
 
+    #[On('live-cook-updated')]
+    public function handleLiveCookUpdated(?int $activeCookId = null, bool $maverickRunning = false): void
+    {
+        $this->live = $maverickRunning || $activeCookId !== null;
+    }
+
     #[On('cook-stopped')]
     public function handleCookStopped(): void
     {
         $this->syncLiveState();
-    }
-
-    #[Computed]
-    public function variant(): string
-    {
-        return $this->live ? 'danger' : 'primary';
     }
 
     #[Computed]

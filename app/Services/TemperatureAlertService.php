@@ -19,11 +19,14 @@ class TemperatureAlertService
             return;
         }
 
+        $eligibleUsers = 0;
+
         User::query()
             ->whereHas('pushSubscriptions')
             ->whereHas('alertSettings')
             ->with('alertSettings')
-            ->each(function (User $user) use ($reading, $cook): void {
+            ->each(function (User $user) use ($reading, &$eligibleUsers): void {
+                $eligibleUsers++;
                 $this->evaluateForUser($user, $reading, route('home'));
             });
 
@@ -32,10 +35,7 @@ class TemperatureAlertService
             'cook_id' => $cook->id,
             'probe_food' => $reading->probe_food,
             'probe_bbq' => $reading->probe_bbq,
-            'eligible_users' => User::query()
-                ->whereHas('pushSubscriptions')
-                ->whereHas('alertSettings')
-                ->count(),
+            'eligible_users' => $eligibleUsers,
         ]);
     }
 

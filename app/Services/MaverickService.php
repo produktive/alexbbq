@@ -39,7 +39,20 @@ class MaverickService
 
         Process::path(base_path())->start($this->binaryPath());
 
-        return true;
+        return $this->waitUntilRunning();
+    }
+
+    protected function waitUntilRunning(int $attempts = 10, int $intervalMicroseconds = 50_000): bool
+    {
+        for ($i = 0; $i < $attempts; $i++) {
+            if ($this->isRunning()) {
+                return true;
+            }
+
+            usleep($intervalMicroseconds);
+        }
+
+        return false;
     }
 
     public function stop(): bool

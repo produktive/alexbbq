@@ -85,6 +85,7 @@ class extends Component implements HasActions, HasForms {
         }
 
         $cook = Cook::query()->create([
+            'user_id' => Auth::id(),
             'smoker_id' => $state['smoker_id'],
             'title' => $state['title'],
             'description' => $state['description'] ?? null,

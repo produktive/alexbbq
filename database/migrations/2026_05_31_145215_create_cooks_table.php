@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -20,6 +21,16 @@ return new class extends Migration
             $table->timestamp('ended_at')->nullable();
             $table->timestamps();
         });
+
+        $driver = Schema::getConnection()->getDriverName();
+
+        if ($driver === 'sqlite') {
+            DB::statement('CREATE UNIQUE INDEX cooks_single_active ON cooks ((1)) WHERE ended_at IS NULL');
+        } elseif ($driver === 'mysql') {
+            DB::statement('CREATE UNIQUE INDEX cooks_single_active ON cooks ((IF(ended_at IS NULL, 1, NULL)))');
+        } elseif ($driver === 'pgsql') {
+            DB::statement('CREATE UNIQUE INDEX cooks_single_active ON cooks ((1)) WHERE ended_at IS NULL');
+        }
     }
 
     /**

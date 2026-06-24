@@ -12,21 +12,24 @@ new class extends Component {
 
     public function mount(): void
     {
-        $this->syncActiveCook();
+        $this->syncFromActiveCook();
     }
 
-    public function pollLiveCookIndicator(): void
+    #[On('live-cook-updated')]
+    public function handleLiveCookUpdated(?int $activeCookId = null, ?string $beganAt = null): void
     {
-        $this->syncActiveCook();
+        $this->cookId = $activeCookId;
+        $this->beganAt = $beganAt;
     }
 
     #[On('cook-stopped')]
     public function handleCookStopped(): void
     {
-        $this->syncActiveCook();
+        $this->cookId = null;
+        $this->beganAt = null;
     }
 
-    private function syncActiveCook(): void
+    private function syncFromActiveCook(): void
     {
         $cook = Cook::active();
 
@@ -35,7 +38,7 @@ new class extends Component {
     }
 }
 ?>
-<div wire:poll.12s.visible="pollLiveCookIndicator">
+<div>
     @if ($cookId)
         <a href="{{ route('home') }}" wire:navigate wire:key="live-cook-indicator-{{ $cookId }}">
             <x-live-cook-timer :began-at="$beganAt" />

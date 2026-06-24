@@ -2,7 +2,6 @@
 
 use App\Models\Cook;
 use App\Support\CookChartData;
-use App\Services\TemperatureAlertService;
 use Filament\Actions\Action;
 use Filament\Actions\Concerns\InteractsWithActions;
 use Filament\Actions\Contracts\HasActions;
@@ -10,7 +9,6 @@ use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Concerns\InteractsWithSchemas;
 use Filament\Schemas\Contracts\HasSchemas;
 use Livewire\Attributes\Computed;
-use Livewire\Attributes\On;
 use Livewire\Component;
 
 new class extends Component implements HasActions, HasSchemas {
@@ -38,49 +36,11 @@ new class extends Component implements HasActions, HasSchemas {
         return CookChartData::fromCook($this->cook);
     }
 
-    #[Computed]
-    public function isLive(): bool
-    {
-        return $this->cook->isActive();
-    }
-
     public function refreshChartData(): array
     {
         unset($this->chartData);
 
         return $this->chartData;
-    }
-
-    public function pollLiveCookView(): void
-    {
-        if (! $this->isLive) {
-            return;
-        }
-
-        $this->cook->refresh();
-
-        if (! $this->cook->isActive()) {
-            unset($this->isLive);
-
-            return;
-        }
-
-        $this->cook->unsetRelation('readings');
-        unset($this->chartData);
-        $this->dispatch('cook-chart-updated');
-
-        $reading = $this->cook->readings()->latest('id')->first();
-
-        if ($reading !== null) {
-            app(TemperatureAlertService::class)->evaluate($reading);
-        }
-    }
-
-    #[On('cook-stopped')]
-    public function handleCookStopped(): void
-    {
-        $this->cook->refresh();
-        unset($this->isLive, $this->chartData);
     }
 
     private function ensureCanModifyReadings(): void
@@ -257,7 +217,7 @@ new class extends Component implements HasActions, HasSchemas {
     }
 }
 ?>
-<flux:container wire:poll.12s.visible="pollLiveCookView">
+<flux:container>
 
     <flux:heading level="1" size="xl" class="my-2">
         {{ $this->cook->title }}
@@ -273,7 +233,7 @@ new class extends Component implements HasActions, HasSchemas {
 
     <div
         wire:ignore
-        x-data="window.cookChart(@js($this->chartData), @js(auth()->check()), @js($this->isLive))"
+        x-data="window.cookChart(@js($this->chartData), @js(auth()->check()), false)"
         x-ref="root"
         class="relative h-125"
     >
@@ -350,73 +310,7 @@ new class extends Component implements HasActions, HasSchemas {
         @endauth
     </div>
 
-    <div x-data="cookDescriptionGallery()" class="my-6">
-        <article
-            id="cook-description"
-            x-ref="content"
-            class="cook-description"
-            :class="{ 'is-processed': processed }"
-        >
-            {!! $this->cook->renderRichContent('description') !!}
-        </article>
-
-        <template x-teleport="body">
-            <div
-                x-show="lightboxOpen"
-                x-cloak
-                x-transition.opacity
-                class="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-4"
-                @keydown.escape.window="closeLightbox()"
-                @keydown.arrow-right.window="lightboxOpen && next()"
-                @keydown.arrow-left.window="lightboxOpen && prev()"
-            >
-                <button
-                    type="button"
-                    class="absolute inset-0 cursor-default"
-                    aria-label="Close lightbox"
-                    @click="closeLightbox()"
-                ></button>
-
-                <button
-                    type="button"
-                    class="absolute inset-e-4 top-4 z-10 rounded-full bg-black/50 p-2 text-white hover:bg-black/70"
-                    aria-label="Close"
-                    @click="closeLightbox()"
-                >
-                    <flux:icon.x-mark variant="mini" class="size-5"/>
-                </button>
-
-                <template x-if="hasMultiple()">
-                    <button
-                        type="button"
-                        class="absolute inset-s-2 top-1/2 z-10 -translate-y-1/2 rounded-full bg-black/50 p-2 text-white hover:bg-black/70 sm:inset-s-4"
-                        aria-label="Previous image"
-                        @click.stop="prev()"
-                    >
-                        <flux:icon.chevron-left variant="mini" class="size-6"/>
-                    </button>
-                </template>
-
-                <img
-                    :src="lightboxSrc()"
-                    :alt="lightboxAlt()"
-                    class="relative z-1 max-h-[90vh] max-w-[90vw] rounded-lg object-contain shadow-2xl"
-                    @click.stop
-                >
-
-                <template x-if="hasMultiple()">
-                    <button
-                        type="button"
-                        class="absolute inset-e-2 top-1/2 z-10 -translate-y-1/2 rounded-full bg-black/50 p-2 text-white hover:bg-black/70 sm:inset-e-4"
-                        aria-label="Next image"
-                        @click.stop="next()"
-                    >
-                        <flux:icon.chevron-right variant="mini" class="size-6"/>
-                    </button>
-                </template>
-            </div>
-        </template>
-    </div>
+    <x-cook-description :html="$this->cook->renderRichContent('description')" />
 
     @auth
         <div class="flex justify-end">

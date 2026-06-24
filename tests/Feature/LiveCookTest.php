@@ -143,9 +143,25 @@ test('live cook indicator poll syncs active cook state', function () {
 
     Livewire::test('live-cook-indicator')
         ->assertSet('cookId', $cook->id)
-        ->tap(fn () => $cook->update(['ended_at' => now()]))
-        ->call('pollLiveCookIndicator')
+        ->dispatch('live-cook-updated', activeCookId: null, beganAt: null)
         ->assertSet('cookId', null);
+});
+
+test('live cook sync dispatches cook stopped when active cook ends', function () {
+    $smoker = Smoker::query()->create(['name' => 'Backyard']);
+
+    $cook = Cook::query()->create([
+        'smoker_id' => $smoker->id,
+        'title' => 'Brisket',
+        'ended_at' => null,
+    ]);
+
+    Livewire::test('live-cook-sync')
+        ->assertSet('activeCookId', $cook->id)
+        ->tap(fn () => $cook->update(['ended_at' => now()]))
+        ->call('pollLiveCookSync')
+        ->assertSet('activeCookId', null)
+        ->assertDispatched('cook-stopped');
 });
 
 test('cooks nav item updates count when cook stopped event fires', function () {
@@ -170,7 +186,31 @@ test('cooks nav item updates count when cook stopped event fires', function () {
         ->assertSet('count', 2);
 });
 
-test('cook view poll refreshes chart data for finished cook', function () {
+test('home page poll clears live state when cook ends', function () {
+    $smoker = Smoker::query()->create(['name' => 'Backyard']);
+
+    $cook = Cook::query()->create([
+        'smoker_id' => $smoker->id,
+        'title' => 'Brisket',
+        'ended_at' => null,
+    ]);
+
+    Reading::withoutEvents(fn () => Reading::query()->create([
+        'cook_id' => $cook->id,
+        'time' => now(),
+        'probe_food' => 165,
+        'probe_bbq' => 225,
+    ]));
+
+    Livewire::test('pages::home')
+        ->assertSet('displayCookId', $cook->id)
+        ->tap(fn () => $cook->update(['ended_at' => now()]))
+        ->call('pollLiveCookUpdates')
+        ->assertSet('displayCookId', $cook->id)
+        ->assertSet('isLive', false);
+});
+
+test('cook view renders finished cook chart', function () {
     $smoker = Smoker::query()->create(['name' => 'Backyard']);
 
     $cook = Cook::query()->create([
@@ -187,8 +227,8 @@ test('cook view poll refreshes chart data for finished cook', function () {
     ]));
 
     Livewire::test('pages::cooks.view', ['cook' => $cook])
-        ->call('pollLiveCookView')
-        ->assertNotDispatched('cook-chart-updated');
+        ->assertOk()
+        ->assertSee('Brisket');
 });
 
 test('menu cook count excludes the active cook', function () {
@@ -325,6 +365,14 @@ test('maverick service stop finishes the active cook', function () {
     expect($cook->ended_at)->not->toBeNull();
 });
 
+test('maverick service start returns false when process does not launch', function () {
+    Process::fake([
+        'pgrep -x maverick' => Process::result(exitCode: 1),
+    ]);
+
+    expect(app(\App\Services\MaverickService::class)->start())->toBeFalse();
+});
+
 test('home page clears live state when cook stopped event fires', function () {
     $smoker = Smoker::query()->create(['name' => 'Backyard']);
 
@@ -345,5 +393,6 @@ test('home page clears live state when cook stopped event fires', function () {
         ->assertSet('displayCookId', $cook->id)
         ->tap(fn () => $cook->update(['ended_at' => now()]))
         ->dispatch('cook-stopped')
-        ->assertSet('displayCookId', $cook->id);
+        ->assertSet('displayCookId', $cook->id)
+        ->assertSet('isLive', false);
 });

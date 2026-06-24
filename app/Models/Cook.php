@@ -30,6 +30,7 @@ class Cook extends Model implements HasRichContent
     public const DESCRIPTION_ATTACHMENT_MAX_HEIGHT = 1920;
 
     protected $fillable = [
+        'user_id',
         'smoker_id',
         'title',
         'description',
@@ -88,6 +89,11 @@ class Cook extends Model implements HasRichContent
     public function smoker(): BelongsTo
     {
         return $this->belongsTo(Smoker::class);
+    }
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
     }
 
     public function getBeganAt(): Carbon
