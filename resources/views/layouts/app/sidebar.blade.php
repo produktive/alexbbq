@@ -1,5 +1,4 @@
-@php use App\Models\Cook; @endphp
-    <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="dark">
     <head>
         @include('partials.head')
@@ -18,9 +17,7 @@
                     {{ __('Dashboard') }}
                 </flux:sidebar.item>
 
-                <flux:sidebar.item icon="presentation-chart-line" :href="route('cooks')" :current="request()->routeIs('cooks')" badge="{{ Cook::finishedCount() }}">
-                    {{ __('Cooks') }}
-                </flux:sidebar.item>
+                <livewire:cooks-nav-item />
 
                 <flux:sidebar.item icon="bell-alert" :href="route('alerts')" :current="request()->routeIs('alerts')">
                     {{ __('Alerts') }}

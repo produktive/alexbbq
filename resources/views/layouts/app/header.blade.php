@@ -1,7 +1,3 @@
-@php
-    use App\Models\Cook;
-@endphp
-
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="dark">
 <head>
@@ -22,14 +18,7 @@
             {{ __('Home') }}
         </flux:navbar.item>
 
-        <flux:navbar.item :href="route('cooks')"
-                          :current="request()->routeIs('cooks')"
-                          icon="presentation-chart-line"
-                          wire:navigate
-                          badge="{{ Cook::finishedCount() }}"
-        >
-            {{ __('Cooks') }}
-        </flux:navbar.item>
+        <livewire:cooks-nav-item variant="navbar" :navigate="true" />
     </flux:navbar>
 
     <flux:spacer/>
@@ -54,10 +43,7 @@
             <flux:sidebar.item icon="home" :href="route('home')" :current="request()->routeIs('home')" wire:navigate>
                 {{ __('Home') }}
             </flux:sidebar.item>
-            <flux:sidebar.item icon="presentation-chart-line" :href="route('cooks')" :current="request()->routeIs('cooks')"
-                               wire:navigate badge="{{ Cook::finishedCount() }}">
-                {{ __('Cooks') }}
-            </flux:sidebar.item>
+            <livewire:cooks-nav-item variant="sidebar" :navigate="true" />
         </flux:sidebar.group>
     </flux:sidebar.nav>
 </flux:sidebar>

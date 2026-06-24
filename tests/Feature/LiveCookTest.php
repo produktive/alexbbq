@@ -148,6 +148,28 @@ test('live cook indicator poll syncs active cook state', function () {
         ->assertSet('cookId', null);
 });
 
+test('cooks nav item updates count when cook stopped event fires', function () {
+    $smoker = Smoker::query()->create(['name' => 'Backyard']);
+
+    Cook::query()->create([
+        'smoker_id' => $smoker->id,
+        'title' => 'Finished Ribs',
+        'ended_at' => now()->subDay(),
+    ]);
+
+    $activeCook = Cook::query()->create([
+        'smoker_id' => $smoker->id,
+        'title' => 'Live Brisket',
+        'ended_at' => null,
+    ]);
+
+    Livewire::test('cooks-nav-item')
+        ->assertSet('count', 1)
+        ->tap(fn () => $activeCook->update(['ended_at' => now()]))
+        ->dispatch('cook-stopped')
+        ->assertSet('count', 2);
+});
+
 test('cook view poll refreshes chart data for finished cook', function () {
     $smoker = Smoker::query()->create(['name' => 'Backyard']);
 
