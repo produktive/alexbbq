@@ -143,10 +143,11 @@ static int change_to_project_root(void) {
 }
 
 static void run_artisan_command(const char *command, sqlite3_int64 id) {
-        char shell[1024];
         char root[PATH_MAX];
+        char shell[PATH_MAX * 2 + 512];
         const char *php = getenv("MAVERICK_PHP");
         const char *user = getenv("MAVERICK_ARTISAN_USER");
+        int length;
 
         if (php == NULL || php[0] == '\0') {
                 php = "php";
@@ -161,7 +162,7 @@ static void run_artisan_command(const char *command, sqlite3_int64 id) {
                 return;
         }
 
-        snprintf(
+        length = snprintf(
                 shell,
                 sizeof(shell),
                 "sudo -nu %s %s %s/artisan %s %lld >> %s/storage/logs/maverick-artisan.log 2>&1",
@@ -172,6 +173,11 @@ static void run_artisan_command(const char *command, sqlite3_int64 id) {
                 id,
                 root
         );
+
+        if (length < 0 || (size_t) length >= sizeof(shell)) {
+                fprintf(stderr, "Artisan command path too long.\n");
+                return;
+        }
 
         system(shell);
 }
