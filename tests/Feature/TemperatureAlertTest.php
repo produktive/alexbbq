@@ -33,6 +33,43 @@ test('alert settings can be saved from the alerts page', function () {
         ->and($settings->alert_interval_minutes)->toBe(10);
 });
 
+test('push notifications toggle shows only enable button when not subscribed', function () {
+    $user = User::factory()->create();
+
+    Livewire::actingAs($user)
+        ->test('push-notifications-toggle')
+        ->assertSee('Enable Push Notifications')
+        ->assertDontSee('Disable Push Notifications');
+});
+
+test('push notifications toggle shows only disable button when subscribed', function () {
+    $user = User::factory()->create();
+
+    $user->pushSubscriptions()->create([
+        'endpoint' => 'https://example.com/push/toggle',
+        'public_key' => 'public-key',
+        'auth_token' => 'auth-token',
+        'content_encoding' => 'aes128gcm',
+    ]);
+
+    Livewire::actingAs($user)
+        ->test('push-notifications-toggle')
+        ->assertSee('Disable Push Notifications')
+        ->assertDontSee('Enable Push Notifications');
+});
+
+test('alert interval options include three minute frequency', function () {
+    $user = User::factory()->create();
+
+    Livewire::actingAs($user)
+        ->test('pages::alerts')
+        ->set('data.alert_interval_minutes', 3)
+        ->call('save')
+        ->assertHasNoErrors();
+
+    expect(UserSettings::forUser($user->fresh())->alert_interval_minutes)->toBe(3);
+});
+
 test('temperature alert is sent when bbq probe is below minimum', function () {
     Notification::fake();
 

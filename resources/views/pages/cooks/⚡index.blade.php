@@ -51,7 +51,7 @@ class extends Component implements HasActions, HasForms, HasTable {
                         position: 'above',
                     )
                     ->wrap()
-                    ->lineClamp(2)
+                    ->lineClamp(3)
                     ->grow(),
             ])
             ->defaultSort('created_at', 'desc')

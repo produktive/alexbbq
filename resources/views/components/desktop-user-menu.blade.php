@@ -1,5 +1,5 @@
 @guest
-    <flux:button href="{{ route('login') }}">
+    <flux:button href="{{ route('login') }}" wire:navigate>
         {{ __('Log in') }}
     </flux:button>
 @endguest

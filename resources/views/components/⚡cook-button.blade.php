@@ -80,7 +80,7 @@ new class extends Component implements HasActions, HasSchemas {
             return;
         }
 
-        $this->redirectRoute('cooks.new');
+        $this->redirectRoute('cooks.new', navigate: true);
     }
 
     private function syncLiveState(): void

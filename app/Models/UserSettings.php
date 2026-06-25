@@ -9,7 +9,7 @@ class UserSettings extends Model
 {
     public const TEMPERATURE_OFF = 32;
 
-    public const ALERT_INTERVALS = [1, 5, 10];
+    public const ALERT_INTERVALS = [1, 3, 5, 10, 15];
 
     protected $fillable = [
         'user_id',

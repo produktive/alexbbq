@@ -314,7 +314,7 @@ new class extends Component implements HasActions, HasSchemas {
 
     @auth
         <div class="flex justify-end">
-            <flux:button href="{{ route('cooks.edit', $this->cook) }}">
+            <flux:button href="{{ route('cooks.edit', $this->cook) }}" wire:navigate>
                 Edit Cook
             </flux:button>
         </div>

@@ -28,15 +28,11 @@ new
 class extends Component implements HasActions, HasForms, HasTable {
     use InteractsWithActions, InteractsWithForms, InteractsWithTable;
 
-    private function hasRecords(): bool
+    public function addSmokerAction(): CreateAction
     {
-        return $this->getFilteredTableQuery()->exists();
-    }
-
-    private function createForm($formName): CreateAction
-    {
-        return CreateAction::make($formName)
+        return CreateAction::make('addSmoker')
             ->label('Add New Smoker')
+            ->model(Smoker::class)
             ->modalHeading('Add New Smoker')
             ->createAnother(false)
             ->modalWidth('md')
@@ -53,13 +49,6 @@ class extends Component implements HasActions, HasForms, HasTable {
             ->emptyStateIcon('heroicon-o-fire')
             ->emptyStateHeading('No Smokers')
             ->emptyStateDescription('Add a new smoker to get started cooking.')
-            ->emptyStateActions([
-                $this->createForm('add_smoker_empty'),
-            ])
-            ->toolbarActions([
-                $this->createForm('add_smoker_toolbar')
-                    ->hidden(fn () => ! $this->hasRecords()),
-            ])
             ->recordActions([
                 ActionGroup::make([
                     EditAction::make()
@@ -130,7 +119,19 @@ class extends Component implements HasActions, HasForms, HasTable {
         Manage your smokers here. You can archive, delete, or restore them.
     </flux:text>
 
-    <div class="max-w-3xl my-6">
+    <div class="max-w-3xl my-6 space-y-4">
+        <div class="flex justify-end">
+            <flux:button
+                variant="primary"
+                icon="plus"
+                wire:click="mountAction('addSmoker')"
+            >
+                Add New Smoker
+            </flux:button>
+        </div>
+
         {{ $this->table }}
     </div>
+
+    <x-filament-actions::modals />
 </flux:container>

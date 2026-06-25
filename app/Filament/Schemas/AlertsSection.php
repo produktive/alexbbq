@@ -80,6 +80,7 @@ class AlertsSection
                 )->all())
                 ->default(5)
                 ->required()
+                ->in(UserSettings::ALERT_INTERVALS)
                 ->native(false);
         }
 

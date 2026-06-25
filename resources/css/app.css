@@ -39,6 +39,7 @@
     --color-zinc-900: #171717;
     --color-zinc-950: #0a0a0a;
 
+    /* Flux accent — keep aligned with App\Support\Theme::PRIMARY_HEX (see Theme.php). */
     --color-accent: var(--color-neutral-800);
     --color-accent-content: var(--color-neutral-800);
     --color-accent-foreground: var(--color-white);
@@ -129,11 +130,11 @@ p.fi-ta-text-description,
 }
 
 .bbq-slider .noUi-connect {
-    background: rgb(34 197 94);
+    @apply bg-teal-400 dark:bg-teal-300;
 }
 
 .food-slider .noUi-connect {
-    background: rgb(234 88 12);
+    @apply bg-amber-600 dark:bg-amber-500;
 }
 
 [data-flux-main] {

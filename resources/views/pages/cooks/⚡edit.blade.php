@@ -47,7 +47,7 @@ new class extends Component implements HasActions, HasForms {
         }
 
         $this->cook->update($data);
-        $this->redirectRoute('cooks.view', $this->cook);
+        $this->redirectRoute('cooks.view', $this->cook, navigate: true);
     }
 }
 ?>
@@ -61,7 +61,7 @@ new class extends Component implements HasActions, HasForms {
         {{ $this->form }}
 
         <div class="flex justify-end gap-4 my-6">
-            <flux:button href="{{ route('cooks.view', $this->cook) }}">
+            <flux:button href="{{ route('cooks.view', $this->cook) }}" wire:navigate>
                 Cancel
             </flux:button>
 

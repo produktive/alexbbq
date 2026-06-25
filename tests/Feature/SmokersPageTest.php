@@ -8,5 +8,6 @@ test('smokers page renders on a fresh install', function () {
     $this->actingAs($user)
         ->get(route('smokers'))
         ->assertOk()
-        ->assertSee('No Smokers');
+        ->assertSee('No Smokers')
+        ->assertSee('Add New Smoker');
 });

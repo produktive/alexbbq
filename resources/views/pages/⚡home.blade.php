@@ -107,7 +107,7 @@ new class extends Component {
 
         <div class="flex justify-end">
             @unless ($this->isLive)
-                <flux:button href="{{ route('cooks.view', $this->displayCook) }}">
+                <flux:button href="{{ route('cooks.view', $this->displayCook) }}" wire:navigate>
                     View Full Cook
                 </flux:button>
             @endunless

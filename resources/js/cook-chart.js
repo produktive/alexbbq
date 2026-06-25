@@ -84,11 +84,78 @@ function pointHasNote(context) {
     return Boolean(context.raw?.note);
 }
 
+const CHART_COLORS = {
+    food: {
+        light: { border: 'rgb(217, 119, 6)', area: '217, 119, 6' },
+        dark: { border: 'rgb(245, 158, 11)', area: '245, 158, 11' },
+        note: 'rgb(217, 119, 6)',
+    },
+    bbq: {
+        light: { border: 'rgb(45, 212, 191)', area: '45, 212, 191' },
+        dark: { border: 'rgb(94, 234, 212)', area: '94, 234, 212' },
+    },
+};
+
+function chartPalette() {
+    const mode = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
+
+    return {
+        food: CHART_COLORS.food[mode],
+        bbq: CHART_COLORS.bbq[mode],
+    };
+}
+
+function seriesAreaFill(context, rgb) {
+    const { chart } = context;
+    const { ctx, chartArea } = chart;
+
+    if (!chartArea) {
+        return `rgba(${rgb}, 0.12)`;
+    }
+
+    const dark = document.documentElement.classList.contains('dark');
+    const gradient = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
+
+    gradient.addColorStop(0, `rgba(${rgb}, ${dark ? 0.22 : 0.16})`);
+    gradient.addColorStop(1, `rgba(${rgb}, 0)`);
+
+    return gradient;
+}
+
+function lineDataset(label, points, colors) {
+    return {
+        label,
+        data: points,
+        borderColor: colors.border,
+        backgroundColor: (context) => seriesAreaFill(context, colors.area),
+        fill: 'start',
+        borderWidth: 2,
+        pointBackgroundColor: colors.border,
+        pointHitRadius: 0,
+        ...DATASET_POINT_STYLE,
+    };
+}
+
+const SERIES_SWATCH = {
+    legend: {
+        labels: {
+            generateLabels(chart) {
+                return Chart.defaults.plugins.legend.labels.generateLabels(chart).map((label) => ({
+                    ...label,
+                    fillStyle: chart.data.datasets[label.datasetIndex].borderColor,
+                    strokeStyle: chart.data.datasets[label.datasetIndex].borderColor,
+                    lineWidth: 0,
+                }));
+            },
+        },
+    },
+};
+
 const DATASET_POINT_STYLE = {
     pointRadius: (context) => (pointHasNote(context) ? 7 : 4),
     pointStyle: (context) => (pointHasNote(context) ? 'rectRot' : 'circle'),
     pointBorderWidth: (context) => (pointHasNote(context) ? 2 : 1),
-    pointBorderColor: (context) => (pointHasNote(context) ? '#d97706' : context.dataset.borderColor),
+    pointBorderColor: (context) => (pointHasNote(context) ? CHART_COLORS.food.note : context.dataset.borderColor),
 };
 
 export default function cookChart(data, canModify = false, live = false) {
@@ -125,23 +192,15 @@ export default function cookChart(data, canModify = false, live = false) {
             }
 
             this.$nextTick(() => {
+                const colors = chartPalette();
+
                 chart = new Chart(this.$refs.canvas, {
                     type: 'line',
 
                     data: {
                         datasets: [
-                            {
-                                label: 'Food',
-                                data: data.food,
-                                pointHitRadius: 0,
-                                ...DATASET_POINT_STYLE,
-                            },
-                            {
-                                label: 'BBQ',
-                                data: data.bbq,
-                                pointHitRadius: 0,
-                                ...DATASET_POINT_STYLE,
-                            },
+                            lineDataset('Food', data.food, colors.food),
+                            lineDataset('BBQ', data.bbq, colors.bbq),
                         ],
                     },
 
@@ -167,11 +226,18 @@ export default function cookChart(data, canModify = false, live = false) {
                         },
 
                         plugins: {
+                            ...SERIES_SWATCH,
                             tooltip: {
                                 callbacks: {
                                     title: (items) => formatClock(data.startSecondsOfDay, items[0].parsed.x),
 
                                     label: (context) => `${context.dataset.label}: ${context.parsed.y}°`,
+
+                                    labelColor: (context) => ({
+                                        borderColor: context.dataset.borderColor,
+                                        backgroundColor: context.dataset.borderColor,
+                                        borderWidth: 0,
+                                    }),
 
                                     afterBody: (items) => {
                                         const note = items[0]?.raw?.note;

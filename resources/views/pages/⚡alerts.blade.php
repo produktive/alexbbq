@@ -17,14 +17,11 @@ class extends Component implements HasForms {
 
     public ?array $data = [];
 
-    public bool $pushEnabled = false;
-
     public function mount(): void
     {
         $settings = UserSettings::forUser(Auth::user());
 
         $this->form->fill($settings->toAlertFormState());
-        $this->pushEnabled = Auth::user()->pushSubscriptions()->exists();
     }
 
     public function form(Schema $form): Schema
@@ -46,11 +43,6 @@ class extends Component implements HasForms {
 
         Flux::toast(variant: 'success', text: __('Alert settings saved.'));
     }
-
-    public function refreshPushStatus(): void
-    {
-        $this->pushEnabled = Auth::user()->pushSubscriptions()->exists();
-    }
 }
 ?>
 
@@ -68,44 +60,7 @@ class extends Component implements HasForms {
     </flux:text>
 
     <div class="max-w-3xl my-6 space-y-6">
-        <flux:card class="space-y-4">
-            <div class="flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                    <flux:heading size="lg">Push Notifications</flux:heading>
-                    <flux:text>
-                        Enable browser push notifications to receive temperature alerts on this device.
-                    </flux:text>
-                </div>
-
-                <flux:badge
-                    :color="$pushEnabled ? 'green' : 'zinc'"
-                    size="sm"
-                    class="w-fit shrink-0"
-                >
-                    {{ $pushEnabled ? __('Enabled on this device') : __('Not enabled') }}
-                </flux:badge>
-            </div>
-
-            <div class="flex flex-wrap gap-3">
-                <flux:button
-                    variant="primary"
-                    icon="bell-alert"
-                    x-data
-                    x-on:click="window.pushNotifications.enable().then(() => $wire.refreshPushStatus())"
-                >
-                    Enable Push Notifications
-                </flux:button>
-
-                <flux:button
-                    variant="ghost"
-                    icon="bell-slash"
-                    x-data
-                    x-on:click="window.pushNotifications.disable().then(() => $wire.refreshPushStatus())"
-                >
-                    Disable Push Notifications
-                </flux:button>
-            </div>
-        </flux:card>
+        <livewire:push-notifications-toggle />
 
         {{ $this->form }}
 
