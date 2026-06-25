@@ -9,35 +9,19 @@ class MaverickService
 {
     public function isAvailable(): bool
     {
-        if (! is_file($this->binaryPath())) {
-            return false;
-        }
-
-        if ($this->usesSudo()) {
-            return is_file($this->scriptPath());
-        }
-
-        return is_executable($this->binaryPath());
+        return is_file($this->scriptPath());
     }
 
     public function isRunning(): bool
     {
-        if ($this->usesSudo()) {
-            return Process::run($this->sudoCommand('status'))->successful();
-        }
-
-        return Process::run('pgrep -x maverick')->successful();
+        return Process::run($this->sudoCommand('status'))->successful();
     }
 
     public function start(): bool
     {
-        if ($this->usesSudo()) {
-            return Process::path(base_path())
-                ->run($this->sudoCommand('start'))
-                ->successful();
+        if (! Process::path(base_path())->run($this->sudoCommand('start'))->successful()) {
+            return false;
         }
-
-        Process::path(base_path())->start($this->binaryPath());
 
         return $this->waitUntilRunning();
     }
@@ -57,11 +41,7 @@ class MaverickService
 
     public function stop(): bool
     {
-        if ($this->usesSudo()) {
-            Process::run($this->sudoCommand('stop'));
-        } else {
-            Process::run('pkill -x maverick');
-        }
+        Process::run($this->sudoCommand('stop'));
 
         return $this->finishActiveCook();
     }
@@ -80,11 +60,6 @@ class MaverickService
         }
 
         return true;
-    }
-
-    public function usesSudo(): bool
-    {
-        return (bool) config('maverick.use_sudo', false);
     }
 
     public function binaryPath(): string

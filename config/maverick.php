@@ -4,15 +4,13 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Use sudo to manage maverick
+    | Maverick daemon
     |--------------------------------------------------------------------------
     |
-    | On the Raspberry Pi, PHP-FPM runs as www-data and GPIO access requires
-    | root. Enable this and configure sudoers for maverick.sh start/stop.
+    | The maverick binary reads temperature probes on the Raspberry Pi. PHP-FPM
+    | runs as www-data, so start/stop always goes through maverick.sh with sudo.
     |
     */
-
-    'use_sudo' => env('MAVERICK_USE_SUDO', false),
 
     'binary' => env('MAVERICK_BINARY', base_path('maverick')),
 

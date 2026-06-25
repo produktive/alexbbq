@@ -5,14 +5,9 @@ use App\Models\Smoker;
 use App\Models\User;
 use App\Services\MaverickService;
 use Illuminate\Database\QueryException;
-use Illuminate\Support\Facades\Process;
 use Livewire\Livewire;
 
 test('starting a cook assigns the authenticated user', function () {
-    Process::fake([
-        'pgrep -x maverick' => Process::result(exitCode: 0),
-    ]);
-
     $this->mock(MaverickService::class, function ($mock): void {
         $mock->shouldReceive('isAvailable')->andReturn(true);
         $mock->shouldReceive('isRunning')->andReturn(false);

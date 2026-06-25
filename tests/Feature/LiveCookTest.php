@@ -3,6 +3,8 @@
 use App\Models\Cook;
 use App\Models\Reading;
 use App\Models\Smoker;
+use App\Models\User;
+use App\Services\MaverickService;
 use Illuminate\Support\Facades\Process;
 use Livewire\Livewire;
 
@@ -284,7 +286,7 @@ test('active cook view page returns not found', function () {
 });
 
 test('active cook edit page returns not found', function () {
-    $user = \App\Models\User::factory()->create();
+    $user = User::factory()->create();
     $smoker = Smoker::query()->create(['name' => 'Backyard']);
 
     $cook = Cook::query()->create([
@@ -340,7 +342,7 @@ test('active cook helper ignores ended cooks', function () {
 
 test('maverick service stop finishes the active cook', function () {
     Process::fake([
-        'pkill -x maverick' => Process::result(),
+        'sudo -n * stop' => Process::result(),
     ]);
 
     $smoker = Smoker::query()->create(['name' => 'Backyard']);
@@ -358,7 +360,7 @@ test('maverick service stop finishes the active cook', function () {
         'probe_bbq' => 225,
     ]);
 
-    app(\App\Services\MaverickService::class)->stop();
+    app(MaverickService::class)->stop();
 
     $cook->refresh();
 
@@ -367,10 +369,11 @@ test('maverick service stop finishes the active cook', function () {
 
 test('maverick service start returns false when process does not launch', function () {
     Process::fake([
-        'pgrep -x maverick' => Process::result(exitCode: 1),
+        'sudo -n * start' => Process::result(),
+        'sudo -n * status' => Process::result(exitCode: 1),
     ]);
 
-    expect(app(\App\Services\MaverickService::class)->start())->toBeFalse();
+    expect(app(MaverickService::class)->start())->toBeFalse();
 });
 
 test('home page clears live state when cook stopped event fires', function () {
