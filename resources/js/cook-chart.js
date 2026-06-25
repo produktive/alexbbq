@@ -1,6 +1,6 @@
 import Chart from 'chart.js/auto';
 
-function formatClock(startSecondsOfDay, elapsedSeconds) {
+function formatClock(startSecondsOfDay, elapsedSeconds, { includeSeconds = true } = {}) {
     const wrapped = ((startSecondsOfDay + Math.round(elapsedSeconds)) % 86400 + 86400) % 86400;
 
     let hours = Math.floor(wrapped / 3600);
@@ -12,7 +12,11 @@ function formatClock(startSecondsOfDay, elapsedSeconds) {
 
     const pad = (n) => String(n).padStart(2, '0');
 
-    return `${hours}:${pad(minutes)}:${pad(seconds)} ${ampm}`;
+    if (includeSeconds) {
+        return `${hours}:${pad(minutes)}:${pad(seconds)} ${ampm}`;
+    }
+
+    return `${hours}:${pad(minutes)} ${ampm}`;
 }
 
 const MIN_DRAG_PX = 6;
@@ -213,7 +217,7 @@ export default function cookChart(data, canModify = false, live = false) {
                                 type: 'linear',
                                 bounds: 'data',
                                 ticks: {
-                                    callback: (value) => formatClock(data.startSecondsOfDay, value),
+                                    callback: (value) => formatClock(data.startSecondsOfDay, value, { includeSeconds: false }),
                                 },
                             },
 

@@ -3,6 +3,8 @@ set -euo pipefail
 
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 STATE_FILE="$DIR/storage/app/cloudflare-ddns.ip"
+LOG_FILE="$DIR/storage/logs/cloudflare-ddns.log"
+LOG_MAX_BYTES=524288
 API_BASE="https://api.cloudflare.com/client/v4"
 IP_CHECK_URL="${CLOUDFLARE_IP_CHECK_URL:-https://api.ipify.org}"
 
@@ -35,11 +37,26 @@ while [[ $# -gt 0 ]]; do
 done
 
 log() {
-    echo "[$(date -Is)] $*"
+    mkdir -p "$(dirname "$LOG_FILE")"
+    echo "[$(date -Is)] $*" >> "$LOG_FILE"
+}
+
+rotate_log_if_needed() {
+    if [[ ! -f "$LOG_FILE" ]]; then
+        return 0
+    fi
+
+    local size
+    size="$(wc -c < "$LOG_FILE" | tr -d '[:space:]')"
+
+    if (( size >= LOG_MAX_BYTES )); then
+        mv -f "$LOG_FILE" "${LOG_FILE}.1"
+    fi
 }
 
 fail() {
-    log "ERROR: $*" >&2
+    log "ERROR: $*"
+    echo "ERROR: $*" >&2
     exit 1
 }
 
@@ -137,6 +154,8 @@ cloudflare_api() {
 }
 
 main() {
+    rotate_log_if_needed
+
     require_command curl
     require_command jq
 
