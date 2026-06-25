@@ -39,7 +39,7 @@ class extends Component implements HasActions, HasForms, HasTable {
                     ->wrap(),
                 TextColumn::make('description')
                     ->state(function (Cook $record): string {
-                        $text = trim(html_entity_decode(strip_tags($record->renderRichContent('description'))));
+                        $text = trim(html_entity_decode(strip_tags($record->getRawOriginal('description'))));
 
                         return $text !== '' ? $text : $record->title;
                     })
