@@ -120,7 +120,6 @@ class extends Component implements HasActions, HasForms, HasTable {
     </flux:text>
 
     <div class="max-w-3xl my-6 space-y-4">
-        <div class="flex justify-end">
             <flux:button
                 variant="primary"
                 icon="plus"
@@ -128,7 +127,6 @@ class extends Component implements HasActions, HasForms, HasTable {
             >
                 Add New Smoker
             </flux:button>
-        </div>
 
         {{ $this->table }}
     </div>

@@ -90,13 +90,14 @@ function pointHasNote(context) {
 
 const CHART_COLORS = {
     food: {
-        light: { border: 'rgb(217, 119, 6)', area: '217, 119, 6' },
-        dark: { border: 'rgb(245, 158, 11)', area: '245, 158, 11' },
-        note: 'rgb(217, 119, 6)',
-    },
-    bbq: {
         light: { border: 'rgb(45, 212, 191)', area: '45, 212, 191' },
         dark: { border: 'rgb(94, 234, 212)', area: '94, 234, 212' },
+
+        note: 'rgb(45, 212, 191)',
+    },
+    bbq: {
+        light: { border: 'rgb(217, 119, 6)', area: '217, 119, 6' },
+        dark: { border: 'rgb(245, 158, 11)', area: '245, 158, 11' },
     },
 };
 
