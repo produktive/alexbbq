@@ -163,8 +163,9 @@ const DATASET_POINT_STYLE = {
     pointBorderColor: (context) => (pointHasNote(context) ? CHART_COLORS.food.note : context.dataset.borderColor),
 };
 
-async function fetchChartData(cookId) {
-    const response = await fetch(`/cooks/${cookId}/chart-data`, {
+async function fetchChartData(cookId, { editor = false } = {}) {
+    const query = editor ? '?editor=1' : '';
+    const response = await fetch(`/cooks/${cookId}/chart-data${query}`, {
         headers: { Accept: 'application/json' },
         credentials: 'same-origin',
     });
@@ -219,7 +220,7 @@ export default function cookChart(initialData, canModify = false, live = false, 
 
             if (canModify) {
                 chartUpdateListener = this.$wire.on('cook-chart-updated', async () => {
-                    this.refreshChart(await this.$wire.call('refreshChartData'));
+                    this.refreshChart(await fetchChartData(cookId, { editor: true }));
                 });
             }
 
@@ -230,7 +231,7 @@ export default function cookChart(initialData, canModify = false, live = false, 
             if (shouldLazyLoad) {
                 this.loading = true;
                 this.loadError = false;
-                data = await fetchChartData(cookId);
+                data = await fetchChartData(cookId, { editor: canModify });
                 this.loading = false;
 
                 if (data === null) {
@@ -618,7 +619,7 @@ export default function cookChart(initialData, canModify = false, live = false, 
                 return;
             }
 
-            this.refreshChart(await fetchChartData(cookId));
+            this.refreshChart(await fetchChartData(cookId, { editor: canModify }));
         },
 
         mountPointAction(name) {

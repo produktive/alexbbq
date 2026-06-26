@@ -18,6 +18,8 @@ return new class extends Migration
             $table->integer('probe_food')->nullable();
             $table->integer('probe_bbq')->nullable();
             $table->string('note')->nullable();
+
+            $table->index(['cook_id', 'time']);
         });
     }
 

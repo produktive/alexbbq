@@ -6,6 +6,7 @@ use App\Models\Cook;
 use App\Services\MaverickService;
 use App\Support\CookChartData;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class LiveCookController extends Controller
 {
@@ -23,8 +24,16 @@ class LiveCookController extends Controller
         ]);
     }
 
-    public function chartData(Cook $cook): JsonResponse
+    public function chartData(Cook $cook, Request $request): JsonResponse
     {
+        if (
+            $request->boolean('editor')
+            && auth()->check()
+            && $cook->isOwnedBy(auth()->id())
+        ) {
+            return response()->json(CookChartData::forEditor($cook));
+        }
+
         return response()->json(CookChartData::forDisplay($cook));
     }
 }

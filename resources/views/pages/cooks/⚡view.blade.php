@@ -1,14 +1,12 @@
 <?php
 
 use App\Models\Cook;
-use App\Support\CookChartData;
 use Filament\Actions\Action;
 use Filament\Actions\Concerns\InteractsWithActions;
 use Filament\Actions\Contracts\HasActions;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Concerns\InteractsWithSchemas;
 use Filament\Schemas\Contracts\HasSchemas;
-use Livewire\Attributes\Computed;
 use Livewire\Component;
 
 new class extends Component implements HasActions, HasSchemas {
@@ -28,19 +26,6 @@ new class extends Component implements HasActions, HasSchemas {
     public function render()
     {
         return $this->view()->title($this->cook->title);
-    }
-
-    #[Computed]
-    public function chartData(): array
-    {
-        return CookChartData::forEditor($this->cook);
-    }
-
-    public function refreshChartData(): array
-    {
-        unset($this->chartData);
-
-        return $this->chartData;
     }
 
     private function ensureCanModifyReadings(): void
@@ -233,7 +218,7 @@ new class extends Component implements HasActions, HasSchemas {
 
     <div
         wire:ignore
-        x-data="window.cookChart(@js($this->chartData), @js(auth()->check()), false)"
+        x-data="window.cookChart(null, @js($this->cook->isOwnedBy(auth()->id())), false, @js($this->cook->id))"
         x-ref="root"
         class="relative h-125"
     >
@@ -249,8 +234,28 @@ new class extends Component implements HasActions, HasSchemas {
             ></div>
         </div>
 
-        {{-- Context menu (authenticated users only) --}}
-        @auth
+        <div
+            x-show="loading"
+            class="absolute inset-0 flex items-center justify-center rounded-xl border border-neutral-200 bg-neutral-50/90 dark:border-neutral-700 dark:bg-neutral-900/90"
+        >
+            <div class="flex items-center gap-2 text-sm text-neutral-500 dark:text-neutral-400">
+                <flux:icon.loading variant="mini" />
+                Loading chart…
+            </div>
+        </div>
+
+        <div
+            x-show="loadError"
+            x-cloak
+            class="absolute inset-0 flex items-center justify-center rounded-xl border border-neutral-200 bg-neutral-50/90 dark:border-neutral-700 dark:bg-neutral-900/90"
+        >
+            <flux:text size="sm" class="text-neutral-500 dark:text-neutral-400">
+                Could not load chart data.
+            </flux:text>
+        </div>
+
+        {{-- Context menu (authenticated owners only) --}}
+        @if ($this->cook->isOwnedBy(auth()->id()))
             <div
                 x-ref="menu"
                 x-show="menu.open"
@@ -307,7 +312,7 @@ new class extends Component implements HasActions, HasSchemas {
                     </button>
                 </div>
             </div>
-        @endauth
+        @endif
     </div>
 
     <x-cook-description :html="$this->cook->renderRichContent('description')" />
