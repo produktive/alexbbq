@@ -21,9 +21,9 @@
     @php
         $reverbConfig = [
             'key' => config('broadcasting.connections.reverb.key'),
-            'host' => config('broadcasting.connections.reverb.options.host'),
-            'port' => config('broadcasting.connections.reverb.options.port'),
-            'scheme' => config('broadcasting.connections.reverb.options.scheme'),
+            'host' => env('REVERB_HOST'),
+            'port' => (int) env('REVERB_PORT', 443),
+            'scheme' => env('REVERB_SCHEME', 'https'),
         ];
     @endphp
     <script>

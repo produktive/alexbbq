@@ -8,7 +8,7 @@ Type=simple
 User=www-data
 Group=www-data
 WorkingDirectory=@APP_DIR@
-ExecStart=/usr/bin/php artisan reverb:start --host=127.0.0.1 --port=8080
+ExecStart=/usr/bin/php artisan reverb:start
 Restart=always
 RestartSec=3
 TimeoutStopSec=30

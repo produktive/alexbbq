@@ -31,15 +31,16 @@ bbq.fiskkarta.com {
 		dns cloudflare {env.CLOUDFLARE_API_TOKEN}
 	}
 
-	# WebSockets for Laravel Reverb (must be before the Laravel route block).
-	import /var/www/alexbbq/deploy/caddy/snippets/reverb.caddy
-
 	root * /var/www/alexbbq/public
 	encode gzip zstd
 
 	route {
-		try_files {path} {path}/ /index.php?{query}
-		php_fastcgi unix//run/php/php8.4-fpm.sock
-		file_server
+		import /var/www/alexbbq/deploy/caddy/snippets/reverb.caddy
+
+		handle {
+			try_files {path} {path}/ /index.php?{query}
+			php_fastcgi unix//run/php/php8.4-fpm.sock
+			file_server
+		}
 	}
 }

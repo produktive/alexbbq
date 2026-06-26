@@ -1,17 +1,20 @@
-# Import inside your site block, before the Laravel / php_fastcgi handlers.
+# WebSocket proxy for Laravel Reverb.
 #
-# Example:
-#   bbq.fiskkarta.com {
+# Prefer nesting inside your existing route block (matches bbq.fiskkarta.com setup):
+#
+#   route {
 #       import /path/to/alexbbq/deploy/caddy/snippets/reverb.caddy
-#       root * /path/to/alexbbq/public
-#       ...
+#       handle {
+#           try_files {path} {path}/ /index.php?{query}
+#           php_fastcgi unix//run/php/php8.4-fpm.sock
+#           file_server
+#       }
 #   }
-#
-# Echo connects to wss://your-host/app/{REVERB_APP_KEY} on the same hostname
-# as the app (REVERB_HOST in .env, injected at runtime by Laravel).
+
+# Proxies to Reverb on localhost. Port must match REVERB_SERVER_PORT in .env (default 8081).
 
 handle /app/* {
-	reverse_proxy 127.0.0.1:8080 {
+	reverse_proxy 127.0.0.1:8081 {
 		header_up Host {host}
 		header_up X-Real-IP {remote_host}
 		header_up X-Forwarded-For {remote_host}
