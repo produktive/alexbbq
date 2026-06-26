@@ -66,19 +66,52 @@ class Cook extends Model implements HasRichContent
         return $query->whereNotNull('ended_at');
     }
 
+    private static ?self $cachedActive = null;
+
+    private static bool $activeResolved = false;
+
+    private static ?self $cachedMostRecent = null;
+
+    private static bool $mostRecentResolved = false;
+
+    private static ?int $cachedFinishedCount = null;
+
     public static function active(): ?self
     {
-        return static::query()->active()->latest('id')->first();
+        if (! static::$activeResolved) {
+            static::$cachedActive = static::query()->active()->latest('id')->first();
+            static::$activeResolved = true;
+        }
+
+        return static::$cachedActive;
     }
 
     public static function mostRecent(): ?self
     {
-        return static::query()->latest('id')->first();
+        if (! static::$mostRecentResolved) {
+            static::$cachedMostRecent = static::query()->latest('id')->first();
+            static::$mostRecentResolved = true;
+        }
+
+        return static::$cachedMostRecent;
     }
 
     public static function finishedCount(): int
     {
-        return static::query()->finished()->count();
+        if (static::$cachedFinishedCount === null) {
+            static::$cachedFinishedCount = static::query()->finished()->count();
+        }
+
+        return static::$cachedFinishedCount;
+    }
+
+    public static function flushRequestCache(): void
+    {
+        static::$activeResolved = false;
+        static::$cachedActive = null;
+        static::$mostRecentResolved = false;
+        static::$cachedMostRecent = null;
+        static::$cachedFinishedCount = null;
     }
 
     public function isActive(): bool

@@ -25,8 +25,6 @@ class LiveCookController extends Controller
 
     public function chartData(Cook $cook): JsonResponse
     {
-        $cook->load('readings');
-
-        return response()->json(CookChartData::fromCook($cook));
+        return response()->json(CookChartData::forDisplay($cook));
     }
 }

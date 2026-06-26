@@ -16,6 +16,10 @@ use Tests\TestCase;
 
 pest()->extend(TestCase::class)
     ->use(RefreshDatabase::class)
+    ->beforeEach(function (): void {
+        \App\Models\Cook::flushRequestCache();
+        \App\Services\MaverickService::forgetRunningCache();
+    })
     ->in('Feature');
 
 /*

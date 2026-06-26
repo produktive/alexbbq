@@ -141,7 +141,8 @@ test('live cook chart data endpoint returns chart payload', function () {
     $this->getJson(route('cooks.chart-data', $cook))
         ->assertOk()
         ->assertJsonStructure(['startSecondsOfDay', 'food', 'bbq'])
-        ->assertJsonPath('food.1.y', 170);
+        ->assertJsonPath('food.1.y', 170)
+        ->assertJsonPath('food.0', ['x' => 0, 'y' => 165]);
 });
 
 test('live cook status endpoint returns active cook state', function () {

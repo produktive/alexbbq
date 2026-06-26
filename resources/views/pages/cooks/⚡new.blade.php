@@ -92,8 +92,12 @@ class extends Component implements HasActions, HasForms {
             'description' => $state['description'] ?? null,
         ]);
 
+        Cook::flushRequestCache();
+
         if (! $maverick->start()) {
             $cook->delete();
+
+            Cook::flushRequestCache();
 
             Flux::toast(
                 variant: 'warning',

@@ -12,11 +12,6 @@ new class extends Component {
         $this->syncDisplayCook();
     }
 
-    public function hydrate(): void
-    {
-        $this->syncDisplayCook();
-    }
-
     private function syncDisplayCook(): void
     {
         $preferredId = Cook::active()?->id ?? Cook::mostRecent()?->id;

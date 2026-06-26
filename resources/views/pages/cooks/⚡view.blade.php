@@ -33,7 +33,7 @@ new class extends Component implements HasActions, HasSchemas {
     #[Computed]
     public function chartData(): array
     {
-        return CookChartData::fromCook($this->cook);
+        return CookChartData::forEditor($this->cook);
     }
 
     public function refreshChartData(): array

@@ -8,6 +8,8 @@ use Illuminate\Support\Facades\Process;
 
 class MaverickService
 {
+    private static ?bool $runningCache = null;
+
     public function isAvailable(): bool
     {
         return is_file($this->scriptPath());
@@ -15,7 +17,16 @@ class MaverickService
 
     public function isRunning(): bool
     {
-        return Process::run($this->sudoCommand('status'))->successful();
+        if (self::$runningCache === null) {
+            self::$runningCache = $this->probeRunning();
+        }
+
+        return self::$runningCache;
+    }
+
+    public static function forgetRunningCache(): void
+    {
+        self::$runningCache = null;
     }
 
     public function start(): bool
@@ -24,13 +35,17 @@ class MaverickService
             return false;
         }
 
+        self::forgetRunningCache();
+
         return $this->waitUntilRunning();
     }
 
     protected function waitUntilRunning(int $attempts = 10, int $intervalMicroseconds = 50_000): bool
     {
         for ($i = 0; $i < $attempts; $i++) {
-            if ($this->isRunning()) {
+            if ($this->probeRunning()) {
+                self::$runningCache = true;
+
                 return true;
             }
 
@@ -43,6 +58,8 @@ class MaverickService
     public function stop(): bool
     {
         Process::run($this->sudoCommand('stop'));
+
+        self::forgetRunningCache();
 
         return $this->finishActiveCook();
     }
@@ -62,9 +79,16 @@ class MaverickService
             $cook->saveQuietly();
         }
 
+        Cook::flushRequestCache();
+
         broadcast(LiveCookUpdated::stopped($cookId));
 
         return true;
+    }
+
+    protected function probeRunning(): bool
+    {
+        return Process::run($this->sudoCommand('status'))->successful();
     }
 
     public function binaryPath(): string
