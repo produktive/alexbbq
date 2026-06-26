@@ -3,14 +3,30 @@ import Pusher from 'pusher-js';
 
 window.Pusher = Pusher;
 
-const reverbScheme = import.meta.env.VITE_REVERB_SCHEME ?? 'https';
+function reverbConfig() {
+    const config = window.__reverbConfig;
 
-window.Echo = new Echo({
-    broadcaster: 'reverb',
-    key: import.meta.env.VITE_REVERB_APP_KEY,
-    wsHost: import.meta.env.VITE_REVERB_HOST,
-    wsPort: import.meta.env.VITE_REVERB_PORT ?? 80,
-    wssPort: import.meta.env.VITE_REVERB_PORT ?? 443,
-    forceTLS: reverbScheme === 'https',
-    enabledTransports: ['ws', 'wss'],
-});
+    if (! config?.key || ! config?.host) {
+        return null;
+    }
+
+    const port = Number(config.port) || (config.scheme === 'https' ? 443 : 80);
+
+    return {
+        key: config.key,
+        wsHost: config.host,
+        wsPort: port,
+        wssPort: port,
+        forceTLS: config.scheme === 'https',
+    };
+}
+
+const config = reverbConfig();
+
+if (config) {
+    window.Echo = new Echo({
+        broadcaster: 'reverb',
+        ...config,
+        enabledTransports: ['ws', 'wss'],
+    });
+}

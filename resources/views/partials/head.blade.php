@@ -17,6 +17,20 @@
 
 @fonts
 
+@if (config('broadcasting.default') === 'reverb' && filled(config('broadcasting.connections.reverb.key')))
+    @php
+        $reverbConfig = [
+            'key' => config('broadcasting.connections.reverb.key'),
+            'host' => config('broadcasting.connections.reverb.options.host'),
+            'port' => config('broadcasting.connections.reverb.options.port'),
+            'scheme' => config('broadcasting.connections.reverb.options.scheme'),
+        ];
+    @endphp
+    <script>
+        window.__reverbConfig = @json($reverbConfig);
+    </script>
+@endif
+
 @vite(['resources/css/app.css', 'resources/js/app.js'])
 @fluxAppearance
 @filamentStyles

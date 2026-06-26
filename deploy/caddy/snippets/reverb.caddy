@@ -8,7 +8,7 @@
 #   }
 #
 # Echo connects to wss://your-host/app/{REVERB_APP_KEY} on the same hostname
-# as the app (REVERB_HOST / VITE_REVERB_HOST in .env).
+# as the app (REVERB_HOST in .env, injected at runtime by Laravel).
 
 handle /app/* {
 	reverse_proxy 127.0.0.1:8080 {
