@@ -14,10 +14,18 @@ async function fetchLiveCookStatus() {
 }
 
 async function dispatchLiveCookUpdate(payload) {
-    const { type, cookId } = payload;
+    const { type, cookId, beganAt } = payload;
 
     if (type === 'reading' && cookId) {
         window.dispatchEvent(new CustomEvent('cook-chart-refresh', { detail: { cookId } }));
+
+        if (beganAt) {
+            const status = await fetchLiveCookStatus();
+
+            if (status) {
+                window.dispatchEvent(new CustomEvent('live-cook-status', { detail: status }));
+            }
+        }
 
         return;
     }

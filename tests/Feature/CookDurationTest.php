@@ -5,6 +5,19 @@ use App\Models\Reading;
 use App\Models\Smoker;
 use Carbon\Carbon;
 
+test('cook began at is null until the first reading arrives', function () {
+    $smoker = Smoker::query()->create(['name' => 'Backyard']);
+
+    $cook = Cook::query()->create([
+        'smoker_id' => $smoker->id,
+        'title' => 'Brisket',
+        'ended_at' => null,
+    ]);
+
+    expect($cook->hasReadings())->toBeFalse()
+        ->and($cook->getBeganAt())->toBeNull();
+});
+
 test('cook duration uses first and last reading times', function () {
     $smoker = Smoker::query()->create(['name' => 'Backyard']);
 

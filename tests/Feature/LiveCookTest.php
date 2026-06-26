@@ -132,8 +132,37 @@ test('live cook status endpoint returns active cook state', function () {
         ->assertOk()
         ->assertJson([
             'activeCookId' => $cook->id,
+            'beganAt' => null,
+            'waitingForReading' => true,
             'maverickRunning' => false,
             'finishedCount' => 0,
+        ]);
+});
+
+test('live cook status endpoint returns began at after first reading', function () {
+    $smoker = Smoker::query()->create(['name' => 'Backyard']);
+
+    $cook = Cook::query()->create([
+        'smoker_id' => $smoker->id,
+        'title' => 'Brisket',
+        'ended_at' => null,
+    ]);
+
+    $start = now()->subMinutes(5);
+
+    Reading::query()->create([
+        'cook_id' => $cook->id,
+        'time' => $start,
+        'probe_food' => 165,
+        'probe_bbq' => 225,
+    ]);
+
+    $this->getJson(route('live.cook-status'))
+        ->assertOk()
+        ->assertJson([
+            'activeCookId' => $cook->id,
+            'beganAt' => $start->toIso8601String(),
+            'waitingForReading' => false,
         ]);
 });
 

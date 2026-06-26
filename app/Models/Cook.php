@@ -105,15 +105,20 @@ class Cook extends Model implements HasRichContent
         return $this->belongsTo(User::class);
     }
 
-    public function getBeganAt(): Carbon
+    public function hasReadings(): bool
+    {
+        return $this->readingTimeBounds()['min'] !== null;
+    }
+
+    public function getBeganAt(): ?Carbon
     {
         $firstReadingTime = $this->readingTimeBounds()['min'];
 
-        if ($firstReadingTime !== null) {
-            return Carbon::parse($firstReadingTime);
+        if ($firstReadingTime === null) {
+            return null;
         }
 
-        return Carbon::parse($this->created_at);
+        return Carbon::parse($firstReadingTime);
     }
 
     public function getDurationSeconds(): int

@@ -224,7 +224,7 @@ new class extends Component implements HasActions, HasSchemas {
     </flux:heading>
 
     <flux:text size="md" class="my-2">
-        Began {{ $this->cook->getBeganAt()->format('F j, Y \a\t g:i A') }}
+        Began {{ ($this->cook->getBeganAt() ?? $this->cook->created_at)->format('F j, Y \a\t g:i A') }}
     </flux:text>
 
     <flux:text size="sm" class="my-2">

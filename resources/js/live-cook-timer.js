@@ -14,13 +14,13 @@ function formatElapsed(seconds) {
 
 function elapsedFromIso(beganAtIso) {
     if (! beganAtIso) {
-        return formatElapsed(0);
+        return '';
     }
 
     const beganAt = Date.parse(beganAtIso);
 
     if (Number.isNaN(beganAt)) {
-        return formatElapsed(0);
+        return '';
     }
 
     return formatElapsed((Date.now() - beganAt) / 1000);
@@ -29,11 +29,12 @@ function elapsedFromIso(beganAtIso) {
 export default function liveCookTimer(beganAtIso = null) {
     return {
         elapsed: elapsedFromIso(beganAtIso),
+        connecting: ! beganAtIso,
         timer: null,
 
         init() {
-            this.tick();
-            this.timer = setInterval(() => this.tick(), 1000);
+            this.sync();
+            this.timer = setInterval(() => this.sync(), 1000);
         },
 
         destroy() {
@@ -42,8 +43,11 @@ export default function liveCookTimer(beganAtIso = null) {
             }
         },
 
-        tick() {
-            this.elapsed = elapsedFromIso(this.$el.dataset.beganAt);
+        sync() {
+            const beganAtIso = this.$el.dataset.beganAt;
+
+            this.connecting = ! beganAtIso;
+            this.elapsed = elapsedFromIso(beganAtIso);
         },
     };
 }

@@ -62,8 +62,19 @@ new class extends Component {
                 <div
                     wire:key="live-cook-timer-{{ $this->displayCook->id }}"
                     class="my-2 hidden justify-end lg:flex"
+                    x-data="{
+                        cookId: @js($this->displayCook->id),
+                        beganAt: @js($this->displayCook->getBeganAt()?->toIso8601String()),
+                        beganAtLabel: @js($this->displayCook->getBeganAt()?->format('F j, Y \a\t g:i A')),
+                    }"
+                    x-on:live-cook-status.window="
+                        if ($event.detail.activeCookId === cookId) {
+                            beganAt = $event.detail.beganAt;
+                            beganAtLabel = $event.detail.beganAtLabel;
+                        }
+                    "
                 >
-                    <x-live-cook-timer :began-at="$this->displayCook->getBeganAt()->toIso8601String()" />
+                    <x-live-cook-timer x-bind:data-began-at="beganAt" />
                 </div>
             @endif
         @endauth
@@ -72,9 +83,38 @@ new class extends Component {
             {{ $this->displayCook->title }}
         </flux:heading>
 
-        <flux:text size="md" class="my-2">
-            Began {{ $this->displayCook->getBeganAt()->format('F j, Y \a\t g:i A') }}
-        </flux:text>
+        @if ($this->isLive)
+            <div
+                x-data="{
+                    cookId: @js($this->displayCook->id),
+                    beganAt: @js($this->displayCook->getBeganAt()?->toIso8601String()),
+                    beganAtLabel: @js($this->displayCook->getBeganAt()?->format('F j, Y \a\t g:i A')),
+                }"
+                x-on:live-cook-status.window="
+                    if ($event.detail.activeCookId === cookId) {
+                        beganAt = $event.detail.beganAt;
+                        beganAtLabel = $event.detail.beganAtLabel;
+                    }
+                "
+            >
+                <flux:callout
+                    x-show="! beganAt"
+                    icon="signal"
+                    variant="warning"
+                    class="my-2"
+                >
+                    Waiting for the first temperature reading from your probe…
+                </flux:callout>
+
+                <flux:text size="md" class="my-2" x-show="beganAt" x-cloak>
+                    Began <span x-text="beganAtLabel"></span>
+                </flux:text>
+            </div>
+        @else
+            <flux:text size="md" class="my-2">
+                Began {{ $this->displayCook->getBeganAt()?->format('F j, Y \a\t g:i A') ?? $this->displayCook->created_at->format('F j, Y \a\t g:i A') }}
+            </flux:text>
+        @endif
 
         @unless ($this->isLive && auth()->check())
             <flux:text size="sm" class="my-2">

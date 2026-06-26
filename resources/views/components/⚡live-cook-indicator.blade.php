@@ -19,7 +19,7 @@ new class extends Component {
         $cook = Cook::active();
 
         $this->cookId = $cook?->id;
-        $this->beganAt = $cook?->getBeganAt()->toIso8601String();
+        $this->beganAt = $cook?->getBeganAt()?->toIso8601String();
     }
 }
 ?>
