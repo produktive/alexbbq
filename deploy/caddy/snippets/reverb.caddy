@@ -14,10 +14,5 @@
 # Proxies to Reverb on localhost. Port must match REVERB_SERVER_PORT in .env (default 8081).
 
 handle /app/* {
-	reverse_proxy 127.0.0.1:8081 {
-		header_up Host {host}
-		header_up X-Real-IP {remote_host}
-		header_up X-Forwarded-For {remote_host}
-		header_up X-Forwarded-Proto {scheme}
-	}
+	reverse_proxy 127.0.0.1:8081
 }
