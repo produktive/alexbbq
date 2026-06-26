@@ -72,14 +72,11 @@ test('home page shows live chart for active cook', function () {
 test('home page syncs display cook during hydration', function () {
     $smoker = Smoker::query()->create(['name' => 'Backyard']);
 
-    $ended = Cook::query()->create([
+    Cook::query()->create([
         'smoker_id' => $smoker->id,
         'title' => 'Old Ribs',
         'ended_at' => now()->subHour(),
     ]);
-
-    $component = Livewire::test('pages::home')
-        ->assertSet('displayCookId', $ended->id);
 
     Cook::query()->create([
         'smoker_id' => $smoker->id,
@@ -87,32 +84,13 @@ test('home page syncs display cook during hydration', function () {
         'ended_at' => null,
     ]);
 
-    $component->call('refreshChartData')
-        ->assertSet('displayCookId', Cook::active()?->id);
+    $this->get(route('home'))
+        ->assertOk()
+        ->assertSee('New Brisket')
+        ->assertDontSee('Old Ribs');
 });
 
-test('home page websocket update refreshes chart data for active cook', function () {
-    $smoker = Smoker::query()->create(['name' => 'Backyard']);
-
-    $cook = Cook::query()->create([
-        'smoker_id' => $smoker->id,
-        'title' => 'Brisket',
-        'ended_at' => null,
-    ]);
-
-    Reading::withoutEvents(fn () => Reading::query()->create([
-        'cook_id' => $cook->id,
-        'time' => now(),
-        'probe_food' => 165,
-        'probe_bbq' => 225,
-    ]));
-
-    Livewire::test('pages::home')
-        ->call('onLiveCookUpdated', 'reading', $cook->id)
-        ->assertDispatched('cook-chart-updated');
-});
-
-test('home page websocket reading updates are available via chart data endpoint', function () {
+test('live cook chart data endpoint returns chart payload', function () {
     $smoker = Smoker::query()->create(['name' => 'Backyard']);
 
     $cook = Cook::query()->create([
@@ -137,50 +115,8 @@ test('home page websocket reading updates are available via chart data endpoint'
 
     $this->getJson(route('cooks.chart-data', $cook))
         ->assertOk()
+        ->assertJsonStructure(['startSecondsOfDay', 'food', 'bbq'])
         ->assertJsonPath('food.1.y', 170);
-});
-
-test('home page websocket update switches to a newly started cook', function () {
-    $smoker = Smoker::query()->create(['name' => 'Backyard']);
-
-    $ended = Cook::query()->create([
-        'smoker_id' => $smoker->id,
-        'title' => 'Old Ribs',
-        'ended_at' => now()->subHour(),
-    ]);
-
-    Livewire::test('pages::home')
-        ->assertSet('displayCookId', $ended->id)
-        ->tap(function () use ($smoker) {
-            Cook::query()->create([
-                'smoker_id' => $smoker->id,
-                'title' => 'New Brisket',
-                'ended_at' => null,
-            ]);
-        })
-        ->call('onLiveCookUpdated', 'started', Cook::active()?->id)
-        ->assertSet('displayCookId', Cook::active()?->id);
-});
-
-test('live cook chart data endpoint returns chart payload', function () {
-    $smoker = Smoker::query()->create(['name' => 'Backyard']);
-
-    $cook = Cook::query()->create([
-        'smoker_id' => $smoker->id,
-        'title' => 'Brisket',
-        'ended_at' => null,
-    ]);
-
-    Reading::withoutEvents(fn () => Reading::query()->create([
-        'cook_id' => $cook->id,
-        'time' => now(),
-        'probe_food' => 165,
-        'probe_bbq' => 225,
-    ]));
-
-    $this->getJson(route('cooks.chart-data', $cook))
-        ->assertOk()
-        ->assertJsonStructure(['startSecondsOfDay', 'food', 'bbq']);
 });
 
 test('live cook status endpoint returns active cook state', function () {
@@ -201,6 +137,17 @@ test('live cook status endpoint returns active cook state', function () {
         ]);
 });
 
+test('live cook status endpoint returns null state when no active cook', function () {
+    $this->getJson(route('live.cook-status'))
+        ->assertOk()
+        ->assertJson([
+            'activeCookId' => null,
+            'beganAt' => null,
+            'maverickRunning' => false,
+            'finishedCount' => 0,
+        ]);
+});
+
 test('live cook indicator shows active cook on mount', function () {
     $smoker = Smoker::query()->create(['name' => 'Backyard']);
 
@@ -214,23 +161,7 @@ test('live cook indicator shows active cook on mount', function () {
         ->assertSet('cookId', $cook->id);
 });
 
-test('live cook sync dispatches cook stopped when websocket reports cook ended', function () {
-    $smoker = Smoker::query()->create(['name' => 'Backyard']);
-
-    $cook = Cook::query()->create([
-        'smoker_id' => $smoker->id,
-        'title' => 'Brisket',
-        'ended_at' => null,
-    ]);
-
-    Livewire::test('live-cook-sync')
-        ->assertSet('activeCookId', $cook->id)
-        ->call('onLiveCookUpdated', 'stopped', $cook->id)
-        ->assertSet('activeCookId', null)
-        ->assertDispatched('cook-stopped');
-});
-
-test('cooks nav item updates count when cook stopped event fires', function () {
+test('cooks nav item updates count from status sync', function () {
     $smoker = Smoker::query()->create(['name' => 'Backyard']);
 
     Cook::query()->create([
@@ -239,7 +170,7 @@ test('cooks nav item updates count when cook stopped event fires', function () {
         'ended_at' => now()->subDay(),
     ]);
 
-    $activeCook = Cook::query()->create([
+    Cook::query()->create([
         'smoker_id' => $smoker->id,
         'title' => 'Live Brisket',
         'ended_at' => null,
@@ -247,33 +178,17 @@ test('cooks nav item updates count when cook stopped event fires', function () {
 
     Livewire::test('cooks-nav-item')
         ->assertSet('count', 1)
-        ->tap(fn () => $activeCook->update(['ended_at' => now()]))
-        ->dispatch('cook-stopped')
+        ->call('syncCountFromStatus', 2)
         ->assertSet('count', 2);
 });
 
-test('home page websocket update clears live state when cook ends', function () {
-    $smoker = Smoker::query()->create(['name' => 'Backyard']);
-
-    $cook = Cook::query()->create([
-        'smoker_id' => $smoker->id,
-        'title' => 'Brisket',
-        'ended_at' => null,
-    ]);
-
-    Reading::withoutEvents(fn () => Reading::query()->create([
-        'cook_id' => $cook->id,
-        'time' => now(),
-        'probe_food' => 165,
-        'probe_bbq' => 225,
-    ]));
-
-    Livewire::test('pages::home')
-        ->assertSet('displayCookId', $cook->id)
-        ->tap(fn () => $cook->update(['ended_at' => now()]))
-        ->call('onLiveCookUpdated', 'stopped', $cook->id)
-        ->assertSet('displayCookId', $cook->id)
-        ->assertSet('isLive', false);
+test('cook button syncs live state from status payload', function () {
+    Livewire::test('cook-button')
+        ->assertSet('live', false)
+        ->call('syncLiveFromStatus', 1, true)
+        ->assertSet('live', true)
+        ->call('syncLiveFromStatus', null, false)
+        ->assertSet('live', false);
 });
 
 test('cook view renders finished cook chart', function () {
@@ -440,7 +355,7 @@ test('maverick service start returns false when process does not launch', functi
     expect(app(MaverickService::class)->start())->toBeFalse();
 });
 
-test('home page clears live state when cook stopped event fires', function () {
+test('home page shows finished cook after active cook ends', function () {
     $smoker = Smoker::query()->create(['name' => 'Backyard']);
 
     $cook = Cook::query()->create([
@@ -456,10 +371,10 @@ test('home page clears live state when cook stopped event fires', function () {
         'probe_bbq' => 225,
     ]);
 
-    Livewire::test('pages::home')
-        ->assertSet('displayCookId', $cook->id)
-        ->tap(fn () => $cook->update(['ended_at' => now()]))
-        ->dispatch('cook-stopped')
-        ->assertSet('displayCookId', $cook->id)
-        ->assertSet('isLive', false);
+    $cook->update(['ended_at' => now()]);
+
+    $this->get(route('home'))
+        ->assertOk()
+        ->assertSee('Brisket')
+        ->assertSee('View Full Cook');
 });

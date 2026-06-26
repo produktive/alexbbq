@@ -10,7 +10,6 @@ use Filament\Schemas\Concerns\InteractsWithSchemas;
 use Filament\Schemas\Contracts\HasSchemas;
 use Filament\Support\Icons\Heroicon;
 use Livewire\Attributes\Computed;
-use Livewire\Attributes\On;
 use Livewire\Component;
 
 new class extends Component implements HasActions, HasSchemas {
@@ -27,12 +26,6 @@ new class extends Component implements HasActions, HasSchemas {
     public function syncLiveFromStatus(?int $activeCookId, bool $maverickRunning): void
     {
         $this->live = $maverickRunning || $activeCookId !== null;
-    }
-
-    #[On('cook-stopped')]
-    public function handleCookStopped(): void
-    {
-        $this->syncLiveState();
     }
 
     #[Computed]

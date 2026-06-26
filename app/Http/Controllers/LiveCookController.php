@@ -15,7 +15,7 @@ class LiveCookController extends Controller
 
         return response()->json([
             'activeCookId' => $cook?->id,
-            'beganAt' => $cook?->getBeganAt()->toIso8601String(),
+            'beganAt' => $cook?->getBeganAt()?->toIso8601String(),
             'maverickRunning' => app(MaverickService::class)->isRunning(),
             'finishedCount' => Cook::finishedCount(),
         ]);

@@ -50,5 +50,4 @@ initEcho();
 
 document.addEventListener('livewire:navigated', () => {
     initEcho();
-    listenForLiveCookBroadcasts();
 });

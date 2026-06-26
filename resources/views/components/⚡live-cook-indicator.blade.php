@@ -29,20 +29,7 @@ new class extends Component {
 >
     <template x-if="cookId">
         <a href="{{ route('home') }}" wire:navigate>
-            <div
-                wire:ignore
-                data-live-cook-timer
-                class="inline-flex items-center gap-2 rounded-full border border-red-500/30 bg-red-500/10 px-3 py-1 text-sm font-medium text-red-600 dark:text-red-400"
-                x-data="liveCookTimer(beganAt)"
-                x-bind:key="beganAt"
-            >
-                <span class="relative flex size-2">
-                    <span class="absolute inline-flex size-full animate-ping rounded-full bg-red-400 opacity-75"></span>
-                    <span class="relative inline-flex size-2 rounded-full bg-red-500"></span>
-                </span>
-                <span>LIVE</span>
-                <span x-text="elapsed" class="tabular-nums"></span>
-            </div>
+            <x-live-cook-timer x-bind:data-began-at="beganAt" />
         </a>
     </template>
 </div>

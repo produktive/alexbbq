@@ -191,16 +191,18 @@ export default function cookChart(data, canModify = false, live = false, cookId 
         },
 
         init() {
-            if (canModify || live) {
-                chartUpdateListener = this.$wire.on('cook-chart-updated', async () => {
-                    this.refreshChart(await this.$wire.call('refreshChartData'));
-                });
-
+            if (live) {
                 chartRefreshListener = (event) => {
                     this.handleChartRefresh(event.detail?.cookId);
                 };
 
                 window.addEventListener('cook-chart-refresh', chartRefreshListener);
+            }
+
+            if (canModify) {
+                chartUpdateListener = this.$wire.on('cook-chart-updated', async () => {
+                    this.refreshChart(await this.$wire.call('refreshChartData'));
+                });
             }
 
             this.$nextTick(() => {

@@ -12,9 +12,8 @@ function formatElapsed(seconds) {
     return `${minutes}:${pad(secs)}`;
 }
 
-export default function liveCookTimer(beganAtIso) {
+export default function liveCookTimer() {
     return {
-        beganAtIso,
         elapsed: formatElapsed(0),
         timer: null,
 
@@ -30,7 +29,15 @@ export default function liveCookTimer(beganAtIso) {
         },
 
         tick() {
-            const beganAt = Date.parse(this.beganAtIso);
+            const beganAtIso = this.$el.dataset.beganAt;
+
+            if (! beganAtIso) {
+                this.elapsed = formatElapsed(0);
+
+                return;
+            }
+
+            const beganAt = Date.parse(beganAtIso);
 
             if (Number.isNaN(beganAt)) {
                 this.elapsed = formatElapsed(0);
@@ -48,7 +55,7 @@ export function registerLiveCookTimer(Alpine) {
 }
 
 export function initLiveCookTimers() {
-    if (!window.Alpine) {
+    if (! window.Alpine) {
         return;
     }
 

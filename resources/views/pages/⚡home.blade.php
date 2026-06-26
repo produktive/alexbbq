@@ -1,14 +1,11 @@
 <?php
 
-use App\Livewire\Concerns\ListensForLiveCookUpdates;
 use App\Models\Cook;
 use App\Support\CookChartData;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
 
 new class extends Component {
-    use ListensForLiveCookUpdates;
-
     public ?int $displayCookId = null;
 
     public function mount(): void
@@ -55,13 +52,6 @@ new class extends Component {
         return $this->displayCook
             ? CookChartData::fromCook($this->displayCook)
             : CookChartData::empty();
-    }
-
-    public function refreshChartData(): array
-    {
-        unset($this->chartData, $this->displayCook);
-
-        return $this->chartData;
     }
 }
 ?>

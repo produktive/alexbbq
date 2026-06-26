@@ -1,7 +1,6 @@
 <?php
 
 use App\Models\Cook;
-use Livewire\Attributes\On;
 use Livewire\Component;
 
 new class extends Component {
@@ -15,12 +14,6 @@ new class extends Component {
     {
         $this->variant = $variant;
         $this->navigate = $navigate;
-        $this->syncCount();
-    }
-
-    #[On('cook-stopped')]
-    public function handleCookStopped(): void
-    {
         $this->syncCount();
     }
 
