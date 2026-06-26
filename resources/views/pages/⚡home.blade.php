@@ -60,7 +60,10 @@ new class extends Component {
                         }
                     "
                 >
-                    <x-live-cook-timer x-bind:data-began-at="beganAt" />
+                    <x-live-cook-timer
+                        :began-at="$this->displayCook->getBeganAt()?->toIso8601String()"
+                        x-bind:data-began-at="beganAt"
+                    />
                 </div>
             @endif
         @endauth
@@ -83,18 +86,25 @@ new class extends Component {
                     }
                 "
             >
-                <flux:callout
-                    x-show="! beganAt"
-                    icon="signal"
-                    variant="warning"
-                    class="my-2"
-                >
-                    Waiting for the first temperature reading from your probe…
-                </flux:callout>
+                @unless ($this->displayCook->hasReadings())
+                    <flux:callout
+                        x-show="! beganAt"
+                        x-cloak
+                        icon="signal"
+                        variant="warning"
+                        class="my-2"
+                    >
+                        Waiting for the first temperature reading from your probe…
+                    </flux:callout>
 
-                <flux:text size="md" class="my-2" x-show="beganAt" x-cloak>
-                    Began <span x-text="beganAtLabel"></span>
-                </flux:text>
+                    <flux:text size="md" class="my-2" x-show="beganAt" x-cloak>
+                        Began <span x-text="beganAtLabel"></span>
+                    </flux:text>
+                @else
+                    <flux:text size="md" class="my-2">
+                        Began {{ $this->displayCook->getBeganAt()->format('F j, Y \a\t g:i A') }}
+                    </flux:text>
+                @endunless
             </div>
         @else
             <flux:text size="md" class="my-2">
@@ -120,6 +130,7 @@ new class extends Component {
 
             <div
                 x-show="loading"
+                x-cloak
                 class="absolute inset-0 flex items-center justify-center rounded-xl border border-neutral-200 bg-neutral-50/90 dark:border-neutral-700 dark:bg-neutral-900/90"
             >
                 <div class="flex items-center gap-2 text-sm text-neutral-500 dark:text-neutral-400">
