@@ -163,10 +163,11 @@ const DATASET_POINT_STYLE = {
     pointBorderColor: (context) => (pointHasNote(context) ? CHART_COLORS.food.note : context.dataset.borderColor),
 };
 
-export default function cookChart(data, canModify = false, live = false) {
+export default function cookChart(data, canModify = false, live = false, cookId = null) {
     let chart = null;
     let handlers = {};
     let chartUpdateListener = null;
+    let chartRefreshListener = null;
 
     return {
         menu: {
@@ -194,6 +195,12 @@ export default function cookChart(data, canModify = false, live = false) {
                 chartUpdateListener = this.$wire.on('cook-chart-updated', async () => {
                     this.refreshChart(await this.$wire.call('refreshChartData'));
                 });
+
+                chartRefreshListener = (event) => {
+                    this.handleChartRefresh(event.detail?.cookId);
+                };
+
+                window.addEventListener('cook-chart-refresh', chartRefreshListener);
             }
 
             this.$nextTick(() => {
@@ -291,6 +298,11 @@ export default function cookChart(data, canModify = false, live = false) {
             if (chartUpdateListener) {
                 chartUpdateListener();
                 chartUpdateListener = null;
+            }
+
+            if (chartRefreshListener) {
+                window.removeEventListener('cook-chart-refresh', chartRefreshListener);
+                chartRefreshListener = null;
             }
 
             if (chart) {
@@ -543,6 +555,23 @@ export default function cookChart(data, canModify = false, live = false) {
             delete chart.options.scales.x.max;
 
             chart.update();
+        },
+
+        async handleChartRefresh(eventCookId) {
+            if (eventCookId === null || cookId === null || eventCookId !== cookId) {
+                return;
+            }
+
+            const response = await fetch(`/cooks/${cookId}/chart-data`, {
+                headers: { Accept: 'application/json' },
+                credentials: 'same-origin',
+            });
+
+            if (! response.ok) {
+                return;
+            }
+
+            this.refreshChart(await response.json());
         },
 
         mountPointAction(name) {

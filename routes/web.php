@@ -1,11 +1,15 @@
 <?php
 
+use App\Http\Controllers\LiveCookController;
 use App\Http\Controllers\PushSubscriptionController;
 use Illuminate\Support\Facades\Route;
 
 Route::livewire('/', 'pages::home')->name('home');
 Route::livewire('/cooks', 'pages::cooks.index')->name('cooks');
 Route::view('/stats', 'stats')->name('stats');
+
+Route::get('/live/cook-status', [LiveCookController::class, 'status'])->name('live.cook-status');
+Route::get('/cooks/{cook}/chart-data', [LiveCookController::class, 'chartData'])->whereNumber('cook')->name('cooks.chart-data');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::livewire('/cooks/new', 'pages::cooks.new')->name('cooks.new');

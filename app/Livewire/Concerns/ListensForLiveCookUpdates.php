@@ -7,7 +7,6 @@ use Livewire\Attributes\On;
 
 trait ListensForLiveCookUpdates
 {
-    #[On('echo:cooks,.LiveCookUpdated')]
     public function onLiveCookUpdated(string $type, ?int $cookId = null): void
     {
         match ($type) {

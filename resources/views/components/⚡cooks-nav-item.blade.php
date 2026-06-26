@@ -24,6 +24,11 @@ new class extends Component {
         $this->syncCount();
     }
 
+    public function syncCountFromStatus(int $count): void
+    {
+        $this->count = $count;
+    }
+
     private function syncCount(): void
     {
         $this->count = Cook::finishedCount();
@@ -71,3 +76,13 @@ new class extends Component {
         </flux:sidebar.item>
     @endif
 </div>
+
+@script
+<script>
+    window.addEventListener('live-cook-status', (event) => {
+        if (event.detail.finishedCount !== undefined) {
+            $wire.syncCountFromStatus(event.detail.finishedCount);
+        }
+    });
+</script>
+@endscript

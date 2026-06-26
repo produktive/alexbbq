@@ -2,7 +2,6 @@
 
 use App\Models\Cook;
 use App\Services\MaverickService;
-use Livewire\Attributes\On;
 use Livewire\Component;
 
 new class extends Component {
@@ -17,7 +16,6 @@ new class extends Component {
         $this->sync();
     }
 
-    #[On('echo:cooks,.LiveCookUpdated')]
     public function onLiveCookUpdated(
         string $type,
         ?int $cookId = null,

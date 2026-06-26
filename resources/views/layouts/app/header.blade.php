@@ -24,7 +24,6 @@
     <flux:spacer/>
 
     <div class="flex items-center gap-3">
-        <livewire:live-cook-sync />
         <livewire:live-cook-indicator />
         <x-desktop-user-menu/>
     </div>

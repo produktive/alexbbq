@@ -1,5 +1,6 @@
 import Echo from 'laravel-echo';
 import Pusher from 'pusher-js';
+import { listenForLiveCookBroadcasts } from './live-cook-broadcast';
 
 window.Pusher = Pusher;
 
@@ -23,6 +24,8 @@ function reverbConfig() {
 
 export function initEcho() {
     if (window.Echo) {
+        listenForLiveCookBroadcasts();
+
         return window.Echo;
     }
 
@@ -38,6 +41,8 @@ export function initEcho() {
         enabledTransports: ['ws', 'wss'],
     });
 
+    listenForLiveCookBroadcasts();
+
     return window.Echo;
 }
 
@@ -45,4 +50,5 @@ initEcho();
 
 document.addEventListener('livewire:navigated', () => {
     initEcho();
+    listenForLiveCookBroadcasts();
 });

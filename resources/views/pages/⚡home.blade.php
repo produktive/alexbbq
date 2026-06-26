@@ -95,7 +95,7 @@ new class extends Component {
         <div
             wire:key="home-chart-{{ $this->displayCook->id }}-{{ $this->isLive ? 'live' : 'static' }}"
             wire:ignore
-            x-data="window.cookChart(@js($this->chartData), false, @js($this->isLive))"
+            x-data="window.cookChart(@js($this->chartData), false, @js($this->isLive), @js($this->displayCook->id))"
             class="relative h-125"
         >
             <div class="relative h-full">

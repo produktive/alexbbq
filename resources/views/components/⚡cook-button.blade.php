@@ -24,8 +24,7 @@ new class extends Component implements HasActions, HasSchemas {
         $this->syncLiveState();
     }
 
-    #[On('live-cook-updated')]
-    public function handleLiveCookUpdated(?int $activeCookId = null, bool $maverickRunning = false): void
+    public function syncLiveFromStatus(?int $activeCookId, bool $maverickRunning): void
     {
         $this->live = $maverickRunning || $activeCookId !== null;
     }
@@ -111,3 +110,11 @@ new class extends Component implements HasActions, HasSchemas {
 
     <x-filament-actions::modals />
 </div>
+
+@script
+<script>
+    window.addEventListener('live-cook-status', (event) => {
+        $wire.syncLiveFromStatus(event.detail.activeCookId, event.detail.maverickRunning);
+    });
+</script>
+@endscript

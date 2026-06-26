@@ -46,7 +46,6 @@
         <flux:spacer/>
 
         <div class="flex items-center gap-3">
-            <livewire:live-cook-sync />
             <livewire:live-cook-indicator />
             <flux:dropdown position="top" align="end">
             <flux:profile
