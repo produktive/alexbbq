@@ -317,14 +317,16 @@ new class extends Component implements HasActions, HasSchemas {
 
     <x-cook-description :html="$this->cook->renderRichContent('description')" />
 
-    @auth
+    @if ($this->cook->isOwnedBy(auth()->id()))
         <div class="flex justify-end">
             <flux:button href="{{ route('cooks.edit', $this->cook) }}" wire:navigate>
                 Edit Cook
             </flux:button>
         </div>
+    @endif
 
+    @if ($this->cook->isOwnedBy(auth()->id()))
         <x-filament-actions::modals/>
-    @endauth
+    @endif
 
 </flux:container>

@@ -160,7 +160,7 @@ const DATASET_POINT_STYLE = {
     pointRadius: (context) => (pointHasNote(context) ? 7 : 4),
     pointStyle: (context) => (pointHasNote(context) ? 'rectRot' : 'circle'),
     pointBorderWidth: (context) => (pointHasNote(context) ? 2 : 1),
-    pointBorderColor: (context) => (pointHasNote(context) ? CHART_COLORS.food.note : context.dataset.borderColor),
+    pointBorderColor: (context) => context.dataset.borderColor,
 };
 
 async function fetchChartData(cookId, { editor = false } = {}) {
@@ -292,7 +292,15 @@ export default function cookChart(initialData, canModify = false, live = false, 
                             callbacks: {
                                 title: (items) => formatClock(data.startSecondsOfDay, items[0].parsed.x),
 
-                                label: (context) => `${context.dataset.label}: ${context.parsed.y}°`,
+                                label: (context) => {
+                                    const value = context.parsed.y;
+
+                                    if (value === null || value === undefined) {
+                                        return null;
+                                    }
+
+                                    return `${context.dataset.label}: ${value}°`;
+                                },
 
                                 labelColor: (context) => ({
                                     borderColor: context.dataset.borderColor,

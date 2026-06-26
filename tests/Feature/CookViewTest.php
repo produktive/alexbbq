@@ -57,7 +57,7 @@ test('chart data endpoint returns editor payload for cook owners', function () {
         ->assertJsonPath('food.0.note', 'Wrapped');
 });
 
-test('chart data endpoint ignores editor mode for guests', function () {
+test('chart data endpoint returns display payload with notes for guests', function () {
     $smoker = Smoker::query()->create(['name' => 'Backyard']);
 
     $cook = Cook::query()->create([
@@ -76,5 +76,6 @@ test('chart data endpoint ignores editor mode for guests', function () {
 
     $this->getJson(route('cooks.chart-data', ['cook' => $cook, 'editor' => true]))
         ->assertOk()
-        ->assertJsonPath('food.0', ['x' => 0, 'y' => 203]);
+        ->assertJsonPath('food.0', ['x' => 0, 'y' => 203, 'note' => 'Wrapped'])
+        ->assertJsonMissingPath('food.0.id');
 });

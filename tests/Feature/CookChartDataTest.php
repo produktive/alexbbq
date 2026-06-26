@@ -6,7 +6,7 @@ use App\Models\Smoker;
 use App\Support\CookChartData;
 use Carbon\Carbon;
 
-test('display chart payload omits reading metadata', function () {
+test('display chart payload includes notes but omits reading ids', function () {
     $smoker = Smoker::query()->create(['name' => 'Backyard']);
 
     $cook = Cook::query()->create([
@@ -25,9 +25,9 @@ test('display chart payload omits reading metadata', function () {
 
     $payload = CookChartData::forDisplay($cook);
 
-    expect($payload['food'][0])->toBe(['x' => 0, 'y' => 165])
-        ->and($payload['bbq'][0])->toBe(['x' => 0, 'y' => 225])
-        ->and($payload['food'][0])->not->toHaveKeys(['id', 'note']);
+    expect($payload['food'][0])->toBe(['x' => 0, 'y' => 165, 'note' => 'Wrapped'])
+        ->and($payload['bbq'][0])->toBe(['x' => 0, 'y' => 225, 'note' => 'Wrapped'])
+        ->and($payload['food'][0])->not->toHaveKey('id');
 });
 
 test('editor chart payload includes reading metadata', function () {
@@ -57,7 +57,7 @@ test('editor chart payload includes reading metadata', function () {
     ]);
 });
 
-test('display chart payload downsamples large cooks', function () {
+test('display chart payload downsamples large cooks while preserving noted readings', function () {
     $smoker = Smoker::query()->create(['name' => 'Backyard']);
 
     $cook = Cook::query()->create([
@@ -74,6 +74,7 @@ test('display chart payload downsamples large cooks', function () {
             'time' => $start->copy()->addMinutes($i),
             'probe_food' => 150 + ($i % 50),
             'probe_bbq' => 220 + ($i % 30),
+            'note' => $i === 1_999 ? 'Wrapped' : null,
         ]);
     }
 
@@ -81,7 +82,7 @@ test('display chart payload downsamples large cooks', function () {
 
     expect($payload['food'])->toHaveCount(CookChartData::DISPLAY_MAX_POINTS)
         ->and($payload['food'][0])->toBe(['x' => 0, 'y' => 150])
-        ->and(array_keys($payload['food'][0]))->toBe(['x', 'y']);
+        ->and(collect($payload['food'])->contains(fn (array $point) => ($point['note'] ?? null) === 'Wrapped'))->toBeTrue();
 });
 
 test('cook request cache is flushed after finishing an active cook', function () {

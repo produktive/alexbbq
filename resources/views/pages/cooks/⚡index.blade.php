@@ -59,10 +59,13 @@ class extends Component implements HasActions, HasForms, HasTable {
                 ActionGroup::make([
                     Action::make('Edit')
                         ->icon(Heroicon::PencilSquare)
-                        ->url(fn(Cook $record) => route('cooks.edit', $record))
-                        ->visible(fn() => auth()->check()),
+                        ->url(fn (Cook $record) => route('cooks.edit', $record))
+                        ->visible(fn (Cook $record) => auth()->check() && $record->isOwnedBy(auth()->id())),
                     DeleteAction::make()
-                        ->visible(fn() => auth()->check())
+                        ->visible(fn (Cook $record) => auth()->check() && $record->isOwnedBy(auth()->id()))
+                        ->before(function (DeleteAction $action, Cook $record): void {
+                            abort_unless(auth()->check() && $record->isOwnedBy(auth()->id()), 403);
+                        }),
                 ])
             ])
             ->recordUrl(fn(Cook $record): string => route('cooks.view', ['cook' => $record]))

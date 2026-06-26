@@ -125,7 +125,7 @@ class Cook extends Model implements HasRichContent
             return false;
         }
 
-        return $this->user_id === null || $this->user_id === $userId;
+        return $this->user_id === $userId;
     }
 
     public function smoker(): BelongsTo

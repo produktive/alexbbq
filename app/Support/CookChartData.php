@@ -28,7 +28,7 @@ class CookChartData
     public static function forDisplay(Cook $cook): array
     {
         return self::fromReadings(
-            self::queryReadings($cook, includeNotes: false),
+            self::queryReadings($cook, includeNotes: true),
             forDisplay: true,
         );
     }
@@ -42,14 +42,6 @@ class CookChartData
             self::queryReadings($cook, includeNotes: true),
             forDisplay: false,
         );
-    }
-
-    /**
-     * @return array{startSecondsOfDay: int, food: array<int, array<string, mixed>>, bbq: array<int, array<string, mixed>>}
-     */
-    public static function fromCook(Cook $cook): array
-    {
-        return self::forEditor($cook);
     }
 
     /**
@@ -91,17 +83,32 @@ class CookChartData
         $bbq = [];
 
         foreach ($readings as $reading) {
-            $point = [
-                'x' => $reading->time->getTimestamp() - $start->getTimestamp(),
+            $x = $reading->time->getTimestamp() - $start->getTimestamp();
+
+            $foodPoint = [
+                'x' => $x,
+                'y' => self::cleanTemp($reading->probe_food),
             ];
 
-            if (! $forDisplay) {
-                $point['id'] = $reading->id;
-                $point['note'] = $reading->note;
+            $bbqPoint = [
+                'x' => $x,
+                'y' => self::cleanTemp($reading->probe_bbq),
+            ];
+
+            if ($forDisplay) {
+                if (filled($reading->note)) {
+                    $foodPoint['note'] = $reading->note;
+                    $bbqPoint['note'] = $reading->note;
+                }
+            } else {
+                $foodPoint['id'] = $reading->id;
+                $foodPoint['note'] = $reading->note;
+                $bbqPoint['id'] = $reading->id;
+                $bbqPoint['note'] = $reading->note;
             }
 
-            $food[] = [...$point, 'y' => self::cleanTemp($reading->probe_food)];
-            $bbq[] = [...$point, 'y' => self::cleanTemp($reading->probe_bbq)];
+            $food[] = $foodPoint;
+            $bbq[] = $bbqPoint;
         }
 
         return [
@@ -121,6 +128,35 @@ class CookChartData
 
         if ($count <= $maxPoints) {
             return $readings;
+        }
+
+        $noted = $readings->filter(fn (Reading $reading) => filled($reading->note))->values();
+        $notedIds = $noted->pluck('id');
+
+        $remainingSlots = max(0, $maxPoints - $noted->count());
+        $candidates = $readings->reject(fn (Reading $reading) => $notedIds->contains($reading->id))->values();
+
+        $uniform = ($remainingSlots > 0 && $candidates->isNotEmpty())
+            ? self::uniformSample($candidates, min($remainingSlots, $candidates->count()))
+            : collect();
+
+        return $noted->merge($uniform)->sortBy('time')->values();
+    }
+
+    /**
+     * @param  Collection<int, Reading>  $readings
+     * @return Collection<int, Reading>
+     */
+    private static function uniformSample(Collection $readings, int $maxPoints): Collection
+    {
+        $count = $readings->count();
+
+        if ($count <= $maxPoints) {
+            return $readings;
+        }
+
+        if ($maxPoints === 1) {
+            return collect([$readings->first()]);
         }
 
         $sampled = collect();
