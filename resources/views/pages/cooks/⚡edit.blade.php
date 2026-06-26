@@ -20,6 +20,7 @@ new class extends Component implements HasActions, HasForms {
     public function mount(Cook $cook): void
     {
         abort_if($cook->isActive(), 404);
+        abort_unless($cook->isOwnedBy(auth()->id()), 403);
 
         $this->cook = $cook;
         $this->form->fill([

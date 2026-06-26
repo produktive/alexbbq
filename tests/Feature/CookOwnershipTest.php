@@ -66,3 +66,20 @@ test('finished cooks do not count toward the active cook limit', function () {
 
     expect(Cook::query()->active()->count())->toBe(1);
 });
+
+test('users cannot edit another users finished cook', function () {
+    $owner = User::factory()->create();
+    $other = User::factory()->create();
+    $smoker = Smoker::query()->create(['name' => 'Backyard']);
+
+    $cook = Cook::query()->create([
+        'user_id' => $owner->id,
+        'smoker_id' => $smoker->id,
+        'title' => 'Brisket',
+        'ended_at' => now()->subDay(),
+    ]);
+
+    $this->actingAs($other)
+        ->get(route('cooks.edit', $cook))
+        ->assertForbidden();
+});

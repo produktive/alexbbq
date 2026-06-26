@@ -45,7 +45,7 @@ new class extends Component implements HasActions, HasSchemas {
 
     private function ensureCanModifyReadings(): void
     {
-        abort_unless(auth()->check(), 403);
+        abort_unless($this->cook->isOwnedBy(auth()->id()), 403);
     }
 
     private function afterReadingsChanged(): void

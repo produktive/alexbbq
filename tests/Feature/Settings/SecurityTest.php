@@ -37,8 +37,6 @@ test('security settings page renders without two factor when feature is disabled
         ->assertDontSee('Two-factor authentication');
 });
 
-test('two factor authentication disabled when confirmation abandoned between requests', function () {});
-
 test('password can be updated', function () {
     $user = User::factory()->create([
         'password' => Hash::make('password'),

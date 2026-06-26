@@ -1,12 +1,16 @@
 @php
-    use App\Models\Cook;
     use Carbon\CarbonInterval;
+    use Illuminate\Support\Facades\DB;
     use Illuminate\Support\HtmlString;
 
-    $totalSeconds = Cook::query()
-        ->with(['readings:id,cook_id,time'])
-        ->get()
-        ->sum(fn (Cook $cook): int => $cook->getDurationSeconds());
+    $totalSeconds = (int) DB::query()
+        ->fromSub(
+            DB::table('readings')
+                ->selectRaw('cook_id, CAST((strftime(\'%s\', MAX(time)) - strftime(\'%s\', MIN(time))) AS INTEGER) as cook_seconds')
+                ->groupBy('cook_id'),
+            'durations',
+        )
+        ->sum('cook_seconds');
 
     $human = (string) CarbonInterval::seconds($totalSeconds)->cascade();
 @endphp
