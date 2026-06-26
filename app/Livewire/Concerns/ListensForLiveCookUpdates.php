@@ -7,7 +7,7 @@ use Livewire\Attributes\On;
 
 trait ListensForLiveCookUpdates
 {
-    #[On('echo:cooks,LiveCookUpdated')]
+    #[On('echo:cooks,.LiveCookUpdated')]
     public function onLiveCookUpdated(string $type, ?int $cookId = null): void
     {
         match ($type) {
@@ -29,6 +29,7 @@ trait ListensForLiveCookUpdates
         if ($cookId !== null && $this->displayCookId !== $cookId) {
             $this->displayCookId = $cookId;
             $this->resetLiveCookComputedProperties();
+            $this->dispatch('cook-chart-updated');
         }
     }
 

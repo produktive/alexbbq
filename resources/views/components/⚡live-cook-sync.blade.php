@@ -17,7 +17,7 @@ new class extends Component {
         $this->sync();
     }
 
-    #[On('echo:cooks,LiveCookUpdated')]
+    #[On('echo:cooks,.LiveCookUpdated')]
     public function onLiveCookUpdated(
         string $type,
         ?int $cookId = null,
