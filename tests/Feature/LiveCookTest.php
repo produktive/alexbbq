@@ -90,6 +90,31 @@ test('home page syncs display cook during hydration', function () {
         ->assertDontSee('Old Ribs');
 });
 
+test('home page lazy loads chart data instead of embedding readings', function () {
+    $smoker = Smoker::query()->create(['name' => 'Backyard']);
+
+    $cook = Cook::query()->create([
+        'smoker_id' => $smoker->id,
+        'title' => 'Brisket',
+        'ended_at' => null,
+    ]);
+
+    Reading::query()->create([
+        'cook_id' => $cook->id,
+        'time' => now(),
+        'probe_food' => 165,
+        'probe_bbq' => 225,
+    ]);
+
+    $response = $this->get(route('home'));
+
+    $response->assertOk();
+    $response->assertSee('Loading chart…');
+    $response->assertSee('Brisket');
+    $response->assertDontSee('"y":165', false);
+    $response->assertDontSee('startSecondsOfDay', false);
+});
+
 test('live cook chart data endpoint returns chart payload', function () {
     $smoker = Smoker::query()->create(['name' => 'Backyard']);
 

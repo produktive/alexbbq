@@ -1,7 +1,6 @@
 <?php
 
 use App\Models\Cook;
-use App\Support\CookChartData;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
 
@@ -27,7 +26,7 @@ new class extends Component {
         }
 
         $this->displayCookId = $preferredId;
-        unset($this->displayCook, $this->chartData, $this->isLive);
+        unset($this->displayCook, $this->isLive);
     }
 
     #[Computed]
@@ -37,21 +36,13 @@ new class extends Component {
             return null;
         }
 
-        return Cook::query()->with('readings')->find($this->displayCookId);
+        return Cook::query()->find($this->displayCookId);
     }
 
     #[Computed]
     public function isLive(): bool
     {
         return $this->displayCook?->isActive() ?? false;
-    }
-
-    #[Computed]
-    public function chartData(): array
-    {
-        return $this->displayCook
-            ? CookChartData::fromCook($this->displayCook)
-            : CookChartData::empty();
     }
 }
 ?>
@@ -125,11 +116,31 @@ new class extends Component {
         <div
             wire:key="home-chart-{{ $this->displayCook->id }}-{{ $this->isLive ? 'live' : 'static' }}"
             wire:ignore
-            x-data="window.cookChart(@js($this->chartData), false, @js($this->isLive), @js($this->displayCook->id))"
+            x-data="window.cookChart(null, false, @js($this->isLive), @js($this->displayCook->id))"
             class="relative h-125"
         >
             <div class="relative h-full">
                 <canvas x-ref="canvas" class="block h-full w-full"></canvas>
+            </div>
+
+            <div
+                x-show="loading"
+                class="absolute inset-0 flex items-center justify-center rounded-xl border border-neutral-200 bg-neutral-50/90 dark:border-neutral-700 dark:bg-neutral-900/90"
+            >
+                <div class="flex items-center gap-2 text-sm text-neutral-500 dark:text-neutral-400">
+                    <flux:icon.loading variant="mini" />
+                    Loading chart…
+                </div>
+            </div>
+
+            <div
+                x-show="loadError"
+                x-cloak
+                class="absolute inset-0 flex items-center justify-center rounded-xl border border-neutral-200 bg-neutral-50/90 dark:border-neutral-700 dark:bg-neutral-900/90"
+            >
+                <flux:text size="sm" class="text-neutral-500 dark:text-neutral-400">
+                    Could not load chart data.
+                </flux:text>
             </div>
         </div>
 

@@ -163,13 +163,31 @@ const DATASET_POINT_STYLE = {
     pointBorderColor: (context) => (pointHasNote(context) ? CHART_COLORS.food.note : context.dataset.borderColor),
 };
 
-export default function cookChart(data, canModify = false, live = false, cookId = null) {
+async function fetchChartData(cookId) {
+    const response = await fetch(`/cooks/${cookId}/chart-data`, {
+        headers: { Accept: 'application/json' },
+        credentials: 'same-origin',
+    });
+
+    if (! response.ok) {
+        return null;
+    }
+
+    return response.json();
+}
+
+export default function cookChart(initialData, canModify = false, live = false, cookId = null) {
+    let data = initialData;
     let chart = null;
     let handlers = {};
     let chartUpdateListener = null;
     let chartRefreshListener = null;
+    const shouldLazyLoad = initialData === null && cookId !== null;
 
     return {
+        loading: shouldLazyLoad,
+        loadError: false,
+
         menu: {
             open: false,
             positioned: false,
@@ -205,74 +223,101 @@ export default function cookChart(data, canModify = false, live = false, cookId 
                 });
             }
 
-            this.$nextTick(() => {
-                const colors = chartPalette();
+            this.$nextTick(() => this.bootstrapChart());
+        },
 
-                chart = new Chart(this.$refs.canvas, {
-                    type: 'line',
+        async bootstrapChart() {
+            if (shouldLazyLoad) {
+                this.loading = true;
+                this.loadError = false;
+                data = await fetchChartData(cookId);
+                this.loading = false;
 
-                    data: {
-                        datasets: [
-                            lineDataset('Food', data.food, colors.food),
-                            lineDataset('BBQ', data.bbq, colors.bbq),
-                        ],
-                    },
+                if (data === null) {
+                    this.loadError = true;
 
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-
-                        scales: {
-                            x: {
-                                type: 'linear',
-                                bounds: 'data',
-                                ticks: {
-                                    callback: (value) => formatClock(data.startSecondsOfDay, value, { includeSeconds: false }),
-                                },
-                            },
-
-                            y: {
-                                beginAtZero: false,
-                                ticks: {
-                                    callback: (value) => `${value}°`,
-                                },
-                            },
-                        },
-
-                        plugins: {
-                            ...SERIES_SWATCH,
-                            tooltip: {
-                                callbacks: {
-                                    title: (items) => formatClock(data.startSecondsOfDay, items[0].parsed.x),
-
-                                    label: (context) => `${context.dataset.label}: ${context.parsed.y}°`,
-
-                                    labelColor: (context) => ({
-                                        borderColor: context.dataset.borderColor,
-                                        backgroundColor: context.dataset.borderColor,
-                                        borderWidth: 0,
-                                    }),
-
-                                    afterBody: (items) => {
-                                        const note = items[0]?.raw?.note;
-
-                                        return note ? ['', note] : [];
-                                    },
-                                },
-                            },
-                        },
-
-                        interaction: {
-                            mode: 'nearest',
-                            intersect: true,
-                        },
-                    },
-                });
-
-                if (canModify) {
-                    this.bindCanvasEvents();
+                    return;
                 }
+            }
+
+            if (! data) {
+                return;
+            }
+
+            this.$nextTick(() => this.renderChart());
+        },
+
+        renderChart() {
+            if (chart || ! data) {
+                return;
+            }
+
+            const colors = chartPalette();
+
+            chart = new Chart(this.$refs.canvas, {
+                type: 'line',
+
+                data: {
+                    datasets: [
+                        lineDataset('Food', data.food, colors.food),
+                        lineDataset('BBQ', data.bbq, colors.bbq),
+                    ],
+                },
+
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+
+                    scales: {
+                        x: {
+                            type: 'linear',
+                            bounds: 'data',
+                            ticks: {
+                                callback: (value) => formatClock(data.startSecondsOfDay, value, { includeSeconds: false }),
+                            },
+                        },
+
+                        y: {
+                            beginAtZero: false,
+                            ticks: {
+                                callback: (value) => `${value}°`,
+                            },
+                        },
+                    },
+
+                    plugins: {
+                        ...SERIES_SWATCH,
+                        tooltip: {
+                            callbacks: {
+                                title: (items) => formatClock(data.startSecondsOfDay, items[0].parsed.x),
+
+                                label: (context) => `${context.dataset.label}: ${context.parsed.y}°`,
+
+                                labelColor: (context) => ({
+                                    borderColor: context.dataset.borderColor,
+                                    backgroundColor: context.dataset.borderColor,
+                                    borderWidth: 0,
+                                }),
+
+                                afterBody: (items) => {
+                                    const note = items[0]?.raw?.note;
+
+                                    return note ? ['', note] : [];
+                                },
+                            },
+                        },
+                    },
+
+                    interaction: {
+                        mode: 'nearest',
+                        intersect: true,
+                    },
+                },
             });
+
+            if (canModify) {
+                this.bindCanvasEvents();
+            }
         },
 
         destroy() {
@@ -545,11 +590,20 @@ export default function cookChart(data, canModify = false, live = false, cookId 
         },
 
         refreshChart(fresh) {
-            if (!fresh || !chart) {
+            if (! fresh) {
                 return;
             }
 
-            data.startSecondsOfDay = fresh.startSecondsOfDay;
+            data = fresh;
+
+            if (! chart) {
+                this.loading = false;
+                this.loadError = false;
+                this.$nextTick(() => this.renderChart());
+
+                return;
+            }
+
             chart.data.datasets[0].data = fresh.food;
             chart.data.datasets[1].data = fresh.bbq;
 
@@ -564,16 +618,7 @@ export default function cookChart(data, canModify = false, live = false, cookId 
                 return;
             }
 
-            const response = await fetch(`/cooks/${cookId}/chart-data`, {
-                headers: { Accept: 'application/json' },
-                credentials: 'same-origin',
-            });
-
-            if (! response.ok) {
-                return;
-            }
-
-            this.refreshChart(await response.json());
+            this.refreshChart(await fetchChartData(cookId));
         },
 
         mountPointAction(name) {
