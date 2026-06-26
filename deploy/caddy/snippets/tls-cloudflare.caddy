@@ -1,0 +1,13 @@
+# Import once at the top of your Caddyfile (before any site blocks).
+#
+# Requires Caddy built with the Cloudflare DNS module:
+#   ./deploy/build-caddy-cloudflare.sh
+#
+# Caddy must have CLOUDFLARE_API_TOKEN in its environment (see
+# deploy/systemd/caddy.service.d/cloudflare.conf.example).
+#
+# Token needs Zone → DNS → Edit on the zone that owns your hostname.
+
+{
+	acme_dns cloudflare {env.CLOUDFLARE_API_TOKEN}
+}

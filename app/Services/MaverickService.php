@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Events\LiveCookUpdated;
 use App\Models\Cook;
 use Illuminate\Support\Facades\Process;
 
@@ -54,10 +55,14 @@ class MaverickService
             return true;
         }
 
+        $cookId = $cook->id;
+
         if (! $cook->syncEndedAtFromReadings()) {
             $cook->ended_at = now();
             $cook->saveQuietly();
         }
+
+        broadcast(LiveCookUpdated::stopped($cookId));
 
         return true;
     }

@@ -91,7 +91,7 @@ test('home page syncs display cook during hydration', function () {
         ->assertSet('displayCookId', Cook::active()?->id);
 });
 
-test('home page poll refreshes chart data for active cook', function () {
+test('home page websocket update refreshes chart data for active cook', function () {
     $smoker = Smoker::query()->create(['name' => 'Backyard']);
 
     $cook = Cook::query()->create([
@@ -108,11 +108,11 @@ test('home page poll refreshes chart data for active cook', function () {
     ]));
 
     Livewire::test('pages::home')
-        ->call('pollLiveCookUpdates')
+        ->call('onLiveCookUpdated', 'reading', $cook->id)
         ->assertDispatched('cook-chart-updated');
 });
 
-test('home page poll switches to a newly started cook', function () {
+test('home page websocket update switches to a newly started cook', function () {
     $smoker = Smoker::query()->create(['name' => 'Backyard']);
 
     $ended = Cook::query()->create([
@@ -130,11 +130,11 @@ test('home page poll switches to a newly started cook', function () {
                 'ended_at' => null,
             ]);
         })
-        ->call('pollLiveCookUpdates')
+        ->call('onLiveCookUpdated', 'started', Cook::active()?->id)
         ->assertSet('displayCookId', Cook::active()?->id);
 });
 
-test('live cook indicator poll syncs active cook state', function () {
+test('live cook indicator syncs active cook state from live cook updated event', function () {
     $smoker = Smoker::query()->create(['name' => 'Backyard']);
 
     $cook = Cook::query()->create([
@@ -149,7 +149,7 @@ test('live cook indicator poll syncs active cook state', function () {
         ->assertSet('cookId', null);
 });
 
-test('live cook sync dispatches cook stopped when active cook ends', function () {
+test('live cook sync dispatches cook stopped when websocket reports cook ended', function () {
     $smoker = Smoker::query()->create(['name' => 'Backyard']);
 
     $cook = Cook::query()->create([
@@ -160,8 +160,7 @@ test('live cook sync dispatches cook stopped when active cook ends', function ()
 
     Livewire::test('live-cook-sync')
         ->assertSet('activeCookId', $cook->id)
-        ->tap(fn () => $cook->update(['ended_at' => now()]))
-        ->call('pollLiveCookSync')
+        ->call('onLiveCookUpdated', 'stopped', $cook->id)
         ->assertSet('activeCookId', null)
         ->assertDispatched('cook-stopped');
 });
@@ -188,7 +187,7 @@ test('cooks nav item updates count when cook stopped event fires', function () {
         ->assertSet('count', 2);
 });
 
-test('home page poll clears live state when cook ends', function () {
+test('home page websocket update clears live state when cook ends', function () {
     $smoker = Smoker::query()->create(['name' => 'Backyard']);
 
     $cook = Cook::query()->create([
@@ -207,7 +206,7 @@ test('home page poll clears live state when cook ends', function () {
     Livewire::test('pages::home')
         ->assertSet('displayCookId', $cook->id)
         ->tap(fn () => $cook->update(['ended_at' => now()]))
-        ->call('pollLiveCookUpdates')
+        ->call('onLiveCookUpdated', 'stopped', $cook->id)
         ->assertSet('displayCookId', $cook->id)
         ->assertSet('isLive', false);
 });

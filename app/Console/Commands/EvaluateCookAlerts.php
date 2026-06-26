@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Events\LiveCookUpdated;
 use App\Models\Reading;
 use App\Services\TemperatureAlertService;
 use Illuminate\Console\Command;
@@ -23,6 +24,8 @@ class EvaluateCookAlerts extends Command
         }
 
         $alerts->evaluate($reading);
+
+        broadcast(LiveCookUpdated::reading($reading->cook_id));
 
         $this->info('Evaluated alerts for reading #'.$reading->id.'.');
 

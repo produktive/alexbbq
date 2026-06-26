@@ -1,0 +1,14 @@
+# Drop-in for Caddy so the Cloudflare DNS module can complete ACME challenges.
+#
+# Install:
+#   sudo mkdir -p /etc/systemd/system/caddy.service.d
+#   sudo cp deploy/systemd/caddy.service.d/cloudflare.conf.example \
+#       /etc/systemd/system/caddy.service.d/cloudflare.conf
+#   sudo systemctl edit --force caddy   # or edit cloudflare.conf with your token
+#   sudo systemctl daemon-reload
+#   sudo systemctl restart caddy
+#
+# Use the same CLOUDFLARE_API_TOKEN as in the app .env (Zone → DNS → Edit).
+
+[Service]
+Environment=CLOUDFLARE_API_TOKEN=replace-with-your-cloudflare-api-token

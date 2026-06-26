@@ -1,0 +1,19 @@
+[Unit]
+Description=Laravel Reverb WebSocket Server (Alex BBQ)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=www-data
+Group=www-data
+WorkingDirectory=@APP_DIR@
+ExecStart=/usr/bin/php artisan reverb:start --host=127.0.0.1 --port=8080
+Restart=always
+RestartSec=3
+TimeoutStopSec=30
+
+# Reverb reads .env from WorkingDirectory; no separate EnvironmentFile needed.
+
+[Install]
+WantedBy=multi-user.target

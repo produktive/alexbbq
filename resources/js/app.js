@@ -1,3 +1,4 @@
+import './echo';
 import cookChart from './cook-chart';
 import cookDescriptionGallery from './cook-description-gallery';
 import liveCookTimer, { initLiveCookTimers, registerLiveCookTimer } from './live-cook-timer';

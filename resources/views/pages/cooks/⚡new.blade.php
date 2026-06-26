@@ -1,5 +1,6 @@
 <?php
 
+use App\Events\LiveCookUpdated;
 use App\Filament\Schemas\AlertsSection;
 use App\Filament\Schemas\CookSection;
 use App\Models\Cook;
@@ -105,6 +106,8 @@ class extends Component implements HasActions, HasForms {
         }
 
         Flux::toast(variant: 'success', text: __('Cook recording started.'));
+
+        broadcast(LiveCookUpdated::started($cook));
 
         $this->redirectRoute('home', navigate: true);
     }

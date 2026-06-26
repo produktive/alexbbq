@@ -1,0 +1,45 @@
+# Caddyfile for the Pi — copy to /etc/caddy/Caddyfile (adjust paths if needed).
+#
+# Prerequisites:
+#   1. Caddy built with Cloudflare DNS: ./deploy/build-caddy-cloudflare.sh
+#   2. CLOUDFLARE_API_TOKEN set for the caddy service (deploy/systemd/caddy.service.d/)
+#   3. Reverb running: sudo ./deploy/install-reverb-service.sh
+#
+# Validate: sudo caddy validate --config /etc/caddy/Caddyfile
+# Reload:   sudo systemctl reload caddy
+
+import /var/www/alexbbq/deploy/caddy/snippets/tls-cloudflare.caddy
+
+bbqpi.local {
+	tls internal
+
+	# WebSockets for Laravel Reverb (local LAN testing).
+	import /var/www/alexbbq/deploy/caddy/snippets/reverb.caddy
+
+	root * /var/www/alexbbq/public
+	encode gzip zstd
+
+	route {
+		try_files {path} {path}/ /index.php?{query}
+		php_fastcgi unix//run/php/php8.4-fpm.sock
+		file_server
+	}
+}
+
+bbq.fiskkarta.com {
+	tls {
+		dns cloudflare {env.CLOUDFLARE_API_TOKEN}
+	}
+
+	# WebSockets for Laravel Reverb (must be before the Laravel route block).
+	import /var/www/alexbbq/deploy/caddy/snippets/reverb.caddy
+
+	root * /var/www/alexbbq/public
+	encode gzip zstd
+
+	route {
+		try_files {path} {path}/ /index.php?{query}
+		php_fastcgi unix//run/php/php8.4-fpm.sock
+		file_server
+	}
+}

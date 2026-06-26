@@ -1,13 +1,13 @@
 <?php
 
-use App\Livewire\Concerns\PollsLiveCookData;
+use App\Livewire\Concerns\ListensForLiveCookUpdates;
 use App\Models\Cook;
 use App\Support\CookChartData;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
 
 new class extends Component {
-    use PollsLiveCookData;
+    use ListensForLiveCookUpdates;
 
     public ?int $displayCookId = null;
 
@@ -65,7 +65,7 @@ new class extends Component {
     }
 }
 ?>
-<flux:container wire:poll.12s.visible="pollLiveCookUpdates">
+<flux:container>
     @if ($this->displayCook)
         @auth
             @if ($this->isLive)

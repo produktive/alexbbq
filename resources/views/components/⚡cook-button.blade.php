@@ -62,7 +62,6 @@ new class extends Component implements HasActions, HasSchemas {
                 app(MaverickService::class)->stop();
 
                 $this->syncLiveState();
-                $this->dispatch('cook-stopped');
             });
     }
 

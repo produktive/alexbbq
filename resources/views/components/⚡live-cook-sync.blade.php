@@ -17,14 +17,33 @@ new class extends Component {
         $this->sync();
     }
 
-    public function pollLiveCookSync(): void
-    {
+    #[On('echo:cooks,LiveCookUpdated')]
+    public function onLiveCookUpdated(
+        string $type,
+        ?int $cookId = null,
+        ?string $beganAt = null,
+        bool $maverickRunning = false,
+    ): void {
         $previousCookId = $this->activeCookId;
 
-        $this->sync();
+        if ($type === 'started') {
+            $this->activeCookId = $cookId;
+            $this->beganAt = $beganAt;
+            $this->maverickRunning = $maverickRunning;
+            $this->dispatchLiveCookUpdated();
 
-        if ($previousCookId !== null && $this->activeCookId === null) {
-            $this->dispatch('cook-stopped');
+            return;
+        }
+
+        if ($type === 'stopped') {
+            $this->activeCookId = null;
+            $this->beganAt = null;
+            $this->maverickRunning = false;
+            $this->dispatchLiveCookUpdated();
+
+            if ($previousCookId !== null) {
+                $this->dispatch('cook-stopped');
+            }
         }
     }
 
@@ -36,6 +55,11 @@ new class extends Component {
         $this->beganAt = $cook?->getBeganAt()->toIso8601String();
         $this->maverickRunning = app(MaverickService::class)->isRunning();
 
+        $this->dispatchLiveCookUpdated();
+    }
+
+    private function dispatchLiveCookUpdated(): void
+    {
         $this->dispatch(
             'live-cook-updated',
             activeCookId: $this->activeCookId,
@@ -45,4 +69,4 @@ new class extends Component {
     }
 }
 ?>
-<div wire:poll.12s.visible="pollLiveCookSync" class="hidden" aria-hidden="true"></div>
+<div class="hidden" aria-hidden="true"></div>
