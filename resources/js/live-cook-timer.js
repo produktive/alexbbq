@@ -12,9 +12,23 @@ function formatElapsed(seconds) {
     return `${minutes}:${pad(secs)}`;
 }
 
-export default function liveCookTimer() {
+function elapsedFromIso(beganAtIso) {
+    if (! beganAtIso) {
+        return formatElapsed(0);
+    }
+
+    const beganAt = Date.parse(beganAtIso);
+
+    if (Number.isNaN(beganAt)) {
+        return formatElapsed(0);
+    }
+
+    return formatElapsed((Date.now() - beganAt) / 1000);
+}
+
+export default function liveCookTimer(beganAtIso = null) {
     return {
-        elapsed: formatElapsed(0),
+        elapsed: elapsedFromIso(beganAtIso),
         timer: null,
 
         init() {
@@ -29,23 +43,7 @@ export default function liveCookTimer() {
         },
 
         tick() {
-            const beganAtIso = this.$el.dataset.beganAt;
-
-            if (! beganAtIso) {
-                this.elapsed = formatElapsed(0);
-
-                return;
-            }
-
-            const beganAt = Date.parse(beganAtIso);
-
-            if (Number.isNaN(beganAt)) {
-                this.elapsed = formatElapsed(0);
-
-                return;
-            }
-
-            this.elapsed = formatElapsed((Date.now() - beganAt) / 1000);
+            this.elapsed = elapsedFromIso(this.$el.dataset.beganAt);
         },
     };
 }

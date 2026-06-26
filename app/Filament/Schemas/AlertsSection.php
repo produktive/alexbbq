@@ -21,22 +21,10 @@ class AlertsSection
                 ->step(1)
                 ->decimalPlaces(0)
                 ->tooltips(RawJs::make(<<<'JS'
-                            `${$value.toFixed(0) === '32' ? 'Off' : $value.toFixed(0)+' °F'}`
+                            `${$value.toFixed(0)+' °F'}`
                             JS
                 ))
                 ->nonLinearPoints(['20%' => 140, '80%' => 203])
-                ->extraAlpineAttributes([
-                    'x-init' => <<<'JS'
-                            $nextTick(() => {
-                                const labels = $el.querySelectorAll('.noUi-value');
-                                labels.forEach(el => {
-                                    if (el.innerText.trim() === '32') {
-                                        el.innerText = 'Off';
-                                    }
-                                });
-                            });
-                        JS
-                ])
                 ->fillTrack([false, true, false])
                 ->extraAttributes([
                     'class' => 'food-slider',
@@ -49,22 +37,10 @@ class AlertsSection
                 ->step(1)
                 ->decimalPlaces(0)
                 ->tooltips(RawJs::make(<<<'JS'
-                            `${$value.toFixed(0) === '32' ? 'Off' : $value.toFixed(0)+' °F'}`
+                            `${$value.toFixed(0)+' °F'}`
                             JS
                 ))
                 ->nonLinearPoints(['20%' => 225, '80%' => 300])
-                ->extraAlpineAttributes([
-                    'x-init' => <<<'JS'
-                            $nextTick(() => {
-                                const labels = $el.querySelectorAll('.noUi-value');
-                                labels.forEach(el => {
-                                    if (el.innerText.trim() === '32') {
-                                        el.innerText = 'Off';
-                                    }
-                                });
-                            });
-                        JS
-                ])
                 ->fillTrack([false, true, false])
                 ->extraAttributes([
                     'class' => 'bbq-slider',

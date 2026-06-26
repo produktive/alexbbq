@@ -29,7 +29,7 @@ new class extends Component {
 >
     <template x-if="cookId">
         <a href="{{ route('home') }}" wire:navigate>
-            <x-live-cook-timer x-bind:data-began-at="beganAt" />
+            <x-live-cook-timer :began-at="$beganAt" x-bind:data-began-at="beganAt" />
         </a>
     </template>
 </div>
