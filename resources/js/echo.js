@@ -21,12 +21,28 @@ function reverbConfig() {
     };
 }
 
-const config = reverbConfig();
+export function initEcho() {
+    if (window.Echo) {
+        return window.Echo;
+    }
 
-if (config) {
+    const config = reverbConfig();
+
+    if (! config) {
+        return null;
+    }
+
     window.Echo = new Echo({
         broadcaster: 'reverb',
         ...config,
         enabledTransports: ['ws', 'wss'],
     });
+
+    return window.Echo;
 }
+
+initEcho();
+
+document.addEventListener('livewire:navigated', () => {
+    initEcho();
+});

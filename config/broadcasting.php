@@ -42,6 +42,12 @@ return [
                 'scheme' => env('REVERB_SERVER_SCHEME', 'http'),
                 'useTLS' => env('REVERB_SERVER_SCHEME', 'http') === 'https',
             ],
+            // Browser client (Echo) — baked into config:cache; read via config() in Blade.
+            'client' => [
+                'host' => env('REVERB_HOST'),
+                'port' => (int) env('REVERB_PORT', 443),
+                'scheme' => env('REVERB_SCHEME', 'https'),
+            ],
             'client_options' => [
                 // Guzzle client options: https://docs.guzzlephp.org/en/stable/request-options.html
             ],
