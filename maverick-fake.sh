@@ -10,7 +10,7 @@ cd "$DIR"
 mkdir -p "$(dirname "$LOG")" "$(dirname "$PIDFILE")"
 
 resolve_php() {
-    if [[ -n "${MAVERICK_PHP:-}" && "$MAVERICK_PHP" != "/path/to/php" && -x "$MAVERICK_PHP" && "$MAVERICK_PHP" != *fpm* ]]; then
+    if [[ -n "${MAVERICK_PHP:-}" && -x "$MAVERICK_PHP" && "$MAVERICK_PHP" != *fpm* ]]; then
         echo "$MAVERICK_PHP"
         return
     fi

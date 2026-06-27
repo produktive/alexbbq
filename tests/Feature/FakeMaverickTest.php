@@ -49,12 +49,11 @@ test('fake maverick simulator produces realistic temperatures', function () {
 });
 
 test('maverick service resolves php binary for fake script', function () {
-    config(['maverick.php_binary' => '/path/to/php']);
+    config(['maverick.php_binary' => null]);
 
     $php = app(MaverickService::class)->phpBinary();
 
-    expect($php)->not->toBe('/path/to/php')
-        ->and($php)->not->toContain('fpm')
+    expect($php)->not->toContain('fpm')
         ->and(is_executable($php))->toBeTrue();
 });
 

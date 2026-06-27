@@ -125,7 +125,6 @@ class MaverickService
     protected function isCliPhpBinary(?string $path): bool
     {
         return filled($path)
-            && $path !== '/path/to/php'
             && is_executable($path)
             && ! str_contains(basename($path), 'fpm');
     }
