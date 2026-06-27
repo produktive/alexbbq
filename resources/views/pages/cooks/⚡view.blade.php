@@ -222,7 +222,7 @@ new class extends Component implements HasActions, HasSchemas {
         x-ref="root"
         class="relative h-125"
     >
-        <div class="relative h-full">
+        <div class="relative max-h-screen">
             <canvas x-ref="canvas" class="block h-full w-full"></canvas>
 
             {{-- Drag-selection highlight --}}

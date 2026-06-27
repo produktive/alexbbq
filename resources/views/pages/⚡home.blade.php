@@ -124,7 +124,7 @@ new class extends Component {
             x-data="window.cookChart(null, false, @js($this->isLive), @js($this->displayCook->id))"
             class="relative h-125"
         >
-            <div class="relative h-full">
+            <div class="relative max-h-screen">
                 <canvas x-ref="canvas" class="block h-full w-full"></canvas>
             </div>
 
