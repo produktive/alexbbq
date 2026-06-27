@@ -38,7 +38,7 @@ new class extends Component {
 }
 ?>
 
-<flux:card class="space-y-4">
+<div class="space-y-4 rounded-xl bg-white p-6 shadow-sm ring-1 ring-gray-950/5 dark:bg-gray-900 dark:ring-white/10">
     <div class="flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
             <flux:heading size="lg">{{ __('Push Notifications') }}</flux:heading>
@@ -74,4 +74,4 @@ new class extends Component {
             {{ $this->label }}
         </flux:button>
     @endif
-</flux:card>
+</div>
