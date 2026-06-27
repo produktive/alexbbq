@@ -144,3 +144,13 @@ p.fi-ta-text-description,
 [data-flux-container] {
     @apply max-lg:!px-1.5;
 }
+
+.cook-chart {
+    @apply relative h-125;
+}
+
+@media (orientation: landscape) and (max-height: 500px) {
+    .cook-chart {
+        height: min(31.25rem, calc(100dvh - 11rem));
+    }
+}

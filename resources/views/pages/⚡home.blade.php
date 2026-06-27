@@ -122,9 +122,9 @@ new class extends Component {
             wire:key="home-chart-{{ $this->displayCook->id }}-{{ $this->isLive ? 'live' : 'static' }}"
             wire:ignore
             x-data="window.cookChart(null, false, @js($this->isLive), @js($this->displayCook->id))"
-            class="relative h-125"
+            class="cook-chart"
         >
-            <div class="relative max-h-screen">
+            <div class="relative h-full">
                 <canvas x-ref="canvas" class="block h-full w-full"></canvas>
             </div>
 

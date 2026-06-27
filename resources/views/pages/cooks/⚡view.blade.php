@@ -220,9 +220,9 @@ new class extends Component implements HasActions, HasSchemas {
         wire:ignore
         x-data="window.cookChart(null, @js($this->cook->isOwnedBy(auth()->id())), false, @js($this->cook->id))"
         x-ref="root"
-        class="relative h-125"
+        class="cook-chart"
     >
-        <div class="relative max-h-screen">
+        <div class="relative h-full">
             <canvas x-ref="canvas" class="block h-full w-full"></canvas>
 
             {{-- Drag-selection highlight --}}
