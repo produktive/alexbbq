@@ -112,9 +112,11 @@ new class extends Component {
             </flux:text>
         @endif
 
-        <flux:text size="sm" class="my-2">
-            {{ $this->displayCook->getDurationLabel() }}
-        </flux:text>
+        @unless ($this->isLive)
+            <flux:text size="sm" class="my-2">
+                {{ $this->displayCook->getDurationLabel() }}
+            </flux:text>
+        @endunless
 
         <div
             wire:key="home-chart-{{ $this->displayCook->id }}-{{ $this->isLive ? 'live' : 'static' }}"
