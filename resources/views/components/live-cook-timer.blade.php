@@ -28,6 +28,6 @@
         ></span>
     </span>
     <span x-show="connecting" @class(['hidden' => ! $isConnecting])>Connecting…</span>
-    <span x-show="! connecting" x-cloak @class(['hidden' => $isConnecting])>LIVE</span>
-    <span x-show="! connecting" x-text="elapsed" x-cloak @class(['hidden' => $isConnecting, 'tabular-nums'])>{{ $initialElapsed }}</span>
+    <span x-show="! connecting" x-cloak :class="{ 'hidden': connecting }">LIVE</span>
+    <span x-show="! connecting" x-text="elapsed" x-cloak :class="{ 'hidden': connecting }" class="tabular-nums">{{ $initialElapsed }}</span>
 </div>
