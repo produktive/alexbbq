@@ -17,8 +17,8 @@ self.addEventListener('push', (event) => {
     const title = payload.title ?? 'Temperature Alert';
     const options = {
         body: payload.body ?? '',
-        icon: payload.icon ?? '/favicon.svg',
-        badge: payload.badge ?? '/favicon.svg',
+        icon: payload.icon ?? '/icons/icon-192.png',
+        badge: payload.badge ?? '/icons/icon-192.png',
         data: payload.data ?? {},
         tag: payload.tag ?? 'temperature-alert',
         renotify: true,
