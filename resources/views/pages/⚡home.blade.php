@@ -68,12 +68,14 @@ new class extends Component {
             @endif
         @endauth
 
-        <flux:heading level="1" size="xl" class="my-2">
+        <div class="cook-chart-viewport">
+        <flux:heading level="1" size="xl" class="my-2 shrink-0">
             {{ $this->displayCook->title }}
         </flux:heading>
 
         @if ($this->isLive)
             <div
+                class="shrink-0"
                 x-data="{
                     cookId: @js($this->displayCook->id),
                     beganAt: @js($this->displayCook->getBeganAt()?->toIso8601String()),
@@ -107,13 +109,13 @@ new class extends Component {
                 @endunless
             </div>
         @else
-            <flux:text size="md" class="my-2">
+            <flux:text size="md" class="my-2 shrink-0">
                 Began {{ $this->displayCook->getBeganAt()?->format('F j, Y \a\t g:i A') ?? $this->displayCook->created_at->format('F j, Y \a\t g:i A') }}
             </flux:text>
         @endif
 
         @unless ($this->isLive)
-            <flux:text size="sm" class="my-2">
+            <flux:text size="sm" class="my-2 shrink-0">
                 {{ $this->displayCook->getDurationLabel() }}
             </flux:text>
         @endunless
@@ -122,7 +124,7 @@ new class extends Component {
             wire:key="home-chart-{{ $this->displayCook->id }}-{{ $this->isLive ? 'live' : 'static' }}"
             wire:ignore
             x-data="window.cookChart(null, false, @js($this->isLive), @js($this->displayCook->id))"
-            class="cook-chart"
+            class="cook-chart min-h-0 flex-1"
         >
             <div class="relative h-full">
                 <canvas x-ref="canvas" class="block h-full w-full"></canvas>
@@ -149,13 +151,14 @@ new class extends Component {
                 </flux:text>
             </div>
         </div>
+        </div>
 
         <x-cook-description :html="$this->displayCook->renderRichContent('description')" />
 
         <div class="flex justify-end">
             @unless ($this->isLive)
                 <flux:button href="{{ route('cooks.view', $this->displayCook) }}" wire:navigate>
-                    View Full Cook
+                    View Cook Page
                 </flux:button>
             @endunless
         </div>

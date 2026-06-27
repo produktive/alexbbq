@@ -150,7 +150,16 @@ p.fi-ta-text-description,
 }
 
 @media (orientation: landscape) and (max-height: 500px) {
-    .cook-chart {
-        height: min(31.25rem, calc(100dvh - 11rem));
+    .cook-chart-viewport {
+        display: flex;
+        flex-direction: column;
+        /* Mobile header + main padding only; title/metadata/chart flex inside. */
+        height: calc(100dvh - 5rem);
+        max-height: calc(100dvh - 5rem);
+    }
+
+    .cook-chart-viewport .cook-chart {
+        height: auto;
+        max-height: none;
     }
 }

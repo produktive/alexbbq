@@ -334,7 +334,7 @@ test('active cook edit page returns not found', function () {
         ->assertNotFound();
 });
 
-test('home page hides view full cook link while cook is live', function () {
+test('home page hides view cook page link while cook is live', function () {
     $smoker = Smoker::query()->create(['name' => 'Backyard']);
 
     Cook::query()->create([
@@ -353,7 +353,7 @@ test('home page hides view full cook link while cook is live', function () {
     $this->get(route('home'))
         ->assertOk()
         ->assertSee('Brisket')
-        ->assertDontSee('View Full Cook');
+        ->assertDontSee('View Cook Page');
 });
 
 test('active cook helper ignores ended cooks', function () {
@@ -431,5 +431,5 @@ test('home page shows finished cook after active cook ends', function () {
     $this->get(route('home'))
         ->assertOk()
         ->assertSee('Brisket')
-        ->assertSee('View Full Cook');
+        ->assertSee('View Cook Page');
 });

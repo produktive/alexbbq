@@ -23,3 +23,5 @@ yarn-error.log
 /.vscode
 /.zed
 /maverick
+/storage/maverick-fake.pid
+/storage/logs/maverick-fake.log

@@ -1,6 +1,6 @@
 import Echo from 'laravel-echo';
 import Pusher from 'pusher-js';
-import { listenForLiveCookBroadcasts } from './live-cook-broadcast';
+import { listenForLiveCookBroadcasts, resetLiveCookBroadcasts } from './live-cook-broadcast';
 
 window.Pusher = Pusher;
 
@@ -12,21 +12,33 @@ function reverbConfig() {
     }
 
     const port = Number(config.port) || (config.scheme === 'https' ? 443 : 80);
+    const useTls = config.scheme === 'https';
 
     return {
         key: config.key,
         wsHost: config.host,
         wsPort: port,
         wssPort: port,
-        forceTLS: config.scheme === 'https',
+        forceTLS: useTls,
+        // Pusher uses the "ws" transport name even for WSS on HTTPS pages.
+        enabledTransports: ['ws'],
+        disableStats: true,
     };
 }
 
 export function initEcho() {
     if (window.Echo) {
-        listenForLiveCookBroadcasts();
+        const state = window.Echo.connector?.pusher?.connection?.state;
 
-        return window.Echo;
+        if (state === 'connected' || state === 'connecting') {
+            listenForLiveCookBroadcasts();
+
+            return window.Echo;
+        }
+
+        window.Echo.disconnect();
+        window.Echo = undefined;
+        resetLiveCookBroadcasts();
     }
 
     const config = reverbConfig();
@@ -37,8 +49,8 @@ export function initEcho() {
 
     window.Echo = new Echo({
         broadcaster: 'reverb',
+        cluster: 'mt1',
         ...config,
-        enabledTransports: ['ws', 'wss'],
     });
 
     listenForLiveCookBroadcasts();

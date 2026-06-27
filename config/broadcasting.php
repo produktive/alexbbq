@@ -36,11 +36,11 @@ return [
             'secret' => env('REVERB_APP_SECRET'),
             'app_id' => env('REVERB_APP_ID'),
             'options' => [
-                // Server-side HTTP API (artisan, Livewire) talks to Reverb locally.
-                'host' => env('REVERB_SERVER_HOST', '127.0.0.1'),
-                'port' => env('REVERB_SERVER_PORT', 8081),
-                'scheme' => env('REVERB_SERVER_SCHEME', 'http'),
-                'useTLS' => env('REVERB_SERVER_SCHEME', 'http') === 'https',
+                // Server-side HTTP API. Production defaults to local Reverb; Herd local inherits REVERB_*.
+                'host' => env('REVERB_SERVER_HOST') ?: (env('APP_ENV') === 'local' ? env('REVERB_HOST', '127.0.0.1') : '127.0.0.1'),
+                'port' => (int) (env('REVERB_SERVER_PORT') ?: (env('APP_ENV') === 'local' ? env('REVERB_PORT', 8081) : 8081)),
+                'scheme' => env('REVERB_SERVER_SCHEME') ?: (env('APP_ENV') === 'local' ? env('REVERB_SCHEME', 'http') : 'http'),
+                'useTLS' => (env('REVERB_SERVER_SCHEME') ?: (env('APP_ENV') === 'local' ? env('REVERB_SCHEME', 'http') : 'http')) === 'https',
             ],
             // Browser client (Echo) — baked into config:cache; read via config() in Blade.
             'client' => [
@@ -49,7 +49,8 @@ return [
                 'scheme' => env('REVERB_SCHEME', 'https'),
             ],
             'client_options' => [
-                // Guzzle client options: https://docs.guzzlephp.org/en/stable/request-options.html
+                // Herd uses a self-signed cert; PHP CLI cannot verify it unless REVERB_VERIFY_SSL=true.
+                'verify' => filter_var(env('REVERB_VERIFY_SSL', env('APP_ENV') !== 'local'), FILTER_VALIDATE_BOOL),
             ],
         ],
 

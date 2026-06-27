@@ -1,6 +1,6 @@
 <?php
 
-use App\Events\LiveCookUpdated;
+use App\Services\LiveCookBroadcast;
 use App\Filament\Schemas\AlertsSection;
 use App\Filament\Schemas\CookSection;
 use App\Models\Cook;
@@ -101,7 +101,9 @@ class extends Component implements HasActions, HasForms {
 
             Flux::toast(
                 variant: 'warning',
-                text: __('Alert settings saved, but maverick failed to start. Check storage/logs/maverick.log.'),
+                text: __('Alert settings saved, but maverick failed to start. Check :log.', [
+                    'log' => str_replace(base_path().'/', '', app(MaverickService::class)->logPath()),
+                ]),
             );
 
             $this->redirectRoute('home', navigate: true);
@@ -111,7 +113,7 @@ class extends Component implements HasActions, HasForms {
 
         Flux::toast(variant: 'success', text: __('Cook recording started.'));
 
-        broadcast(LiveCookUpdated::started($cook));
+        LiveCookBroadcast::started($cook);
 
         $this->redirectRoute('home', navigate: true);
     }

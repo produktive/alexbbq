@@ -1,4 +1,6 @@
-let subscribed = false;
+let channel = null;
+let handler = null;
+let echoInstance = null;
 
 async function fetchLiveCookStatus() {
     const response = await fetch('/live/cook-status', {
@@ -14,7 +16,9 @@ async function fetchLiveCookStatus() {
 }
 
 async function dispatchLiveCookUpdate(payload) {
-    const { type, cookId, beganAt } = payload;
+    const type = payload?.type;
+    const cookId = payload?.cookId != null ? Number(payload.cookId) : null;
+    const beganAt = payload?.beganAt ?? null;
 
     if (type === 'reading' && cookId) {
         window.dispatchEvent(new CustomEvent('cook-chart-refresh', { detail: { cookId } }));
@@ -47,14 +51,32 @@ async function dispatchLiveCookUpdate(payload) {
     }
 }
 
+export function resetLiveCookBroadcasts() {
+    if (channel && handler) {
+        channel.stopListening('.LiveCookUpdated', handler);
+    }
+
+    channel = null;
+    handler = null;
+    echoInstance = null;
+}
+
 export function listenForLiveCookBroadcasts() {
-    if (subscribed || typeof window.Echo === 'undefined') {
+    if (typeof window.Echo === 'undefined') {
         return;
     }
 
-    subscribed = true;
+    if (channel && handler && echoInstance === window.Echo) {
+        return;
+    }
 
-    window.Echo.channel('cooks').listen('.LiveCookUpdated', (payload) => {
+    resetLiveCookBroadcasts();
+
+    handler = (payload) => {
         dispatchLiveCookUpdate(payload);
-    });
+    };
+
+    channel = window.Echo.channel('cooks');
+    channel.listen('.LiveCookUpdated', handler);
+    echoInstance = window.Echo;
 }

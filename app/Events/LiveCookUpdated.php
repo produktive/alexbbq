@@ -36,16 +36,9 @@ class LiveCookUpdated implements ShouldBroadcastNow
         return new self(type: 'stopped', cookId: $cookId);
     }
 
-    public static function reading(int $cookId): self
+    public static function reading(int $cookId, ?string $beganAt = null): self
     {
-        $cook = Cook::query()->withCount('readings')->find($cookId);
-        $isFirstReading = ($cook?->readings_count ?? 0) === 1;
-
-        return new self(
-            type: 'reading',
-            cookId: $cookId,
-            beganAt: $isFirstReading ? $cook?->getBeganAt()?->toIso8601String() : null,
-        );
+        return new self(type: 'reading', cookId: $cookId, beganAt: $beganAt);
     }
 
     public function broadcastOn(): array

@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Events\LiveCookUpdated;
 use App\Models\Cook;
 use Illuminate\Support\Facades\Process;
 
@@ -31,7 +30,7 @@ class MaverickService
 
     public function start(): bool
     {
-        if (! Process::path(base_path())->run($this->sudoCommand('start'))->successful()) {
+        if (! $this->runScript('start')->successful()) {
             return false;
         }
 
@@ -57,7 +56,7 @@ class MaverickService
 
     public function stop(): bool
     {
-        Process::run($this->sudoCommand('stop'));
+        $this->runScript('stop');
 
         self::forgetRunningCache();
 
@@ -81,14 +80,94 @@ class MaverickService
 
         Cook::flushRequestCache();
 
-        broadcast(LiveCookUpdated::stopped($cookId));
+        LiveCookBroadcast::stopped($cookId);
 
         return true;
     }
 
     protected function probeRunning(): bool
     {
-        return Process::run($this->sudoCommand('status'))->successful();
+        return $this->runScript('status')->successful();
+    }
+
+    public function logPath(): string
+    {
+        return (string) config('maverick.log_file');
+    }
+
+    public function phpBinary(): string
+    {
+        $configured = config('maverick.php_binary');
+
+        if ($this->isCliPhpBinary($configured)) {
+            return $configured;
+        }
+
+        $siblingCli = $this->siblingCliPhpBinary();
+
+        if ($siblingCli !== null) {
+            return $siblingCli;
+        }
+
+        $herdPhp = $this->herdPhpBinary();
+
+        if ($herdPhp !== null) {
+            return $herdPhp;
+        }
+
+        if (defined('PHP_BINARY') && $this->isCliPhpBinary(PHP_BINARY)) {
+            return PHP_BINARY;
+        }
+
+        return 'php';
+    }
+
+    protected function isCliPhpBinary(?string $path): bool
+    {
+        return filled($path)
+            && $path !== '/path/to/php'
+            && is_executable($path)
+            && ! str_contains(basename($path), 'fpm');
+    }
+
+    protected function siblingCliPhpBinary(): ?string
+    {
+        if (! defined('PHP_BINARY')) {
+            return null;
+        }
+
+        $directory = dirname(PHP_BINARY);
+        $basename = basename(PHP_BINARY);
+
+        if (preg_match('/^php(\d+)-fpm$/', $basename, $matches) !== 1) {
+            return null;
+        }
+
+        $candidate = $directory.'/php'.$matches[1];
+
+        return $this->isCliPhpBinary($candidate) ? $candidate : null;
+    }
+
+    protected function herdPhpBinary(): ?string
+    {
+        $home = getenv('HOME') ?: null;
+
+        if ($home === null) {
+            return null;
+        }
+
+        $path = $home.'/Library/Application Support/Herd/bin/php';
+
+        return is_executable($path) ? $path : null;
+    }
+
+    protected function runScript(string $action): \Illuminate\Contracts\Process\ProcessResult
+    {
+        $process = Process::path(base_path())->env([
+            'MAVERICK_PHP' => $this->phpBinary(),
+        ]);
+
+        return $process->run($this->sudoCommand($action));
     }
 
     public function binaryPath(): string
@@ -103,10 +182,16 @@ class MaverickService
 
     protected function sudoCommand(string $action): string
     {
-        return sprintf(
-            'sudo -n %s %s',
+        $command = sprintf(
+            '%s %s',
             escapeshellarg($this->scriptPath()),
             $action,
         );
+
+        if (! config('maverick.use_sudo')) {
+            return $command;
+        }
+
+        return sprintf('sudo -n %s', $command);
     }
 }

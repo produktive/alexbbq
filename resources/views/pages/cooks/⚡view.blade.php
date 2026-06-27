@@ -204,15 +204,16 @@ new class extends Component implements HasActions, HasSchemas {
 ?>
 <flux:container>
 
-    <flux:heading level="1" size="xl" class="my-2">
+    <div class="cook-chart-viewport">
+    <flux:heading level="1" size="xl" class="my-2 shrink-0">
         {{ $this->cook->title }}
     </flux:heading>
 
-    <flux:text size="md" class="my-2">
+    <flux:text size="md" class="my-2 shrink-0">
         Began {{ ($this->cook->getBeganAt() ?? $this->cook->created_at)->format('F j, Y \a\t g:i A') }}
     </flux:text>
 
-    <flux:text size="sm" class="my-2">
+    <flux:text size="sm" class="my-2 shrink-0">
         {{ $this->cook->getDurationLabel() }}
     </flux:text>
 
@@ -220,7 +221,7 @@ new class extends Component implements HasActions, HasSchemas {
         wire:ignore
         x-data="window.cookChart(null, @js($this->cook->isOwnedBy(auth()->id())), false, @js($this->cook->id))"
         x-ref="root"
-        class="cook-chart"
+        class="cook-chart min-h-0 flex-1"
     >
         <div class="relative h-full">
             <canvas x-ref="canvas" class="block h-full w-full"></canvas>
@@ -313,6 +314,7 @@ new class extends Component implements HasActions, HasSchemas {
                 </div>
             </div>
         @endif
+    </div>
     </div>
 
     <x-cook-description :html="$this->cook->renderRichContent('description')" />

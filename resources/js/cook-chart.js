@@ -212,7 +212,7 @@ export default function cookChart(initialData, canModify = false, live = false, 
         init() {
             if (live) {
                 chartRefreshListener = (event) => {
-                    this.handleChartRefresh(event.detail?.cookId);
+                    this.handleChartRefresh(Number(event.detail?.cookId));
                 };
 
                 window.addEventListener('cook-chart-refresh', chartRefreshListener);
@@ -623,7 +623,10 @@ export default function cookChart(initialData, canModify = false, live = false, 
         },
 
         async handleChartRefresh(eventCookId) {
-            if (eventCookId === null || cookId === null || eventCookId !== cookId) {
+            const id = eventCookId != null ? Number(eventCookId) : null;
+            const chartCookId = cookId != null ? Number(cookId) : null;
+
+            if (id === null || chartCookId === null || id !== chartCookId) {
                 return;
             }
 
