@@ -151,24 +151,20 @@ p.fi-ta-text-description,
 
 @media (orientation: landscape) and (max-height: 500px) and (max-width: 896px) {
     .cook-chart-viewport {
-        display: flex;
-        flex-direction: column;
-        /* Header (3.5rem) + main top padding (0.75rem) */
+        /* First screen: title + metadata + chart; description/buttons scroll below. */
         min-height: calc(100dvh - 4.25rem);
     }
 
     .cook-chart-viewport [data-flux-heading] {
-        @apply my-0.5 shrink-0 text-xl leading-tight;
+        @apply my-0.5 text-xl leading-tight;
     }
 
     .cook-chart-viewport [data-flux-text] {
-        @apply my-0.5 shrink-0 leading-snug;
+        @apply my-0.5 leading-snug;
     }
 
     .cook-chart-viewport .cook-chart {
-        flex: 1 1 0%;
-        min-height: 0;
-        height: auto;
-        max-height: none;
+        /* Keep normal h-125; only shrink when the viewport is shorter than that. */
+        max-height: calc(100dvh - 4.25rem - 5.5rem);
     }
 }
