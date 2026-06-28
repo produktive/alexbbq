@@ -21,6 +21,7 @@ function formatClock(startSecondsOfDay, elapsedSeconds, { includeSeconds = true 
 
 const MIN_DRAG_PX = 6;
 const MENU_MIN_WIDTH = 224; // matches min-w-56
+const TAP_TOLERANCE_PX = 14; // x-axis only — precise even when points are dense
 
 // Chart.js layout coordinates use chart.width/chart.height (CSS pixels).
 function cssScale(chart) {
@@ -184,14 +185,21 @@ export default function cookChart(initialData, canModify = false, live = false, 
     let chartUpdateListener = null;
     let chartRefreshListener = null;
     const shouldLazyLoad = initialData === null && cookId !== null;
+    const touchEditing = window.matchMedia('(pointer: coarse)').matches;
 
     return {
+        canModify,
+        touchEditing,
+        editMode: false,
+        activePointerId: null,
+
         loading: shouldLazyLoad,
         loadError: false,
 
         menu: {
             open: false,
             positioned: false,
+            useSheet: false,
             x: 0,
             y: 0,
             pointId: null,
@@ -221,6 +229,17 @@ export default function cookChart(initialData, canModify = false, live = false, 
             if (canModify) {
                 chartUpdateListener = this.$wire.on('cook-chart-updated', async () => {
                     this.refreshChart(await fetchChartData(cookId, { editor: true }));
+                });
+            }
+
+            if (this.touchEditing) {
+                this.$watch('editMode', (enabled) => {
+                    this.updateCanvasEditState();
+
+                    if (! enabled) {
+                        this.closeMenu();
+                        this.clearSelection();
+                    }
                 });
             }
 
@@ -327,22 +346,50 @@ export default function cookChart(initialData, canModify = false, live = false, 
             if (canModify) {
                 this.bindCanvasEvents();
             }
+
+            this.updateCanvasEditState();
+        },
+
+        editingActive() {
+            return canModify && (! this.touchEditing || this.editMode);
+        },
+
+        closeMenu() {
+            this.menu.open = false;
+            this.menu.positioned = false;
+            this.menu.useSheet = false;
+        },
+
+        updateCanvasEditState() {
+            const canvas = this.$refs.canvas;
+
+            if (! canvas) {
+                return;
+            }
+
+            if (this.touchEditing && this.editMode && canModify) {
+                canvas.classList.add('touch-none');
+            } else {
+                canvas.classList.remove('touch-none');
+            }
+
+            if (! chart) {
+                return;
+            }
+
+            chart.options.plugins.tooltip.enabled = ! (this.touchEditing && this.editMode);
+            chart.update('none');
         },
 
         destroy() {
             const canvas = this.$refs.canvas;
 
-            if (canvas && handlers.mousedown) {
-                canvas.removeEventListener('mousedown', handlers.mousedown);
+            if (canvas && handlers.pointerdown) {
+                canvas.removeEventListener('pointerdown', handlers.pointerdown);
+                canvas.removeEventListener('pointermove', handlers.pointermove);
+                canvas.removeEventListener('pointerup', handlers.pointerup);
+                canvas.removeEventListener('pointercancel', handlers.pointercancel);
                 canvas.removeEventListener('contextmenu', handlers.contextmenu);
-            }
-
-            if (handlers.mouseup) {
-                window.removeEventListener('mouseup', handlers.mouseup);
-            }
-
-            if (handlers.dragMove) {
-                window.removeEventListener('mousemove', handlers.dragMove);
             }
 
             if (handlers.keydown) {
@@ -370,14 +417,17 @@ export default function cookChart(initialData, canModify = false, live = false, 
         bindCanvasEvents() {
             const canvas = this.$refs.canvas;
 
-            handlers.mousedown = (e) => this.onMouseDown(e);
-            handlers.mouseup = (e) => this.onMouseUp(e);
-            handlers.dragMove = (e) => this.onMouseMove(e);
+            handlers.pointerdown = (e) => this.onPointerDown(e);
+            handlers.pointermove = (e) => this.onPointerMove(e);
+            handlers.pointerup = (e) => this.onPointerUp(e);
+            handlers.pointercancel = (e) => this.onPointerUp(e);
             handlers.contextmenu = (e) => this.onContextMenu(e);
             handlers.keydown = (e) => this.onKeyDown(e);
 
-            canvas.addEventListener('mousedown', handlers.mousedown);
-            window.addEventListener('mouseup', handlers.mouseup);
+            canvas.addEventListener('pointerdown', handlers.pointerdown);
+            canvas.addEventListener('pointermove', handlers.pointermove);
+            canvas.addEventListener('pointerup', handlers.pointerup);
+            canvas.addEventListener('pointercancel', handlers.pointercancel);
             canvas.addEventListener('contextmenu', handlers.contextmenu);
             window.addEventListener('keydown', handlers.keydown);
         },
@@ -406,13 +456,17 @@ export default function cookChart(initialData, canModify = false, live = false, 
             this.selection.overlayStyle = `left:${left}px;width:${Math.max(right - left, 1)}px;top:${area.top}px;height:${area.height}px`;
         },
 
-        onMouseDown(e) {
-            if (e.button !== 0 || !chart?.chartArea || !isInChartArea(e, chart)) {
+        onPointerDown(e) {
+            if (! this.editingActive() || e.button !== 0 || ! chart?.chartArea || ! isInChartArea(e, chart)) {
                 return;
             }
 
-            this.menu.open = false;
-            this.menu.positioned = false;
+            this.closeMenu();
+
+            const canvas = this.$refs.canvas;
+
+            canvas.setPointerCapture(e.pointerId);
+            this.activePointerId = e.pointerId;
 
             this.selection.dragging = true;
             this.selection.active = false;
@@ -420,12 +474,10 @@ export default function cookChart(initialData, canModify = false, live = false, 
             this.selection.startX = this.dataXFromEvent(e);
             this.selection.endX = this.selection.startX;
             this.updateSelectionOverlay();
-
-            window.addEventListener('mousemove', handlers.dragMove);
         },
 
-        onMouseMove(e) {
-            if (!this.selection.dragging) {
+        onPointerMove(e) {
+            if (! this.selection.dragging || e.pointerId !== this.activePointerId) {
                 return;
             }
 
@@ -433,19 +485,36 @@ export default function cookChart(initialData, canModify = false, live = false, 
             this.updateSelectionOverlay();
         },
 
-        onMouseUp() {
-            if (!this.selection.dragging) {
+        onPointerUp(e) {
+            if (e.pointerId !== this.activePointerId) {
+                return;
+            }
+
+            const canvas = this.$refs.canvas;
+
+            if (canvas.hasPointerCapture(e.pointerId)) {
+                canvas.releasePointerCapture(e.pointerId);
+            }
+
+            this.activePointerId = null;
+
+            if (! this.selection.dragging) {
                 return;
             }
 
             this.selection.dragging = false;
-            window.removeEventListener('mousemove', handlers.dragMove);
 
             const startPx = cssXFromDataValue(chart, this.selection.startX);
             const endPx = cssXFromDataValue(chart, this.selection.endX);
+            const dragPx = Math.abs(endPx - startPx);
 
-            if (Math.abs(endPx - startPx) < MIN_DRAG_PX) {
+            if (dragPx < MIN_DRAG_PX) {
                 this.clearSelection();
+
+                if (this.touchEditing) {
+                    this.openPointMenu(e);
+                }
+
                 return;
             }
 
@@ -458,12 +527,17 @@ export default function cookChart(initialData, canModify = false, live = false, 
 
             this.selection.active = this.selection.ids.length > 0;
 
-            if (!this.selection.active) {
+            if (! this.selection.active) {
                 this.clearSelection();
+
                 return;
             }
 
             this.updateSelectionOverlay();
+
+            if (this.touchEditing) {
+                this.openSelectionMenu(e);
+            }
         },
 
         clearSelection() {
@@ -473,8 +547,6 @@ export default function cookChart(initialData, canModify = false, live = false, 
             this.selection.endX = null;
             this.selection.ids = [];
             this.selection.overlayStyle = 'display:none';
-
-            window.removeEventListener('mousemove', handlers.dragMove);
         },
 
         isWithinSelection(x) {
@@ -483,66 +555,116 @@ export default function cookChart(initialData, canModify = false, live = false, 
             return x >= lo && x <= hi;
         },
 
-        nearestPoint(e) {
-            const matches = chart.getElementsAtEventForMode(
-                e,
-                'nearest',
-                { intersect: true },
-                true
-            );
-
-            if (!matches.length) {
+        nearestPointByX(e) {
+            if (! chart?.scales?.x || ! chart.chartArea?.width) {
                 return null;
             }
 
-            const { datasetIndex, index } = matches[0];
+            const dataX = this.dataXFromEvent(e);
+            const scale = chart.scales.x;
+            const range = scale.max - scale.min;
+
+            if (range <= 0) {
+                return null;
+            }
+
+            const maxDataDist = TAP_TOLERANCE_PX / (chart.chartArea.width / range);
+            const points = chart.data.datasets[0].data ?? [];
+            let bestIndex = -1;
+            let bestDist = Infinity;
+
+            for (let i = 0; i < points.length; i++) {
+                const dist = Math.abs(points[i].x - dataX);
+
+                if (dist < bestDist) {
+                    bestDist = dist;
+                    bestIndex = i;
+                }
+            }
+
+            if (bestIndex < 0 || bestDist > maxDataDist) {
+                return null;
+            }
 
             return {
-                point: chart.data.datasets[datasetIndex].data[index],
-                index,
+                point: points[bestIndex],
+                index: bestIndex,
             };
         },
 
+        openPointMenu(e) {
+            const hit = this.nearestPointByX(e);
+
+            if (! hit) {
+                return;
+            }
+
+            const { point, index } = hit;
+            const seriesLength = chart.data.datasets[0].data.length;
+
+            this.clearSelection();
+            this.menu.pointId = Number(point.id);
+            this.menu.pointNote = point.note || null;
+            this.menu.canDeleteBefore = index > 0;
+            this.menu.canDeleteAfter = index < seriesLength - 1;
+            this.menu.useSheet = this.touchEditing;
+            this.scheduleMenuOpen(e);
+        },
+
+        openSelectionMenu(e) {
+            if (! this.selection.active) {
+                return;
+            }
+
+            this.menu.pointId = null;
+            this.menu.pointNote = null;
+            this.menu.canDeleteBefore = false;
+            this.menu.canDeleteAfter = false;
+            this.menu.useSheet = this.touchEditing;
+            this.scheduleMenuOpen(e);
+        },
+
         onContextMenu(e) {
+            if (this.touchEditing) {
+                e.preventDefault();
+
+                return;
+            }
+
+            if (! this.editingActive()) {
+                return;
+            }
+
             e.preventDefault();
 
             const withinActiveSelection = this.selection.active && this.isWithinSelection(this.dataXFromEvent(e));
 
             if (withinActiveSelection) {
-                this.menu.pointId = null;
-                this.menu.pointNote = null;
-                this.menu.canDeleteBefore = false;
-                this.menu.canDeleteAfter = false;
-            } else {
-                const hit = this.nearestPoint(e);
+                this.openSelectionMenu(e);
 
-                if (!hit) {
-                    this.menu.open = false;
-                    return;
-                }
+                return;
+            }
 
-                const { point, index } = hit;
-                const seriesLength = chart.data.datasets[0].data.length;
+            this.openPointMenu(e);
+        },
 
-                this.clearSelection();
-                this.menu.pointId = Number(point.id);
-                this.menu.pointNote = point.note || null;
-                this.menu.canDeleteBefore = index > 0;
-                this.menu.canDeleteAfter = index < seriesLength - 1;
+        scheduleMenuOpen(e) {
+            this.menu.open = true;
+
+            if (this.menu.useSheet) {
+                this.menu.positioned = true;
+
+                return;
             }
 
             this.menu.positioned = false;
-            this.scheduleContextMenuPosition(e);
-        },
-
-        scheduleContextMenuPosition(e) {
-            this.menu.open = true;
 
             this.$nextTick(() => {
                 this.positionContextMenu(e);
 
                 if (this.$refs.menu?.offsetWidth > 0) {
                     this.menu.positioned = true;
+
                     return;
                 }
 
@@ -593,8 +715,7 @@ export default function cookChart(initialData, canModify = false, live = false, 
                 return;
             }
 
-            this.menu.open = false;
-            this.menu.positioned = false;
+            this.closeMenu();
             this.clearSelection();
         },
 
@@ -636,23 +757,22 @@ export default function cookChart(initialData, canModify = false, live = false, 
         mountPointAction(name) {
             const id = this.menu.pointId;
 
-            if (!id) {
+            if (! id) {
                 return;
             }
 
-            this.menu.open = false;
-            this.menu.positioned = false;
+            this.closeMenu();
             this.$wire.mountAction(name, { id });
         },
 
         removeSelected() {
-            if (!this.selection.ids.length) {
+            if (! this.selection.ids.length) {
                 return;
             }
 
             const ids = this.selection.ids.map(Number);
-            this.menu.open = false;
-            this.menu.positioned = false;
+
+            this.closeMenu();
             this.clearSelection();
 
             this.$wire.mountAction('deleteSelected', { ids });

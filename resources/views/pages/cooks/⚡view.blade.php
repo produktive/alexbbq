@@ -221,8 +221,24 @@ new class extends Component implements HasActions, HasSchemas {
         wire:ignore
         x-data="window.cookChart(null, @js($this->cook->isOwnedBy(auth()->id())), false, @js($this->cook->id))"
         x-ref="root"
-        class="cook-chart"
     >
+        @if ($this->cook->isOwnedBy(auth()->id()))
+            <div
+                x-show="touchEditing"
+                x-cloak
+                class="mb-2 flex flex-col items-end gap-2 sm:flex-row sm:items-center sm:justify-end"
+            >
+                <flux:text x-show="editMode" size="sm" class="text-zinc-500 dark:text-zinc-400">
+                    Tap a point or drag to select a range
+                </flux:text>
+                <label class="inline-flex cursor-pointer items-center gap-2">
+                    <flux:switch x-model="editMode" />
+                    <flux:text size="sm">Edit chart</flux:text>
+                </label>
+            </div>
+        @endif
+
+        <div class="cook-chart">
         <div class="relative h-full">
             <canvas x-ref="canvas" class="block h-full w-full"></canvas>
 
@@ -255,64 +271,43 @@ new class extends Component implements HasActions, HasSchemas {
             </flux:text>
         </div>
 
-        {{-- Context menu (authenticated owners only) --}}
+        {{-- Desktop context menu --}}
         @if ($this->cook->isOwnedBy(auth()->id()))
             <div
                 x-ref="menu"
-                x-show="menu.open"
-                @click.outside="menu.open = false; menu.positioned = false"
+                x-show="menu.open && ! menu.useSheet"
+                @click.outside="closeMenu()"
                 class="absolute z-50 min-w-56 rounded border border-zinc-200 bg-white py-1 text-zinc-900 shadow dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
-                :class="{ invisible: !menu.positioned }"
+                :class="{ invisible: ! menu.positioned }"
                 :style="`left:${menu.x}px;top:${menu.y}px`"
                 x-cloak
             >
-                <div x-show="!selection.active" class="flex flex-col">
-                    <button type="button"
-                            class="flex w-full items-center gap-2 px-3 py-1.5 text-left text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800"
-                            @click="mountPointAction('addNote')">
-                        <flux:icon.pencil-square variant="mini" class="size-4 shrink-0 text-zinc-500 dark:text-zinc-400"/>
-                        <span x-text="menu.pointNote ? 'Edit note' : 'Add note'"></span>
-                    </button>
-
-                    <div class="my-1 border-t border-zinc-200 dark:border-zinc-700"></div>
-
-                    <button type="button"
-                            class="flex w-full items-center gap-2 px-3 py-1.5 text-left text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800"
-                            @click="mountPointAction('deletePoint')">
-                        <flux:icon.trash variant="mini" class="size-4 shrink-0 text-zinc-500 dark:text-zinc-400"/>
-                        Delete this point
-                    </button>
-                    <button type="button"
-                            x-show="menu.canDeleteBefore"
-                            class="flex w-full items-center gap-2 px-3 py-1.5 text-left text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800"
-                            @click="mountPointAction('deleteBefore')">
-                        <flux:icon.chevron-double-left variant="mini" class="size-4 shrink-0 text-zinc-500 dark:text-zinc-400"/>
-                        Delete all before this point
-                    </button>
-                    <button type="button"
-                            x-show="menu.canDeleteAfter"
-                            class="flex w-full items-center gap-2 px-3 py-1.5 text-left text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800"
-                            @click="mountPointAction('deleteAfter')">
-                        <flux:icon.chevron-double-right variant="mini" class="size-4 shrink-0 text-zinc-500 dark:text-zinc-400"/>
-                        Delete all after this point
-                    </button>
-                </div>
-
-                <div x-show="selection.active" class="flex flex-col">
-                    <button type="button"
-                            class="flex w-full items-center gap-2 px-3 py-1.5 text-left text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800"
-                            @click="removeSelected()">
-                        <flux:icon.trash variant="mini" class="size-4 shrink-0 text-zinc-500 dark:text-zinc-400"/>
-                        <span x-text="`Delete ${selection.ids.length} selected points`"></span>
-                    </button>
-                    <button type="button"
-                            class="flex w-full items-center gap-2 px-3 py-1.5 text-left text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800"
-                            @click="menu.open = false; menu.positioned = false; clearSelection()">
-                        <flux:icon.x-mark variant="mini" class="size-4 shrink-0 text-zinc-500 dark:text-zinc-400"/>
-                        Clear selection
-                    </button>
-                </div>
+                @include('partials.cook-chart-point-menu')
             </div>
+        @endif
+        </div>
+
+        {{-- Mobile bottom sheet --}}
+        @if ($this->cook->isOwnedBy(auth()->id()))
+            <template x-teleport="body">
+                <div
+                    x-show="menu.open && menu.useSheet"
+                    x-cloak
+                    class="fixed inset-0 z-50 flex items-end"
+                    @keydown.escape.window="closeMenu()"
+                >
+                    <button
+                        type="button"
+                        class="absolute inset-0 bg-black/40"
+                        aria-label="Close"
+                        @click="closeMenu()"
+                    ></button>
+
+                    <div class="relative w-full rounded-t-xl border border-zinc-200 bg-white py-2 text-zinc-900 shadow-lg dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100">
+                        @include('partials.cook-chart-point-menu')
+                    </div>
+                </div>
+            </template>
         @endif
     </div>
     </div>
@@ -321,8 +316,8 @@ new class extends Component implements HasActions, HasSchemas {
 
     @if ($this->cook->isOwnedBy(auth()->id()))
         <div class="flex justify-end">
-            <flux:button href="{{ route('cooks.edit', $this->cook) }}" wire:navigate>
-                Edit Cook
+            <flux:button href="{{ route('cooks.edit', $this->cook) }}" size="sm" wire:navigate>
+                Edit Details
             </flux:button>
         </div>
     @endif
