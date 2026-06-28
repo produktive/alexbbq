@@ -316,7 +316,7 @@ new class extends Component implements HasActions, HasSchemas {
 
     @if ($this->cook->isOwnedBy(auth()->id()))
         <div class="flex justify-end">
-            <flux:button href="{{ route('cooks.edit', $this->cook) }}" size="sm" wire:navigate>
+            <flux:button href="{{ route('cooks.edit', $this->cook) }}" wire:navigate>
                 Edit Details
             </flux:button>
         </div>

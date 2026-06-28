@@ -2,7 +2,9 @@
 
 namespace App\Providers;
 
+use App\Models\Cook;
 use App\Models\Reading;
+use App\Observers\CookObserver;
 use App\Observers\ReadingObserver;
 use App\Support\Theme;
 use App\Support\WebPushResultRecorder;
@@ -33,6 +35,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        Cook::observe(CookObserver::class);
         Reading::observe(ReadingObserver::class);
 
         FilamentColor::register([
