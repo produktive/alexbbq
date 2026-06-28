@@ -151,8 +151,9 @@ p.fi-ta-text-description,
 
 @media (orientation: landscape) and (max-height: 500px) and (max-width: 896px) {
     .cook-chart-viewport {
-        /* First screen: title + metadata + chart; description/buttons scroll below. */
-        min-height: calc(100dvh - 4.25rem);
+        /* One full viewport of title + metadata + chart before description/buttons.
+           Chart keeps normal h-125; scroll to see the rest. Header not included. */
+        min-height: 100dvh;
     }
 
     .cook-chart-viewport [data-flux-heading] {
@@ -161,10 +162,5 @@ p.fi-ta-text-description,
 
     .cook-chart-viewport [data-flux-text] {
         @apply my-0.5 leading-snug;
-    }
-
-    .cook-chart-viewport .cook-chart {
-        /* Keep normal h-125; only shrink when the viewport is shorter than that. */
-        max-height: calc(100dvh - 4.25rem - 5.5rem);
     }
 }
