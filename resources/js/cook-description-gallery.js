@@ -25,23 +25,23 @@ export default function cookDescriptionGallery() {
 
             imgs.forEach((img, index) => {
                 const src = img.getAttribute('src');
-                const alt = img.getAttribute('alt') ?? '';
+                const caption = img.getAttribute('alt') ?? '';
 
                 if (!src) {
                     return;
                 }
 
-                this.images.push({ src, alt });
+                this.images.push({ src, caption });
 
                 const button = document.createElement('button');
                 button.type = 'button';
                 button.className = 'cook-description-thumb';
-                button.setAttribute('aria-label', alt || `View image ${index + 1}`);
+                button.setAttribute('aria-label', caption || `View image ${index + 1}`);
                 button.addEventListener('click', () => this.openLightbox(index));
 
                 const thumb = document.createElement('img');
                 thumb.src = src;
-                thumb.alt = alt;
+                thumb.alt = caption;
                 thumb.loading = 'lazy';
                 thumb.draggable = false;
 
@@ -92,8 +92,12 @@ export default function cookDescriptionGallery() {
             return this.images[this.lightboxIndex]?.src ?? '';
         },
 
-        lightboxAlt() {
-            return this.images[this.lightboxIndex]?.alt ?? '';
+        lightboxCaption() {
+            return this.images[this.lightboxIndex]?.caption ?? '';
+        },
+
+        hasCaption() {
+            return this.lightboxCaption().trim() !== '';
         },
 
         hasMultiple() {

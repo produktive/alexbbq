@@ -28,9 +28,9 @@ Built with **Laravel 13**, **Livewire 4**, **Filament 5**, and **Livewire Flux**
 
 ## Overview
 
-Maverick.bbq connects a Maverick ET-732 receiver to a Raspberry Pi via GPIO. A small C daemon (`maverick`) decodes the wireless signal and writes temperature readings to SQLite. The Laravel app displays those readings in real time, stores completed cooks, and can notify you when probe temperatures drift outside your thresholds.
-
-The home page shows the active cook (or the most recent finished cook) with an interactive temperature chart. Authenticated users can start and stop cooks, manage smokers, configure alerts, and edit past cook details.
+Maverick.bbq intercepts transmissions from a Maverick ET-732 BBQ thermometer using a radio frequency chip connected to a Raspberry Pi via GPIO. A small C daemon (`maverick`) decodes the wireless signal and writes 
+temperature readings to SQLite. The Laravel app displays those readings in real time, stores completed cooks, and can notify you when probe temperatures drift outside your thresholds. The home page shows the active 
+cook (or the most recent finished cook) with an interactive temperature chart. Authenticated users can start and stop cooks, manage smokers, configure alerts, and edit past cook details.
 
 ---
 
@@ -42,18 +42,19 @@ The home page shows the active cook (or the most recent finished cook) with an i
 - **WebSocket updates** — Live cooks refresh automatically via [Laravel Reverb](https://laravel.com/docs/reverb) and Laravel Echo.
 - **Live cook timer** — Elapsed time since the first reading for in-progress cooks.
 - **Start / stop recording** — Start a new cook from the dashboard; stopping finalizes the cook and ends probe recording.
+- **Cook Simulator** – Simulate cooking with realistic generated probe readings for testing on your computer.
 
 ### Cook management
 
 - **Cook history** — Browse finished cooks with date, title, and description preview.
-- **Rich cook descriptions** — Notes and images attached to each cook (Filament rich editor).
-- **Individual cook pages** — Full chart, duration, and description for any finished cook.
+- **Cook descriptions** — Write detailed notes with stylized text, lists, links, and image gallery attached to each cook.
+- **Individual cook pages** — Share the full chart, duration, and description for any finished cook.
 - **Smoker tracking** — Associate cooks with named smokers; archive or restore smokers as needed.
 
 ### Interactive charts
 
 - **Finished cook editing** — Delete individual readings, ranges of points, or add notes to specific timestamps (owner only).
-- **Desktop context menu & mobile bottom sheet** — Edit chart points on any device.
+- **Desktop & mobile accessible** — Edit chart points on any device.
 - **Touch-friendly selection** — Drag to select a range of points on mobile.
 
 ### Alerts & notifications
@@ -71,7 +72,7 @@ The home page shows the active cook (or the most recent finished cook) with an i
 
 ### Progressive Web App
 
-- Installable as a standalone app (`manifest.webmanifest`) for quick access from phone or tablet while tending the smoker.
+- Installable as a standalone app for quick access from phone, tablet or desktop while tending the smoker.
 
 ### Statistics
 
@@ -82,31 +83,29 @@ The home page shows the active cook (or the most recent finished cook) with an i
 ## Architecture
 
 ```
-┌─────────────────┐     GPIO      ┌──────────────┐
-│ Maverick ET-732 │ ────────────► │  maverick    │  (C daemon, pigpio)
-│   receiver      │               │  binary      │
-└─────────────────┘               └──────┬───────┘
-                                         │ writes readings
-                                         ▼
-                               ┌──────────────────┐
-                               │  SQLite database │
-                               └────────┬─────────┘
-                                        │
-                                        ▼
-                               ┌──────────────────┐
-                               │  Laravel app     │  Livewire + Filament UI
-                               │  (PHP-FPM)       │
-                               └────────┬─────────┘
-                                        │ WebSockets
-                                        ▼
-                               ┌──────────────────┐
-                               │  Laravel Reverb  │  live chart updates
-                               └──────────────────┘
-                                        │
-                                        ▼
-                               ┌──────────────────┐
-                               │  Browser / PWA   │
-                               └──────────────────┘
+┌─────────────────┐ 433MHz RF chip ┌──────────────────┐
+│ Maverick ET-732 │ ─────────────► │     maverick     │  (C daemon, pigpio)
+│   transmitter   │                └────────┬─────────┘
+└─────────────────┘                         │ writes readings
+                                            ▼
+                                   ┌──────────────────┐
+                                   │  SQLite database │
+                                   └────────┬─────────┘
+                                            │
+                                            ▼
+                                   ┌──────────────────┐
+                                   │  Laravel app     │  Livewire + Filament UI
+                                   └────────┬─────────┘
+                                            │ WebSockets
+                                            ▼
+                                   ┌──────────────────┐
+                                   │  Laravel Reverb  │  live chart updates
+                                   └────────┬─────────┘
+                                            │
+                                            ▼
+                                   ┌──────────────────┐
+                                   │  Browser / PWA   │
+                                   └──────────────────┘
 ```
 
 | Component | Role |
@@ -178,7 +177,7 @@ This launches three processes concurrently:
 
 ### Local development (Laravel Herd)
 
-1. Clone the repository into your Herd sites directory (e.g. `~/Herd/alexbbq`).
+1. Clone the repository into your Herd sites directory (e.g. `~/Herd/maverickbbq`).
 2. Run `composer setup`.
 3. Open `https://alexbbq.test` (or your Herd domain).
 4. In local mode (`APP_ENV=local`), the app automatically uses `maverick-fake.sh`, which simulates probe readings — no Raspberry Pi required.
@@ -192,7 +191,7 @@ php artisan reverb:start --port=8080
 Add to `.env`:
 
 ```env
-REVERB_HOST=alexbbq.test
+REVERB_HOST=maverick.test
 REVERB_PORT=8080
 REVERB_SCHEME=https
 ```
@@ -292,7 +291,7 @@ npm run build  # production build
 
 ### 1. Build the Maverick daemon
 
-On the Pi, compile the C binary (requires pigpio):
+On the Pi, compile the C binary (requires [pigpio](https://abyz.me.uk/rpi/pigpio/download.html)):
 
 ```bash
 gcc -o maverick maverick.c -lpigpio -lrt -pthread

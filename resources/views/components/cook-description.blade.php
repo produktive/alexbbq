@@ -47,12 +47,21 @@
                 </button>
             </template>
 
-            <img
-                :src="lightboxSrc()"
-                :alt="lightboxAlt()"
-                class="relative z-1 max-h-[90vh] max-w-[90vw] rounded-lg object-contain shadow-2xl"
-                @click.stop
-            >
+            <figure class="relative z-1 max-h-[90vh] max-w-[90vw]">
+                <img
+                    :src="lightboxSrc()"
+                    :alt="lightboxCaption()"
+                    class="max-h-[90vh] max-w-[90vw] rounded-lg object-contain shadow-2xl"
+                    @click.stop
+                >
+
+                <figcaption
+                    x-show="hasCaption()"
+                    x-cloak
+                    x-text="lightboxCaption()"
+                    class="cook-description-lightbox-caption"
+                ></figcaption>
+            </figure>
 
             <template x-if="hasMultiple()">
                 <button

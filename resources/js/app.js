@@ -1,3 +1,4 @@
+import './cook-description-image-upload';
 import './echo';
 import cookChart from './cook-chart';
 import cookDescriptionGallery from './cook-description-gallery';

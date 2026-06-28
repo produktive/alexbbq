@@ -129,6 +129,10 @@ p.fi-ta-text-description,
     @apply size-full object-cover;
 }
 
+.cook-description-lightbox-caption {
+    @apply absolute inset-x-0 bottom-0 rounded-b-lg bg-gradient-to-t from-black/85 via-black/55 to-transparent px-4 pt-10 pb-4 text-center text-sm text-white;
+}
+
 .bbq-slider .noUi-connect {
     @apply bg-teal-400 dark:bg-teal-300;
 }

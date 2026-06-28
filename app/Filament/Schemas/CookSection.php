@@ -3,6 +3,7 @@
 namespace App\Filament\Schemas;
 
 use App\Filament\Plugins\LinkNewTabPlugin;
+use App\Filament\RichEditor\Actions\AttachCookDescriptionImageAction;
 use App\Models\Cook;
 use App\Models\Smoker;
 use App\Support\CookDescriptionImage;
@@ -48,6 +49,9 @@ class CookSection
                             Cook::DESCRIPTION_ATTACHMENTS_VISIBILITY,
                         ),
                     )
+                    ->registerActions([
+                        AttachCookDescriptionImageAction::make(),
+                    ])
                     ->plugins([
                         LinkNewTabPlugin::make(),
                     ])
