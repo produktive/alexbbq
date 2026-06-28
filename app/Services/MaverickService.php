@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Cook;
+use Illuminate\Contracts\Process\ProcessResult;
 use Illuminate\Support\Facades\Process;
 
 class MaverickService
@@ -160,7 +161,7 @@ class MaverickService
         return is_executable($path) ? $path : null;
     }
 
-    protected function runScript(string $action): \Illuminate\Contracts\Process\ProcessResult
+    protected function runScript(string $action): ProcessResult
     {
         $process = Process::path(base_path())->env([
             'MAVERICK_PHP' => $this->phpBinary(),

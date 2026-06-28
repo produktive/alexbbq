@@ -3,6 +3,7 @@
 use App\Models\Cook;
 use App\Models\Reading;
 use App\Models\Smoker;
+use App\Models\User;
 
 test('cook view page lazy loads chart data', function () {
     $smoker = Smoker::query()->create(['name' => 'Backyard']);
@@ -30,7 +31,7 @@ test('cook view page lazy loads chart data', function () {
 });
 
 test('chart data endpoint returns editor payload for cook owners', function () {
-    $user = \App\Models\User::factory()->create();
+    $user = User::factory()->create();
     $smoker = Smoker::query()->create(['name' => 'Backyard']);
 
     $cook = Cook::query()->create([

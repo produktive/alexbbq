@@ -2,8 +2,8 @@
 
 namespace App\Console\Commands;
 
-use App\Services\LiveCookBroadcast;
 use App\Models\Reading;
+use App\Services\LiveCookBroadcast;
 use App\Services\TemperatureAlertService;
 use Illuminate\Console\Command;
 

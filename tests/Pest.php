@@ -1,5 +1,7 @@
 <?php
 
+use App\Models\Cook;
+use App\Services\MaverickService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -17,8 +19,8 @@ use Tests\TestCase;
 pest()->extend(TestCase::class)
     ->use(RefreshDatabase::class)
     ->beforeEach(function (): void {
-        \App\Models\Cook::flushRequestCache();
-        \App\Services\MaverickService::forgetRunningCache();
+        Cook::flushRequestCache();
+        MaverickService::forgetRunningCache();
     })
     ->in('Feature');
 
