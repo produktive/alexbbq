@@ -1,6 +1,6 @@
 @props(['html'])
 
-<div x-data="cookDescriptionGallery()" class="my-6">
+<div x-data="cookDescriptionGallery()" {{ $attributes->class('my-6') }}>
     <article
         id="cook-description"
         x-ref="content"

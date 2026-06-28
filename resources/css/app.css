@@ -149,16 +149,25 @@ p.fi-ta-text-description,
     @apply relative h-125;
 }
 
-@media (orientation: landscape) and (max-height: 500px) {
+@media (orientation: landscape) and (max-height: 500px) and (max-width: 896px) {
     .cook-chart-viewport {
         display: flex;
         flex-direction: column;
-        /* Mobile header + main padding only; title/metadata/chart flex inside. */
-        height: calc(100dvh - 5rem);
-        max-height: calc(100dvh - 5rem);
+        /* Header (3.5rem) + main top padding (0.75rem) */
+        min-height: calc(100dvh - 4.25rem);
+    }
+
+    .cook-chart-viewport [data-flux-heading] {
+        @apply my-0.5 shrink-0 text-xl leading-tight;
+    }
+
+    .cook-chart-viewport [data-flux-text] {
+        @apply my-0.5 shrink-0 leading-snug;
     }
 
     .cook-chart-viewport .cook-chart {
+        flex: 1 1 0%;
+        min-height: 0;
         height: auto;
         max-height: none;
     }
