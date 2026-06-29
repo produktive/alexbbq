@@ -1,13 +1,13 @@
 import {
+    COOK_DESCRIPTION_UPLOAD_SELECTOR,
     cookDescriptionImageFileSignature,
     isCookDescriptionImageInput,
     isImageUploadFile,
     optimizeCookDescriptionImage,
 } from './cook-description-image';
 
-const COOK_DESCRIPTION_UPLOAD_SELECTOR = '[data-cook-description-image-upload], .cook-description-image-upload';
-const HOOK_POLL_MS = 16;
-const HOOK_POLL_MAX_ATTEMPTS = 1200;
+const HOOK_POLL_MS = 32;
+const HOOK_POLL_MAX_ATTEMPTS = 600;
 const POND_WAIT_MS = 5000;
 
 const preparedFiles = new WeakSet();
@@ -20,10 +20,6 @@ function showCookDescriptionImageError(error) {
     const message = error instanceof Error
         ? error.message
         : 'This image could not be processed.';
-
-    window.dispatchEvent(new CustomEvent('cook-description-image-error', {
-        detail: { message },
-    }));
 
     window.alert(message);
 }
@@ -102,10 +98,12 @@ function isPreparedFile(file) {
 }
 
 function markPendingCookDescriptionFile(file) {
-    pendingCookDescriptionFileSignatures.add(cookDescriptionImageFileSignature(file));
+    const signature = cookDescriptionImageFileSignature(file);
+
+    pendingCookDescriptionFileSignatures.add(signature);
 
     window.setTimeout(() => {
-        pendingCookDescriptionFileSignatures.delete(cookDescriptionImageFileSignature(file));
+        pendingCookDescriptionFileSignatures.delete(signature);
     }, 30_000);
 }
 
@@ -144,6 +142,19 @@ function shouldOptimizeCookDescriptionSource(source, query) {
     }
 
     return isPendingCookDescriptionFile(file) || isCookDescriptionUploadActive();
+}
+
+function failUploadRequest(request, error) {
+    showCookDescriptionImageError(error);
+
+    Object.defineProperty(request, 'status', { configurable: true, value: 422 });
+    Object.defineProperty(request, 'response', {
+        configurable: true,
+        value: JSON.stringify({
+            message: error instanceof Error ? error.message : 'This image could not be processed.',
+        }),
+    });
+    request.dispatchEvent(new Event('load'));
 }
 
 function optimizeUploadSource(source) {
@@ -208,29 +219,24 @@ function registerCookDescriptionImagePlugin() {
     return true;
 }
 
-async function optimizeLivewireUploadFormData(formData) {
-    const entries = [...formData.entries()];
-    const optimizedFormData = new FormData();
-
-    for (const [key, value] of entries) {
-        if (key === 'files[]' && value instanceof File && ! isPreparedFile(value) && isImageUploadFile(value)) {
-            const optimized = await optimizeCookDescriptionImage(value);
-
-            markPreparedFile(optimized);
-            optimizedFormData.append(key, optimized, optimized.name);
-
-            continue;
-        }
-
-        optimizedFormData.append(key, value);
-    }
-
-    return optimizedFormData;
-}
-
 async function optimizeLivewireUploadBody(body) {
     if (body instanceof FormData) {
-        return optimizeLivewireUploadFormData(body);
+        const optimizedFormData = new FormData();
+
+        for (const [key, value] of body.entries()) {
+            if (key === 'files[]' && value instanceof File && ! isPreparedFile(value) && isImageUploadFile(value)) {
+                const optimized = await optimizeCookDescriptionImage(value);
+
+                markPreparedFile(optimized);
+                optimizedFormData.append(key, optimized, optimized.name);
+
+                continue;
+            }
+
+            optimizedFormData.append(key, value);
+        }
+
+        return optimizedFormData;
     }
 
     if (body instanceof File && ! isPreparedFile(body) && isImageUploadFile(body)) {
@@ -244,6 +250,21 @@ async function optimizeLivewireUploadBody(body) {
     return body;
 }
 
+function bodyNeedsOptimization(body) {
+    if (body instanceof FormData) {
+        return [...body.entries()].some(([key, value]) => {
+            return key === 'files[]'
+                && value instanceof File
+                && ! isPreparedFile(value)
+                && isImageUploadFile(value);
+        });
+    }
+
+    return body instanceof File
+        && ! isPreparedFile(body)
+        && isImageUploadFile(body);
+}
+
 function installLivewireUploadInterceptor() {
     if (window.__cookDescriptionLivewireUploadPatch) {
         return;
@@ -252,23 +273,7 @@ function installLivewireUploadInterceptor() {
     const originalSend = XMLHttpRequest.prototype.send;
 
     XMLHttpRequest.prototype.send = function send(body) {
-        if (! isCookDescriptionUploadActive()) {
-            return originalSend.call(this, body);
-        }
-
-        const shouldOptimizeFormData = body instanceof FormData
-            && [...body.entries()].some(([key, value]) => {
-                return key === 'files[]'
-                    && value instanceof File
-                    && ! isPreparedFile(value)
-                    && isImageUploadFile(value);
-            });
-
-        const shouldOptimizeFile = body instanceof File
-            && ! isPreparedFile(body)
-            && isImageUploadFile(body);
-
-        if (! shouldOptimizeFormData && ! shouldOptimizeFile) {
+        if (! isCookDescriptionUploadActive() || ! bodyNeedsOptimization(body)) {
             return originalSend.call(this, body);
         }
 
@@ -277,7 +282,7 @@ function installLivewireUploadInterceptor() {
                 originalSend.call(this, optimizedBody);
             })
             .catch((error) => {
-                showCookDescriptionImageError(error);
+                failUploadRequest(this, error);
             });
 
         return undefined;
@@ -304,12 +309,6 @@ function handleMobileBrowseFileSelection(event) {
     const input = event.target;
 
     if (! isCookDescriptionImageInput(input) || ! input.files?.length) {
-        return;
-    }
-
-    if (input.dataset.cookDescriptionSkipOptimize === '1') {
-        delete input.dataset.cookDescriptionSkipOptimize;
-
         return;
     }
 
@@ -340,9 +339,7 @@ function handleMobileBrowseFileSelection(event) {
             }
 
             input.value = '';
-            await pond.addFile(optimized, {
-                metadata: { cookDescriptionOptimized: true },
-            });
+            await pond.addFile(optimized);
         })
         .catch((error) => {
             input.value = '';
@@ -359,9 +356,7 @@ function installFileSelectionTracker() {
     }
 
     document.addEventListener('change', trackCookDescriptionFileSelection, true);
-    document.addEventListener('input', trackCookDescriptionFileSelection, true);
     document.addEventListener('change', handleMobileBrowseFileSelection, true);
-    document.addEventListener('input', handleMobileBrowseFileSelection, true);
 
     window.__cookDescriptionFileSelectionTracker = true;
 }
@@ -445,9 +440,6 @@ function scheduleCookDescriptionUploadHooks() {
 }
 
 function initCookDescriptionImageUploadHooks() {
-    installFileSelectionTracker();
-    installLivewireUploadInterceptor();
-
     if (! window.__cookDescriptionUploadObserver) {
         window.__cookDescriptionUploadObserver = new MutationObserver(() => {
             scheduleCookDescriptionUploadHooks();

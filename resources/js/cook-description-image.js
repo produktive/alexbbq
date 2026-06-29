@@ -1,6 +1,8 @@
-export const COOK_DESCRIPTION_IMAGE_MAX_BYTES = 2 * 1024 * 1024;
-export const COOK_DESCRIPTION_IMAGE_MAX_WIDTH = 1920;
-export const COOK_DESCRIPTION_IMAGE_MAX_HEIGHT = 1920;
+const COOK_DESCRIPTION_IMAGE_MAX_BYTES = 2 * 1024 * 1024;
+const COOK_DESCRIPTION_IMAGE_MAX_WIDTH = 1920;
+const COOK_DESCRIPTION_IMAGE_MAX_HEIGHT = 1920;
+
+export const COOK_DESCRIPTION_UPLOAD_SELECTOR = '[data-cook-description-image-upload]';
 
 const IMAGE_EXTENSIONS = new Set(['jpg', 'jpeg', 'png', 'gif', 'webp', 'heic', 'heif']);
 
@@ -147,7 +149,7 @@ async function encodeWebpViaWasm(canvas) {
                 return { blob, extension: 'webp', type: 'image/webp' };
             }
         } catch {
-            return null;
+            continue;
         }
     }
 
@@ -252,5 +254,5 @@ export async function optimizeCookDescriptionImage(file) {
 export function isCookDescriptionImageInput(input) {
     return input instanceof HTMLInputElement
         && input.type === 'file'
-        && Boolean(input.closest('[data-cook-description-image-upload], .cook-description-image-upload'));
+        && Boolean(input.closest(COOK_DESCRIPTION_UPLOAD_SELECTOR));
 }

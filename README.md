@@ -367,6 +367,7 @@ Add a cron job to keep your Cloudflare DNS record updated:
 | `alerts:diagnose` | Check alert configuration and VAPID setup |
 | `app:normalize-cook-descriptions` | Convert legacy cook descriptions to RichEditor HTML |
 | `app:normalize-legacy-reading-times` | Convert legacy local timestamps to UTC |
+| `app:prune-cook-description-images` | Remove orphaned cook description image files |
 | `webpush:vapid` | Generate VAPID keys for push notifications |
 
 ---

@@ -27,10 +27,6 @@ class Cook extends Model implements HasRichContent
 
     public const DESCRIPTION_ATTACHMENT_SOURCE_MAX_UPLOAD_KB = 12_288;
 
-    public const DESCRIPTION_ATTACHMENT_MAX_WIDTH = 1920;
-
-    public const DESCRIPTION_ATTACHMENT_MAX_HEIGHT = 1920;
-
     protected $fillable = [
         'user_id',
         'smoker_id',
