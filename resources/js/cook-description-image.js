@@ -2,6 +2,30 @@ export const COOK_DESCRIPTION_IMAGE_MAX_BYTES = 2 * 1024 * 1024;
 export const COOK_DESCRIPTION_IMAGE_MAX_WIDTH = 1920;
 export const COOK_DESCRIPTION_IMAGE_MAX_HEIGHT = 1920;
 
+const IMAGE_EXTENSIONS = new Set(['jpg', 'jpeg', 'png', 'gif', 'webp', 'heic', 'heif']);
+
+export function isImageUploadFile(file) {
+    if (! (file instanceof File)) {
+        return false;
+    }
+
+    if (file.type.startsWith('image/')) {
+        return true;
+    }
+
+    if (file.type !== '' && file.type !== 'application/octet-stream') {
+        return false;
+    }
+
+    const extension = file.name.split('.').pop()?.toLowerCase() ?? '';
+
+    return IMAGE_EXTENSIONS.has(extension);
+}
+
+export function cookDescriptionImageFileSignature(file) {
+    return `${file.name}:${file.size}:${file.type}:${file.lastModified}`;
+}
+
 function swapExtension(filename, extension) {
     const base = filename.replace(/\.[^.]+$/, '') || 'image';
 
@@ -87,7 +111,7 @@ async function encodeUnderBudget(canvas) {
 }
 
 export async function optimizeCookDescriptionImage(file) {
-    if (! file.type.startsWith('image/')) {
+    if (! isImageUploadFile(file)) {
         return file;
     }
 

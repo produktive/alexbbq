@@ -1,10 +1,17 @@
-import { isCookDescriptionImageInput, optimizeCookDescriptionImage } from './cook-description-image';
+import {
+    cookDescriptionImageFileSignature,
+    isCookDescriptionImageInput,
+    isImageUploadFile,
+    optimizeCookDescriptionImage,
+} from './cook-description-image';
 
 const COOK_DESCRIPTION_UPLOAD_SELECTOR = '[data-cook-description-image-upload], .cook-description-image-upload';
 const HOOK_POLL_MS = 16;
 const HOOK_POLL_MAX_ATTEMPTS = 1200;
+const POND_WAIT_MS = 5000;
 
 const preparedFiles = new WeakSet();
+const preparedFileSignatures = new Set();
 const hookedPonds = new WeakSet();
 
 let hookPollIntervalId = null;
@@ -21,6 +28,12 @@ function showCookDescriptionImageError(error) {
     }));
 
     window.alert(message);
+}
+
+function prefersDirectPondUpload() {
+    return window.matchMedia('(pointer: coarse)').matches
+        || 'ontouchstart' in window
+        || navigator.maxTouchPoints > 0;
 }
 
 function findCookDescriptionUploadScopes() {
@@ -56,18 +69,46 @@ function getPondForScope(scope) {
     return null;
 }
 
+async function waitForPond(scope) {
+    const startedAt = Date.now();
+
+    while (Date.now() - startedAt < POND_WAIT_MS) {
+        const pond = getPondForScope(scope);
+
+        if (pond) {
+            return pond;
+        }
+
+        await new Promise((resolve) => {
+            window.setTimeout(resolve, HOOK_POLL_MS);
+        });
+    }
+
+    return null;
+}
+
+function markPreparedFile(file) {
+    preparedFiles.add(file);
+    preparedFileSignatures.add(cookDescriptionImageFileSignature(file));
+}
+
+function isPreparedFile(file) {
+    return preparedFiles.has(file)
+        || preparedFileSignatures.has(cookDescriptionImageFileSignature(file));
+}
+
 function optimizeForUpload(file) {
-    if (! (file instanceof File) || ! file.type.startsWith('image/')) {
+    if (! isImageUploadFile(file)) {
         return Promise.resolve(file);
     }
 
-    if (preparedFiles.has(file)) {
+    if (isPreparedFile(file)) {
         return Promise.resolve(file);
     }
 
     return optimizeCookDescriptionImage(file)
         .then((optimized) => {
-            preparedFiles.add(optimized);
+            markPreparedFile(optimized);
 
             return optimized;
         })
@@ -89,11 +130,11 @@ function shouldSkipFileItem(fileItem) {
 
     const file = fileItem.file;
 
-    if (! (file instanceof File) || ! file.type.startsWith('image/')) {
+    if (! isImageUploadFile(file)) {
         return true;
     }
 
-    if (preparedFiles.has(file)) {
+    if (isPreparedFile(file)) {
         fileItem.setMetadata('cookDescriptionOptimized', true);
 
         return true;
@@ -103,30 +144,59 @@ function shouldSkipFileItem(fileItem) {
 }
 
 function assignFileToInput(input, file) {
-    const transfer = new DataTransfer();
+    try {
+        const transfer = new DataTransfer();
 
-    transfer.items.add(file);
-    input.files = transfer.files;
+        transfer.items.add(file);
+        input.files = transfer.files;
 
-    return input.files.length === 1 && input.files[0] === file;
+        if (input.files.length !== 1) {
+            return false;
+        }
+
+        const assigned = input.files[0];
+
+        return assigned.name === file.name
+            && assigned.size === file.size
+            && assigned.type === file.type;
+    } catch {
+        return false;
+    }
+}
+
+async function addOptimizedFileToPond(pond, file) {
+    await pond.addFile(file, {
+        metadata: { cookDescriptionOptimized: true },
+    });
 }
 
 async function deliverOptimizedFileToPond(scope, input, file) {
+    const pond = getPondForScope(scope) ?? await waitForPond(scope);
+
+    if (prefersDirectPondUpload()) {
+        if (! pond) {
+            throw new Error('Could not prepare this image for upload.');
+        }
+
+        input.value = '';
+        await addOptimizedFileToPond(pond, file);
+
+        return;
+    }
+
     if (assignFileToInput(input, file)) {
+        input.dataset.cookDescriptionSkipOptimize = '1';
         input.dispatchEvent(new Event('change', { bubbles: true }));
 
         return;
     }
 
-    const pond = getPondForScope(scope);
-
     if (! pond) {
         throw new Error('Could not prepare this image for upload.');
     }
 
-    await pond.addFile(file, {
-        metadata: { cookDescriptionOptimized: true },
-    });
+    input.value = '';
+    await addOptimizedFileToPond(pond, file);
 }
 
 function hookCookDescriptionPond(pond) {
@@ -171,12 +241,10 @@ function hookCookDescriptionPond(pond) {
     });
 }
 
-async function addOptimizedFileToPond(pond, file) {
+async function addOptimizedFileToPondFromSource(pond, file) {
     const optimized = await optimizeForUpload(file);
 
-    await pond.addFile(optimized, {
-        metadata: { cookDescriptionOptimized: true },
-    });
+    await addOptimizedFileToPond(pond, optimized);
 }
 
 function installDocumentChangeHandler() {
@@ -193,9 +261,15 @@ function installDocumentChangeHandler() {
             return;
         }
 
+        if (input.dataset.cookDescriptionSkipOptimize === '1') {
+            delete input.dataset.cookDescriptionSkipOptimize;
+
+            return;
+        }
+
         const selectedFile = input.files[0];
 
-        if (preparedFiles.has(selectedFile)) {
+        if (isPreparedFile(selectedFile)) {
             return;
         }
 
@@ -257,7 +331,7 @@ function installDocumentDropHandler() {
 
         const file = files[0];
 
-        if (! (file instanceof File) || ! file.type.startsWith('image/')) {
+        if (! isImageUploadFile(file)) {
             return;
         }
 
@@ -272,7 +346,7 @@ function installDocumentDropHandler() {
 
         void (async () => {
             try {
-                await addOptimizedFileToPond(pond, file);
+                await addOptimizedFileToPondFromSource(pond, file);
             } catch {
                 // Error already surfaced in optimizeForUpload().
             }
