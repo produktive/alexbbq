@@ -32,6 +32,10 @@ class AttachCookDescriptionImageAction
                     ->storeFiles(false)
                     ->required(blank($arguments['src'] ?? null))
                     ->hiddenLabel(blank($arguments['src'] ?? null))
+                    ->extraAttributes([
+                        'class' => 'cook-description-image-upload',
+                        'data-cook-description-image-upload' => true,
+                    ])
                     ->extraFieldWrapperAttributes(['data-cook-description-image-upload' => true]),
                 TextInput::make('alt')
                     ->label(filled($arguments['src'] ?? null) ? 'Change caption' : 'Caption')

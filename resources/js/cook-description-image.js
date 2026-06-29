@@ -156,5 +156,5 @@ export async function optimizeCookDescriptionImage(file) {
 export function isCookDescriptionImageInput(input) {
     return input instanceof HTMLInputElement
         && input.type === 'file'
-        && Boolean(input.closest('[data-cook-description-image-upload]'));
+        && Boolean(input.closest('[data-cook-description-image-upload], .cook-description-image-upload'));
 }
