@@ -12,6 +12,7 @@ const POND_WAIT_MS = 5000;
 
 const preparedFiles = new WeakSet();
 const preparedFileSignatures = new Set();
+const hookedInputs = new WeakSet();
 const hookedPonds = new WeakSet();
 
 let hookPollIntervalId = null;
@@ -124,28 +125,6 @@ function optimizeForUpload(file) {
         });
 }
 
-function shouldSkipFileItem(fileItem) {
-    if (! fileItem?.file) {
-        return true;
-    }
-
-    if (fileItem.getMetadata('cookDescriptionOptimized')) {
-        return true;
-    }
-
-    if (! isImageUploadFile(fileItem.file)) {
-        return true;
-    }
-
-    if (isPreparedFile(fileItem.file)) {
-        fileItem.setMetadata('cookDescriptionOptimized', true);
-
-        return true;
-    }
-
-    return false;
-}
-
 function assignFileToInput(input, file) {
     try {
         const transfer = new DataTransfer();
@@ -191,36 +170,6 @@ async function deliverOptimizedFileToPond(scope, input, file) {
     await addOptimizedFileToPond(pond, file);
 }
 
-function hookCookDescriptionPond(pond) {
-    if (hookedPonds.has(pond)) {
-        return;
-    }
-
-    hookedPonds.add(pond);
-
-    pond.on('addfile', (fileItem) => {
-        if (shouldSkipFileItem(fileItem)) {
-            return;
-        }
-
-        const file = fileItem.file;
-        const itemId = fileItem.id;
-
-        void optimizeForUpload(file)
-            .then(async (optimized) => {
-                await pond.removeFile(itemId, { revert: false });
-                await addOptimizedFileToPond(pond, optimized);
-            })
-            .catch(async () => {
-                try {
-                    await pond.removeFile(itemId, { revert: false });
-                } catch {
-                    // Ignore cleanup failures.
-                }
-            });
-    });
-}
-
 function handleBrowseFileSelection(event) {
     const input = event.target;
 
@@ -242,6 +191,7 @@ function handleBrowseFileSelection(event) {
 
     event.preventDefault();
     event.stopPropagation();
+    event.stopImmediatePropagation();
 
     input.dataset.cookDescriptionOptimizing = '1';
 
@@ -257,6 +207,25 @@ function handleBrowseFileSelection(event) {
         .finally(() => {
             delete input.dataset.cookDescriptionOptimizing;
         });
+}
+
+function hookCookDescriptionInput(input) {
+    if (! isCookDescriptionImageInput(input) || hookedInputs.has(input)) {
+        return;
+    }
+
+    hookedInputs.add(input);
+
+    input.addEventListener('change', handleBrowseFileSelection, true);
+    input.addEventListener('input', handleBrowseFileSelection, true);
+}
+
+function hookCookDescriptionInputs(scope) {
+    const input = getFileInputForScope(scope);
+
+    if (input) {
+        hookCookDescriptionInput(input);
+    }
 }
 
 function installBrowseHandler() {
@@ -313,6 +282,7 @@ function installDropHandler() {
         }
 
         event.preventDefault();
+        event.stopPropagation();
         event.stopImmediatePropagation();
 
         void optimizeForUpload(file)
@@ -326,13 +296,17 @@ function installDropHandler() {
 }
 
 function hookCookDescriptionUploadScope(scope) {
+    hookCookDescriptionInputs(scope);
+
     const pond = getPondForScope(scope);
 
     if (! pond) {
         return false;
     }
 
-    hookCookDescriptionPond(pond);
+    if (! hookedPonds.has(pond)) {
+        hookedPonds.add(pond);
+    }
 
     return true;
 }
@@ -358,6 +332,8 @@ function startHookPolling() {
         let allHooked = scopes.length > 0;
 
         scopes.forEach((scope) => {
+            hookCookDescriptionInputs(scope);
+
             if (! hookCookDescriptionUploadScope(scope)) {
                 allHooked = false;
             }
