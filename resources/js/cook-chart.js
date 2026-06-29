@@ -89,12 +89,12 @@ function pointHasNote(context) {
     return Boolean(context.raw?.note);
 }
 
+const NOTE_POINT_COLOR = '#ff1493';
+
 const CHART_COLORS = {
     food: {
         light: { border: 'rgb(45, 212, 191)', area: '45, 212, 191' },
         dark: { border: 'rgb(94, 234, 212)', area: '94, 234, 212' },
-
-        note: 'rgb(45, 212, 191)',
     },
     bbq: {
         light: { border: 'rgb(217, 119, 6)', area: '217, 119, 6' },
@@ -136,7 +136,6 @@ function lineDataset(label, points, colors) {
         backgroundColor: (context) => seriesAreaFill(context, colors.area),
         fill: 'start',
         borderWidth: 2,
-        pointBackgroundColor: colors.border,
         pointHitRadius: 0,
         ...DATASET_POINT_STYLE,
     };
@@ -161,7 +160,8 @@ const DATASET_POINT_STYLE = {
     pointRadius: (context) => (pointHasNote(context) ? 7 : 4),
     pointStyle: (context) => (pointHasNote(context) ? 'rectRot' : 'circle'),
     pointBorderWidth: (context) => (pointHasNote(context) ? 2 : 1),
-    pointBorderColor: (context) => context.dataset.borderColor,
+    pointBackgroundColor: (context) => (pointHasNote(context) ? NOTE_POINT_COLOR : context.dataset.borderColor),
+    pointBorderColor: (context) => (pointHasNote(context) ? NOTE_POINT_COLOR : context.dataset.borderColor),
 };
 
 async function fetchChartData(cookId, { editor = false } = {}) {
