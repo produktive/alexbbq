@@ -86,10 +86,18 @@ async function loadImageSource(file) {
     }
 }
 
-async function encodeUnderBudget(canvas) {
-    const supportsWebp = canvas.toDataURL('image/webp').startsWith('data:image/webp');
+async function supportsWebpEncoding(canvas) {
+    if (canvas.toDataURL('image/webp').startsWith('data:image/webp')) {
+        return true;
+    }
 
-    if (supportsWebp) {
+    const probe = await canvasToBlob(canvas, 'image/webp', 0.5);
+
+    return probe?.type === 'image/webp';
+}
+
+async function encodeUnderBudget(canvas) {
+    if (await supportsWebpEncoding(canvas)) {
         for (let quality = 0.85; quality >= 0.45; quality -= 0.05) {
             const blob = await canvasToBlob(canvas, 'image/webp', quality);
 

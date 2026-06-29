@@ -1,5 +1,6 @@
 import {
     cookDescriptionImageFileSignature,
+    isCookDescriptionImageInput,
     isImageUploadFile,
     optimizeCookDescriptionImage,
 } from './cook-description-image';
@@ -10,6 +11,7 @@ const HOOK_POLL_MAX_ATTEMPTS = 1200;
 
 const preparedFiles = new WeakSet();
 const preparedFileSignatures = new Set();
+const pendingCookDescriptionFileSignatures = new Set();
 
 let hookPollIntervalId = null;
 
@@ -27,6 +29,13 @@ function showCookDescriptionImageError(error) {
 
 function findCookDescriptionUploadScopes() {
     return document.querySelectorAll(COOK_DESCRIPTION_UPLOAD_SELECTOR);
+}
+
+function isCookDescriptionUploadActive() {
+    return [...findCookDescriptionUploadScopes()].some((scope) => {
+        return scope.querySelector('.filepond--root') !== null
+            || scope.querySelector('input[type="file"]') !== null;
+    });
 }
 
 function getFileInputForScope(scope) {
@@ -68,35 +77,86 @@ function isPreparedFile(file) {
         || preparedFileSignatures.has(cookDescriptionImageFileSignature(file));
 }
 
+function markPendingCookDescriptionFile(file) {
+    pendingCookDescriptionFileSignatures.add(cookDescriptionImageFileSignature(file));
+
+    window.setTimeout(() => {
+        pendingCookDescriptionFileSignatures.delete(cookDescriptionImageFileSignature(file));
+    }, 30_000);
+}
+
+function isPendingCookDescriptionFile(file) {
+    return pendingCookDescriptionFileSignatures.has(cookDescriptionImageFileSignature(file));
+}
+
+function toUploadFile(source) {
+    if (source instanceof File) {
+        return source;
+    }
+
+    if (source instanceof Blob) {
+        const name = typeof source.name === 'string' && source.name !== ''
+            ? source.name
+            : 'image.jpg';
+
+        return new File([source], name, {
+            type: source.type || 'application/octet-stream',
+            lastModified: Date.now(),
+        });
+    }
+
+    return null;
+}
+
+function shouldOptimizeCookDescriptionSource(source, query) {
+    if (query?.('GET_COOK_DESCRIPTION_IMAGE_UPLOAD')) {
+        return true;
+    }
+
+    const file = toUploadFile(source);
+
+    if (! file) {
+        return false;
+    }
+
+    return isPendingCookDescriptionFile(file) || isCookDescriptionUploadActive();
+}
+
+function optimizeUploadSource(source) {
+    const file = toUploadFile(source);
+
+    if (! file || isPreparedFile(file) || ! isImageUploadFile(file)) {
+        return Promise.resolve(source);
+    }
+
+    return optimizeCookDescriptionImage(file)
+        .then((optimized) => {
+            markPreparedFile(optimized);
+
+            return optimized;
+        })
+        .catch((error) => {
+            showCookDescriptionImageError(error);
+
+            return Promise.reject({
+                status: {
+                    main: 'Image processing failed',
+                    sub: error instanceof Error ? error.message : 'This image could not be processed.',
+                },
+            });
+        });
+}
+
 function createCookDescriptionImageOptimizerPlugin() {
     return ({ addFilter, utils }) => {
         const { Type } = utils;
 
         addFilter('LOAD_FILE', (source, { query }) => {
-            if (! query('GET_COOK_DESCRIPTION_IMAGE_UPLOAD')) {
+            if (! shouldOptimizeCookDescriptionSource(source, query)) {
                 return Promise.resolve(source);
             }
 
-            if (! (source instanceof File) || isPreparedFile(source) || ! isImageUploadFile(source)) {
-                return Promise.resolve(source);
-            }
-
-            return optimizeCookDescriptionImage(source)
-                .then((optimized) => {
-                    markPreparedFile(optimized);
-
-                    return optimized;
-                })
-                .catch((error) => {
-                    showCookDescriptionImageError(error);
-
-                    return Promise.reject({
-                        status: {
-                            main: 'Image processing failed',
-                            sub: error instanceof Error ? error.message : 'This image could not be processed.',
-                        },
-                    });
-                });
+            return optimizeUploadSource(source);
         });
 
         return {
@@ -107,9 +167,40 @@ function createCookDescriptionImageOptimizerPlugin() {
     };
 }
 
+function patchFilePondCreate() {
+    if (window.__cookDescriptionFilePondCreatePatched) {
+        return true;
+    }
+
+    const { FilePond } = window;
+
+    if (! FilePond?.create) {
+        return false;
+    }
+
+    const originalCreate = FilePond.create.bind(FilePond);
+
+    FilePond.create = (input, options = {}) => {
+        const element = input instanceof Element ? input : null;
+
+        if (element?.closest(COOK_DESCRIPTION_UPLOAD_SELECTOR)) {
+            options = {
+                ...options,
+                cookDescriptionImageUpload: true,
+            };
+        }
+
+        return originalCreate(input, options);
+    };
+
+    window.__cookDescriptionFilePondCreatePatched = true;
+
+    return true;
+}
+
 function registerCookDescriptionImagePlugin() {
     if (window.__cookDescriptionFilePondPluginRegistered) {
-        return true;
+        return patchFilePondCreate();
     }
 
     const { FilePond } = window;
@@ -121,7 +212,85 @@ function registerCookDescriptionImagePlugin() {
     FilePond.registerPlugin(createCookDescriptionImageOptimizerPlugin());
     window.__cookDescriptionFilePondPluginRegistered = true;
 
-    return true;
+    return patchFilePondCreate();
+}
+
+async function optimizeLivewireUploadFormData(formData) {
+    const entries = [...formData.entries()];
+    const optimizedFormData = new FormData();
+
+    for (const [key, value] of entries) {
+        if (key === 'files[]' && value instanceof File && ! isPreparedFile(value) && isImageUploadFile(value)) {
+            const optimized = await optimizeCookDescriptionImage(value);
+
+            markPreparedFile(optimized);
+            optimizedFormData.append(key, optimized, optimized.name);
+
+            continue;
+        }
+
+        optimizedFormData.append(key, value);
+    }
+
+    return optimizedFormData;
+}
+
+function installLivewireUploadInterceptor() {
+    if (window.__cookDescriptionLivewireUploadPatch) {
+        return;
+    }
+
+    const originalSend = XMLHttpRequest.prototype.send;
+
+    XMLHttpRequest.prototype.send = function send(body) {
+        if (! (body instanceof FormData) || ! isCookDescriptionUploadActive()) {
+            return originalSend.call(this, body);
+        }
+
+        const hasUnpreparedImage = [...body.entries()].some(([key, value]) => {
+            return key === 'files[]'
+                && value instanceof File
+                && ! isPreparedFile(value)
+                && isImageUploadFile(value);
+        });
+
+        if (! hasUnpreparedImage) {
+            return originalSend.call(this, body);
+        }
+
+        void optimizeLivewireUploadFormData(body)
+            .then((optimizedFormData) => {
+                originalSend.call(this, optimizedFormData);
+            })
+            .catch((error) => {
+                showCookDescriptionImageError(error);
+            });
+
+        return undefined;
+    };
+
+    window.__cookDescriptionLivewireUploadPatch = true;
+}
+
+function trackCookDescriptionFileSelection(event) {
+    const input = event.target;
+
+    if (! isCookDescriptionImageInput(input) || ! input.files?.length) {
+        return;
+    }
+
+    markPendingCookDescriptionFile(input.files[0]);
+}
+
+function installFileSelectionTracker() {
+    if (window.__cookDescriptionFileSelectionTracker) {
+        return;
+    }
+
+    document.addEventListener('change', trackCookDescriptionFileSelection, true);
+    document.addEventListener('input', trackCookDescriptionFileSelection, true);
+
+    window.__cookDescriptionFileSelectionTracker = true;
 }
 
 function configureCookDescriptionPond(scope) {
@@ -174,6 +343,9 @@ function startHookPolling() {
 }
 
 function scheduleCookDescriptionUploadHooks() {
+    installFileSelectionTracker();
+    installLivewireUploadInterceptor();
+
     const scopes = findCookDescriptionUploadScopes();
 
     if (! scopes.length) {
@@ -200,6 +372,9 @@ function scheduleCookDescriptionUploadHooks() {
 }
 
 function initCookDescriptionImageUploadHooks() {
+    installFileSelectionTracker();
+    installLivewireUploadInterceptor();
+
     if (! window.__cookDescriptionUploadObserver) {
         window.__cookDescriptionUploadObserver = new MutationObserver(() => {
             scheduleCookDescriptionUploadHooks();
