@@ -4,6 +4,7 @@ import {
 } from './cook-description-image';
 
 const HOOK_POLL_MS = 16;
+const HOOK_POLL_MAX_ATTEMPTS = 600;
 
 let optimizing = false;
 let hookPollIntervalId = null;
@@ -30,64 +31,69 @@ function replaceInputFiles(input, file) {
     input.files = transfer.files;
 }
 
-function wrapCookDescriptionServerProcess(originalProcess) {
-    return (fieldName, file, metadata, load, error, progress, abort) => {
-        if (! (file instanceof File) || ! file.type.startsWith('image/')) {
-            return originalProcess(fieldName, file, metadata, load, error, progress, abort);
-        }
+function isCookDescriptionPond(query) {
+    const root = query('GET_ROOT');
 
-        let abortHandle = null;
-
-        optimizeCookDescriptionImage(file)
-            .then((optimized) => {
-                abortHandle = originalProcess(
-                    fieldName,
-                    optimized,
-                    metadata,
-                    load,
-                    error,
-                    progress,
-                    abort,
-                );
-            })
-            .catch((caught) => {
-                showCookDescriptionImageError(caught);
-                error(caught instanceof Error ? caught.message : 'This image could not be processed.');
-            });
-
-        return {
-            abort: () => {
-                abortHandle?.abort?.();
-            },
-        };
-    };
+    return Boolean(root?.element?.closest('[data-cook-description-image-upload]'));
 }
 
-function installFilePondCreateHook() {
+function fileFromAddItem(item) {
+    if (item?.file instanceof File) {
+        return item.file;
+    }
+
+    if (item?.source instanceof File) {
+        return item.source;
+    }
+
+    return null;
+}
+
+function applyOptimizedFileToAddItem(item, optimized) {
+    item.file = optimized;
+    item.source = optimized;
+}
+
+function installFilePondAddItemFilter() {
     const { FilePond } = window;
 
-    if (! FilePond?.create || FilePond.create.__cookDescriptionHook) {
-        return Boolean(FilePond?.create?.__cookDescriptionHook);
+    if (! FilePond?.addFilter || FilePond.__cookDescriptionAddItemFilter) {
+        return Boolean(FilePond?.__cookDescriptionAddItemFilter);
     }
 
-    const originalCreate = FilePond.create.bind(FilePond);
-
-    function wrappedCreate(input, options) {
-        if (isCookDescriptionImageInput(input) && options?.server?.process) {
-            options.server.process = wrapCookDescriptionServerProcess(
-                options.server.process,
-            );
-
-            input.dataset.cookDescriptionImageProcessHooked = '1';
+    FilePond.addFilter('ADD_ITEM', (item, { query }) => {
+        if (! isCookDescriptionPond(query)) {
+            return item;
         }
 
-        return originalCreate(input, options);
-    }
+        const file = fileFromAddItem(item);
 
-    wrappedCreate.__cookDescriptionHook = true;
-    FilePond.create = wrappedCreate;
+        if (! file || ! file.type.startsWith('image/')) {
+            return item;
+        }
+
+        return optimizeCookDescriptionImage(file)
+            .then((optimized) => {
+                if (optimized !== file) {
+                    applyOptimizedFileToAddItem(item, optimized);
+                }
+
+                return item;
+            })
+            .catch((error) => {
+                showCookDescriptionImageError(error);
+
+                return Promise.reject(error);
+            });
+    });
+
+    FilePond.__cookDescriptionAddItemFilter = true;
 
     return true;
+}
+
+function installFilePondHooks() {
+    return installFilePondAddItemFilter();
 }
 
 function stopHookPolling() {
@@ -100,12 +106,14 @@ function stopHookPolling() {
 }
 
 function startHookPolling() {
-    if (hookPollIntervalId !== null || installFilePondCreateHook()) {
+    if (hookPollIntervalId !== null || installFilePondHooks()) {
         return;
     }
 
+    let attempts = 0;
+
     hookPollIntervalId = window.setInterval(() => {
-        if (installFilePondCreateHook()) {
+        if (installFilePondHooks() || ++attempts >= HOOK_POLL_MAX_ATTEMPTS) {
             stopHookPolling();
         }
     }, HOOK_POLL_MS);
@@ -113,12 +121,10 @@ function startHookPolling() {
 
 function scheduleCookDescriptionUploadHooks() {
     if (! document.querySelector('[data-cook-description-image-upload]')) {
-        stopHookPolling();
-
         return;
     }
 
-    if (! installFilePondCreateHook()) {
+    if (! installFilePondHooks()) {
         startHookPolling();
     }
 }
