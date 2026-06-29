@@ -3,10 +3,10 @@ import {
     optimizeCookDescriptionImage,
 } from './cook-description-image';
 
-const HOOK_RETRY_MS = 100;
-const HOOK_RETRY_ATTEMPTS = 100;
+const HOOK_POLL_MS = 16;
 
 let optimizing = false;
+let hookPollIntervalId = null;
 
 function showCookDescriptionImageError(error) {
     const message = error instanceof Error
@@ -30,41 +30,36 @@ function replaceInputFiles(input, file) {
     input.files = transfer.files;
 }
 
-function replaceFileItemFile(fileItem, file) {
-    fileItem.file = file;
-
-    if ('source' in fileItem) {
-        fileItem.source = file;
-    }
-}
-
-async function optimizeCookDescriptionFileItem(fileItem) {
-    if (! (fileItem?.file instanceof File)) {
-        return;
-    }
-
-    const optimized = await optimizeCookDescriptionImage(fileItem.file);
-
-    if (optimized !== fileItem.file) {
-        replaceFileItemFile(fileItem, optimized);
-    }
-}
-
-function chainBeforeAddFile(original, hook) {
-    return async (fileItem) => {
-        try {
-            await hook(fileItem);
-        } catch (error) {
-            showCookDescriptionImageError(error);
-
-            return false;
+function wrapCookDescriptionServerProcess(originalProcess) {
+    return (fieldName, file, metadata, load, error, progress, abort) => {
+        if (! (file instanceof File) || ! file.type.startsWith('image/')) {
+            return originalProcess(fieldName, file, metadata, load, error, progress, abort);
         }
 
-        if (typeof original === 'function') {
-            return await original(fileItem);
-        }
+        let abortHandle = null;
 
-        return true;
+        optimizeCookDescriptionImage(file)
+            .then((optimized) => {
+                abortHandle = originalProcess(
+                    fieldName,
+                    optimized,
+                    metadata,
+                    load,
+                    error,
+                    progress,
+                    abort,
+                );
+            })
+            .catch((caught) => {
+                showCookDescriptionImageError(caught);
+                error(caught instanceof Error ? caught.message : 'This image could not be processed.');
+            });
+
+        return {
+            abort: () => {
+                abortHandle?.abort?.();
+            },
+        };
     };
 }
 
@@ -72,19 +67,18 @@ function installFilePondCreateHook() {
     const { FilePond } = window;
 
     if (! FilePond?.create || FilePond.create.__cookDescriptionHook) {
-        return false;
+        return Boolean(FilePond?.create?.__cookDescriptionHook);
     }
 
     const originalCreate = FilePond.create.bind(FilePond);
 
     function wrappedCreate(input, options) {
-        if (isCookDescriptionImageInput(input) && options != null) {
-            options.beforeAddFile = chainBeforeAddFile(
-                options.beforeAddFile,
-                optimizeCookDescriptionFileItem,
+        if (isCookDescriptionImageInput(input) && options?.server?.process) {
+            options.server.process = wrapCookDescriptionServerProcess(
+                options.server.process,
             );
 
-            input.dataset.cookDescriptionImagePondHooked = '1';
+            input.dataset.cookDescriptionImageProcessHooked = '1';
         }
 
         return originalCreate(input, options);
@@ -96,89 +90,37 @@ function installFilePondCreateHook() {
     return true;
 }
 
-function hookExistingCookDescriptionPond(input) {
-    if (input.dataset.cookDescriptionImagePondHooked === '1') {
-        return true;
-    }
-
-    const { FilePond } = window;
-
-    if (! FilePond?.find) {
-        return false;
-    }
-
-    const pond = FilePond.find(input);
-
-    if (! pond) {
-        return false;
-    }
-
-    pond.setOptions({
-        beforeAddFile: chainBeforeAddFile(
-            async () => true,
-            optimizeCookDescriptionFileItem,
-        ),
-    });
-
-    input.dataset.cookDescriptionImagePondHooked = '1';
-
-    return true;
-}
-
-function retryUntil(callback, intervalMs, maxAttempts) {
-    let attempts = 0;
-
-    const intervalId = window.setInterval(() => {
-        if (callback() || ++attempts >= maxAttempts) {
-            window.clearInterval(intervalId);
-        }
-    }, intervalMs);
-}
-
-function scheduleCookDescriptionUploadHooks() {
-    installFilePondCreateHook();
-
-    document.querySelectorAll('[data-cook-description-image-upload] input[type="file"]').forEach((input) => {
-        if (input.dataset.cookDescriptionImagePondHooked === '1') {
-            return;
-        }
-
-        if (! hookExistingCookDescriptionPond(input)) {
-            retryUntil(
-                () => hookExistingCookDescriptionPond(input),
-                HOOK_RETRY_MS,
-                HOOK_RETRY_ATTEMPTS,
-            );
-        }
-    });
-}
-
-function interceptFilePondAssignment() {
-    if (window.__cookDescriptionFilePondIntercept) {
+function stopHookPolling() {
+    if (hookPollIntervalId === null) {
         return;
     }
 
-    window.__cookDescriptionFilePondIntercept = true;
+    window.clearInterval(hookPollIntervalId);
+    hookPollIntervalId = null;
+}
 
-    let filePond = window.FilePond;
-
-    try {
-        Object.defineProperty(window, 'FilePond', {
-            configurable: true,
-            enumerable: true,
-            get() {
-                return filePond;
-            },
-            set(value) {
-                filePond = value;
-                scheduleCookDescriptionUploadHooks();
-            },
-        });
-    } catch {
-        // FilePond may already be defined; polling below still applies.
+function startHookPolling() {
+    if (hookPollIntervalId !== null || installFilePondCreateHook()) {
+        return;
     }
 
-    scheduleCookDescriptionUploadHooks();
+    hookPollIntervalId = window.setInterval(() => {
+        if (installFilePondCreateHook()) {
+            stopHookPolling();
+        }
+    }, HOOK_POLL_MS);
+}
+
+function scheduleCookDescriptionUploadHooks() {
+    if (! document.querySelector('[data-cook-description-image-upload]')) {
+        stopHookPolling();
+
+        return;
+    }
+
+    if (! installFilePondCreateHook()) {
+        startHookPolling();
+    }
 }
 
 async function handleCookDescriptionImageSelection(event) {
@@ -220,8 +162,6 @@ async function handleCookDescriptionImageSelection(event) {
 }
 
 function initCookDescriptionImageUploadHooks() {
-    interceptFilePondAssignment();
-
     if (! window.__cookDescriptionUploadObserver) {
         window.__cookDescriptionUploadObserver = new MutationObserver(() => {
             scheduleCookDescriptionUploadHooks();
@@ -232,6 +172,8 @@ function initCookDescriptionImageUploadHooks() {
             subtree: true,
         });
     }
+
+    scheduleCookDescriptionUploadHooks();
 }
 
 initCookDescriptionImageUploadHooks();
