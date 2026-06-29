@@ -3,8 +3,10 @@ import {
     optimizeCookDescriptionImage,
 } from './cook-description-image';
 
-const FILE_POND_POLL_MS = 100;
-const FILE_POND_POLL_TIMEOUT_MS = 30_000;
+const HOOK_RETRY_MS = 100;
+const HOOK_RETRY_ATTEMPTS = 100;
+
+let optimizing = false;
 
 function showCookDescriptionImageError(error) {
     const message = error instanceof Error
@@ -16,6 +18,16 @@ function showCookDescriptionImageError(error) {
     }));
 
     window.alert(message);
+}
+
+function replaceInputFiles(input, file) {
+    const transfer = new DataTransfer();
+
+    if (file) {
+        transfer.items.add(file);
+    }
+
+    input.files = transfer.files;
 }
 
 function replaceFileItemFile(fileItem, file) {
@@ -56,7 +68,7 @@ function chainBeforeAddFile(original, hook) {
     };
 }
 
-function installFilePondCookDescriptionHook() {
+function installFilePondCreateHook() {
     const { FilePond } = window;
 
     if (! FilePond?.create || FilePond.create.__cookDescriptionHook) {
@@ -71,6 +83,8 @@ function installFilePondCookDescriptionHook() {
                 options.beforeAddFile,
                 optimizeCookDescriptionFileItem,
             );
+
+            input.dataset.cookDescriptionImagePondHooked = '1';
         }
 
         return originalCreate(input, options);
@@ -82,26 +96,145 @@ function installFilePondCookDescriptionHook() {
     return true;
 }
 
-function watchForFilePond() {
-    if (installFilePondCookDescriptionHook()) {
-        return;
+function hookExistingCookDescriptionPond(input) {
+    if (input.dataset.cookDescriptionImagePondHooked === '1') {
+        return true;
     }
 
-    const startedAt = Date.now();
+    const { FilePond } = window;
+
+    if (! FilePond?.find) {
+        return false;
+    }
+
+    const pond = FilePond.find(input);
+
+    if (! pond) {
+        return false;
+    }
+
+    pond.setOptions({
+        beforeAddFile: chainBeforeAddFile(
+            async () => true,
+            optimizeCookDescriptionFileItem,
+        ),
+    });
+
+    input.dataset.cookDescriptionImagePondHooked = '1';
+
+    return true;
+}
+
+function retryUntil(callback, intervalMs, maxAttempts) {
+    let attempts = 0;
 
     const intervalId = window.setInterval(() => {
-        if (installFilePondCookDescriptionHook()) {
+        if (callback() || ++attempts >= maxAttempts) {
             window.clearInterval(intervalId);
+        }
+    }, intervalMs);
+}
 
+function scheduleCookDescriptionUploadHooks() {
+    installFilePondCreateHook();
+
+    document.querySelectorAll('[data-cook-description-image-upload] input[type="file"]').forEach((input) => {
+        if (input.dataset.cookDescriptionImagePondHooked === '1') {
             return;
         }
 
-        if (Date.now() - startedAt >= FILE_POND_POLL_TIMEOUT_MS) {
-            window.clearInterval(intervalId);
+        if (! hookExistingCookDescriptionPond(input)) {
+            retryUntil(
+                () => hookExistingCookDescriptionPond(input),
+                HOOK_RETRY_MS,
+                HOOK_RETRY_ATTEMPTS,
+            );
         }
-    }, FILE_POND_POLL_MS);
+    });
 }
 
-watchForFilePond();
+function interceptFilePondAssignment() {
+    if (window.__cookDescriptionFilePondIntercept) {
+        return;
+    }
 
-document.addEventListener('livewire:navigated', watchForFilePond);
+    window.__cookDescriptionFilePondIntercept = true;
+
+    let filePond = window.FilePond;
+
+    try {
+        Object.defineProperty(window, 'FilePond', {
+            configurable: true,
+            enumerable: true,
+            get() {
+                return filePond;
+            },
+            set(value) {
+                filePond = value;
+                scheduleCookDescriptionUploadHooks();
+            },
+        });
+    } catch {
+        // FilePond may already be defined; polling below still applies.
+    }
+
+    scheduleCookDescriptionUploadHooks();
+}
+
+async function handleCookDescriptionImageSelection(event) {
+    const input = event.target;
+
+    if (! isCookDescriptionImageInput(input) || ! input.files?.length) {
+        return;
+    }
+
+    if (input.dataset.cookDescriptionImageReady === '1') {
+        delete input.dataset.cookDescriptionImageReady;
+
+        return;
+    }
+
+    if (optimizing) {
+        return;
+    }
+
+    const original = input.files[0];
+
+    event.preventDefault();
+    event.stopImmediatePropagation();
+
+    optimizing = true;
+
+    try {
+        const optimized = await optimizeCookDescriptionImage(original);
+        replaceInputFiles(input, optimized);
+        input.dataset.cookDescriptionImageReady = '1';
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+        input.dispatchEvent(new Event('change', { bubbles: true }));
+    } catch (error) {
+        replaceInputFiles(input, null);
+        showCookDescriptionImageError(error);
+    } finally {
+        optimizing = false;
+    }
+}
+
+function initCookDescriptionImageUploadHooks() {
+    interceptFilePondAssignment();
+
+    if (! window.__cookDescriptionUploadObserver) {
+        window.__cookDescriptionUploadObserver = new MutationObserver(() => {
+            scheduleCookDescriptionUploadHooks();
+        });
+
+        window.__cookDescriptionUploadObserver.observe(document.documentElement, {
+            childList: true,
+            subtree: true,
+        });
+    }
+}
+
+initCookDescriptionImageUploadHooks();
+
+document.addEventListener('change', handleCookDescriptionImageSelection, true);
+document.addEventListener('livewire:navigated', scheduleCookDescriptionUploadHooks);
