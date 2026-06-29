@@ -2,6 +2,7 @@
 
 namespace App\Filament\RichEditor\Actions;
 
+use App\Models\Cook;
 use Filament\Actions\Action;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\RichEditor;
@@ -28,7 +29,7 @@ class AttachCookDescriptionImageAction
                         ? __('filament-forms::components.rich_editor.actions.attach_files.modal.form.file.label.existing')
                         : __('filament-forms::components.rich_editor.actions.attach_files.modal.form.file.label.new'))
                     ->acceptedFileTypes($component->getFileAttachmentsAcceptedFileTypes())
-                    ->maxSize($component->getFileAttachmentsMaxSize())
+                    ->maxSize(Cook::DESCRIPTION_ATTACHMENT_SOURCE_MAX_UPLOAD_KB)
                     ->storeFiles(false)
                     ->required(blank($arguments['src'] ?? null))
                     ->hiddenLabel(blank($arguments['src'] ?? null))

@@ -1,6 +1,5 @@
 import {
     cookDescriptionImageFileSignature,
-    isCookDescriptionImageInput,
     isImageUploadFile,
     optimizeCookDescriptionImage,
 } from './cook-description-image';
@@ -8,12 +7,9 @@ import {
 const COOK_DESCRIPTION_UPLOAD_SELECTOR = '[data-cook-description-image-upload], .cook-description-image-upload';
 const HOOK_POLL_MS = 16;
 const HOOK_POLL_MAX_ATTEMPTS = 1200;
-const POND_WAIT_MS = 5000;
 
 const preparedFiles = new WeakSet();
 const preparedFileSignatures = new Set();
-const hookedInputs = new WeakSet();
-const hookedPonds = new WeakSet();
 
 let hookPollIntervalId = null;
 
@@ -29,21 +25,8 @@ function showCookDescriptionImageError(error) {
     window.alert(message);
 }
 
-function prefersDirectPondUpload() {
-    return window.matchMedia('(pointer: coarse)').matches
-        || navigator.maxTouchPoints > 0;
-}
-
 function findCookDescriptionUploadScopes() {
     return document.querySelectorAll(COOK_DESCRIPTION_UPLOAD_SELECTOR);
-}
-
-function getScopeFromTarget(target) {
-    if (! (target instanceof Element)) {
-        return null;
-    }
-
-    return target.closest(COOK_DESCRIPTION_UPLOAD_SELECTOR);
 }
 
 function getFileInputForScope(scope) {
@@ -75,24 +58,6 @@ function getPondForScope(scope) {
     return null;
 }
 
-async function waitForPond(scope) {
-    const startedAt = Date.now();
-
-    while (Date.now() - startedAt < POND_WAIT_MS) {
-        const pond = getPondForScope(scope);
-
-        if (pond) {
-            return pond;
-        }
-
-        await new Promise((resolve) => {
-            window.setTimeout(resolve, HOOK_POLL_MS);
-        });
-    }
-
-    return null;
-}
-
 function markPreparedFile(file) {
     preparedFiles.add(file);
     preparedFileSignatures.add(cookDescriptionImageFileSignature(file));
@@ -103,209 +68,72 @@ function isPreparedFile(file) {
         || preparedFileSignatures.has(cookDescriptionImageFileSignature(file));
 }
 
-function optimizeForUpload(file) {
-    if (! isImageUploadFile(file)) {
-        return Promise.resolve(file);
-    }
+function createCookDescriptionImageOptimizerPlugin() {
+    return ({ addFilter, utils }) => {
+        const { Type } = utils;
 
-    if (isPreparedFile(file)) {
-        return Promise.resolve(file);
-    }
+        addFilter('LOAD_FILE', (source, { query }) => {
+            if (! query('GET_COOK_DESCRIPTION_IMAGE_UPLOAD')) {
+                return Promise.resolve(source);
+            }
 
-    return optimizeCookDescriptionImage(file)
-        .then((optimized) => {
-            markPreparedFile(optimized);
+            if (! (source instanceof File) || isPreparedFile(source) || ! isImageUploadFile(source)) {
+                return Promise.resolve(source);
+            }
 
-            return optimized;
-        })
-        .catch((error) => {
-            showCookDescriptionImageError(error);
+            return optimizeCookDescriptionImage(source)
+                .then((optimized) => {
+                    markPreparedFile(optimized);
 
-            return Promise.reject(error);
+                    return optimized;
+                })
+                .catch((error) => {
+                    showCookDescriptionImageError(error);
+
+                    return Promise.reject({
+                        status: {
+                            main: 'Image processing failed',
+                            sub: error instanceof Error ? error.message : 'This image could not be processed.',
+                        },
+                    });
+                });
         });
+
+        return {
+            options: {
+                cookDescriptionImageUpload: [false, Type.BOOLEAN],
+            },
+        };
+    };
 }
 
-function assignFileToInput(input, file) {
-    try {
-        const transfer = new DataTransfer();
+function registerCookDescriptionImagePlugin() {
+    if (window.__cookDescriptionFilePondPluginRegistered) {
+        return true;
+    }
 
-        transfer.items.add(file);
-        input.files = transfer.files;
+    const { FilePond } = window;
 
-        if (input.files.length !== 1) {
-            return false;
-        }
-
-        const assigned = input.files[0];
-
-        return assigned.name === file.name
-            && assigned.size === file.size
-            && assigned.type === file.type;
-    } catch {
+    if (! FilePond?.registerPlugin) {
         return false;
     }
+
+    FilePond.registerPlugin(createCookDescriptionImageOptimizerPlugin());
+    window.__cookDescriptionFilePondPluginRegistered = true;
+
+    return true;
 }
 
-async function addOptimizedFileToPond(pond, file) {
-    await pond.addFile(file, {
-        metadata: { cookDescriptionOptimized: true },
-    });
-}
-
-async function deliverOptimizedFileToPond(scope, input, file) {
-    if (! prefersDirectPondUpload() && assignFileToInput(input, file)) {
-        input.dataset.cookDescriptionSkipOptimize = '1';
-        input.dispatchEvent(new Event('change', { bubbles: true }));
-
-        return;
-    }
-
-    const pond = getPondForScope(scope) ?? await waitForPond(scope);
-
-    if (! pond) {
-        throw new Error('Could not prepare this image for upload.');
-    }
-
-    input.value = '';
-    await addOptimizedFileToPond(pond, file);
-}
-
-function handleBrowseFileSelection(event) {
-    const input = event.target;
-
-    if (! isCookDescriptionImageInput(input) || ! input.files?.length) {
-        return;
-    }
-
-    if (input.dataset.cookDescriptionSkipOptimize === '1') {
-        delete input.dataset.cookDescriptionSkipOptimize;
-
-        return;
-    }
-
-    const selectedFile = input.files[0];
-
-    if (isPreparedFile(selectedFile) || input.dataset.cookDescriptionOptimizing === '1') {
-        return;
-    }
-
-    event.preventDefault();
-    event.stopPropagation();
-    event.stopImmediatePropagation();
-
-    input.dataset.cookDescriptionOptimizing = '1';
-
-    const scope = input.closest(COOK_DESCRIPTION_UPLOAD_SELECTOR);
-
-    void optimizeForUpload(selectedFile)
-        .then(async (optimized) => {
-            await deliverOptimizedFileToPond(scope, input, optimized);
-        })
-        .catch(() => {
-            input.value = '';
-        })
-        .finally(() => {
-            delete input.dataset.cookDescriptionOptimizing;
-        });
-}
-
-function hookCookDescriptionInput(input) {
-    if (! isCookDescriptionImageInput(input) || hookedInputs.has(input)) {
-        return;
-    }
-
-    hookedInputs.add(input);
-
-    input.addEventListener('change', handleBrowseFileSelection, true);
-    input.addEventListener('input', handleBrowseFileSelection, true);
-}
-
-function hookCookDescriptionInputs(scope) {
-    const input = getFileInputForScope(scope);
-
-    if (input) {
-        hookCookDescriptionInput(input);
-    }
-}
-
-function installBrowseHandler() {
-    if (window.__cookDescriptionBrowseHandler) {
-        return;
-    }
-
-    document.addEventListener('change', handleBrowseFileSelection, true);
-    document.addEventListener('input', handleBrowseFileSelection, true);
-
-    window.__cookDescriptionBrowseHandler = true;
-}
-
-function installDropHandler() {
-    if (window.__cookDescriptionDropHandler) {
-        return;
-    }
-
-    document.addEventListener('dragover', (event) => {
-        if (! getScopeFromTarget(event.target)) {
-            return;
-        }
-
-        if (! event.dataTransfer?.types?.includes('Files')) {
-            return;
-        }
-
-        event.preventDefault();
-    }, true);
-
-    document.addEventListener('drop', (event) => {
-        const scope = getScopeFromTarget(event.target);
-
-        if (! scope) {
-            return;
-        }
-
-        const files = event.dataTransfer?.files;
-
-        if (! files?.length) {
-            return;
-        }
-
-        const file = files[0];
-
-        if (! isImageUploadFile(file)) {
-            return;
-        }
-
-        const pond = getPondForScope(scope);
-
-        if (! pond) {
-            return;
-        }
-
-        event.preventDefault();
-        event.stopPropagation();
-        event.stopImmediatePropagation();
-
-        void optimizeForUpload(file)
-            .then((optimized) => addOptimizedFileToPond(pond, optimized))
-            .catch(() => {
-                // Error already surfaced in optimizeForUpload().
-            });
-    }, true);
-
-    window.__cookDescriptionDropHandler = true;
-}
-
-function hookCookDescriptionUploadScope(scope) {
-    hookCookDescriptionInputs(scope);
-
+function configureCookDescriptionPond(scope) {
     const pond = getPondForScope(scope);
 
     if (! pond) {
         return false;
     }
 
-    if (! hookedPonds.has(pond)) {
-        hookedPonds.add(pond);
+    if (! pond.__cookDescriptionImageConfigured) {
+        pond.setOptions({ cookDescriptionImageUpload: true });
+        pond.__cookDescriptionImageConfigured = true;
     }
 
     return true;
@@ -328,42 +156,45 @@ function startHookPolling() {
     let attempts = 0;
 
     hookPollIntervalId = window.setInterval(() => {
+        registerCookDescriptionImagePlugin();
+
         const scopes = findCookDescriptionUploadScopes();
-        let allHooked = scopes.length > 0;
+        let allConfigured = scopes.length > 0;
 
         scopes.forEach((scope) => {
-            hookCookDescriptionInputs(scope);
-
-            if (! hookCookDescriptionUploadScope(scope)) {
-                allHooked = false;
+            if (! configureCookDescriptionPond(scope)) {
+                allConfigured = false;
             }
         });
 
-        if (allHooked || ++attempts >= HOOK_POLL_MAX_ATTEMPTS) {
+        if (allConfigured || ++attempts >= HOOK_POLL_MAX_ATTEMPTS) {
             stopHookPolling();
         }
     }, HOOK_POLL_MS);
 }
 
 function scheduleCookDescriptionUploadHooks() {
-    installBrowseHandler();
-    installDropHandler();
-
     const scopes = findCookDescriptionUploadScopes();
 
     if (! scopes.length) {
         return;
     }
 
-    let allHooked = true;
+    if (! registerCookDescriptionImagePlugin()) {
+        startHookPolling();
+
+        return;
+    }
+
+    let allConfigured = true;
 
     scopes.forEach((scope) => {
-        if (! hookCookDescriptionUploadScope(scope)) {
-            allHooked = false;
+        if (! configureCookDescriptionPond(scope)) {
+            allConfigured = false;
         }
     });
 
-    if (! allHooked) {
+    if (! allConfigured) {
         startHookPolling();
     }
 }
