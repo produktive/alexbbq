@@ -4,6 +4,8 @@ export const COOK_DESCRIPTION_IMAGE_MAX_HEIGHT = 1920;
 
 const IMAGE_EXTENSIONS = new Set(['jpg', 'jpeg', 'png', 'gif', 'webp', 'heic', 'heif']);
 
+let wasmWebpEncoderPromise = null;
+
 export function isImageUploadFile(file) {
     if (! (file instanceof File)) {
         return false;
@@ -47,20 +49,41 @@ function canvasToBlob(canvas, type, quality) {
     });
 }
 
-async function loadImageSource(file) {
-    if (typeof createImageBitmap === 'function') {
-        const bitmap = await createImageBitmap(file);
+function isWebpBlob(blob) {
+    return blob instanceof Blob && blob.type === 'image/webp' && blob.size > 0;
+}
 
-        return {
-            draw(ctx, width, height) {
-                ctx.drawImage(bitmap, 0, 0, width, height);
-            },
-            width: bitmap.width,
-            height: bitmap.height,
-            close() {
-                bitmap.close?.();
-            },
-        };
+function loadWasmWebpEncoder() {
+    if (! wasmWebpEncoderPromise) {
+        wasmWebpEncoderPromise = import('@jsquash/webp').then((module) => module.encode);
+    }
+
+    return wasmWebpEncoderPromise;
+}
+
+async function loadImageSource(file) {
+    const preferImageElement = typeof createImageBitmap !== 'function'
+        || (navigator.maxTouchPoints > 0 && file.type === 'image/jpeg');
+
+    if (! preferImageElement && typeof createImageBitmap === 'function') {
+        try {
+            const bitmap = await createImageBitmap(file, {
+                imageOrientation: 'from-image',
+            });
+
+            return {
+                draw(ctx, width, height) {
+                    ctx.drawImage(bitmap, 0, 0, width, height);
+                },
+                width: bitmap.width,
+                height: bitmap.height,
+                close() {
+                    bitmap.close?.();
+                },
+            };
+        } catch {
+            // Fall back to Image() below.
+        }
     }
 
     const url = URL.createObjectURL(file);
@@ -86,27 +109,52 @@ async function loadImageSource(file) {
     }
 }
 
-async function supportsWebpEncoding(canvas) {
-    if (canvas.toDataURL('image/webp').startsWith('data:image/webp')) {
-        return true;
-    }
+async function encodeWebpViaCanvas(canvas) {
+    for (let quality = 0.85; quality >= 0.45; quality -= 0.05) {
+        const blob = await canvasToBlob(canvas, 'image/webp', quality);
 
-    const probe = await canvasToBlob(canvas, 'image/webp', 0.5);
-
-    return probe?.type === 'image/webp';
-}
-
-async function encodeUnderBudget(canvas) {
-    if (await supportsWebpEncoding(canvas)) {
-        for (let quality = 0.85; quality >= 0.45; quality -= 0.05) {
-            const blob = await canvasToBlob(canvas, 'image/webp', quality);
-
-            if (blob && blob.size <= COOK_DESCRIPTION_IMAGE_MAX_BYTES) {
-                return { blob, extension: 'webp', type: 'image/webp' };
-            }
+        if (isWebpBlob(blob) && blob.size <= COOK_DESCRIPTION_IMAGE_MAX_BYTES) {
+            return { blob, extension: 'webp', type: 'image/webp' };
         }
     }
 
+    return null;
+}
+
+async function encodeWebpViaWasm(canvas) {
+    const context = canvas.getContext('2d');
+
+    if (! context) {
+        return null;
+    }
+
+    let encode;
+
+    try {
+        encode = await loadWasmWebpEncoder();
+    } catch {
+        return null;
+    }
+
+    const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+
+    for (let quality = 85; quality >= 45; quality -= 5) {
+        try {
+            const webpBuffer = await encode(imageData, { quality });
+            const blob = new Blob([webpBuffer], { type: 'image/webp' });
+
+            if (blob.size <= COOK_DESCRIPTION_IMAGE_MAX_BYTES) {
+                return { blob, extension: 'webp', type: 'image/webp' };
+            }
+        } catch {
+            return null;
+        }
+    }
+
+    return null;
+}
+
+async function encodeJpegUnderBudget(canvas) {
     for (let quality = 0.85; quality >= 0.45; quality -= 0.05) {
         const blob = await canvasToBlob(canvas, 'image/jpeg', quality);
 
@@ -116,6 +164,22 @@ async function encodeUnderBudget(canvas) {
     }
 
     return null;
+}
+
+async function encodeUnderBudget(canvas) {
+    const canvasWebp = await encodeWebpViaCanvas(canvas);
+
+    if (canvasWebp) {
+        return canvasWebp;
+    }
+
+    const wasmWebp = await encodeWebpViaWasm(canvas);
+
+    if (wasmWebp) {
+        return wasmWebp;
+    }
+
+    return encodeJpegUnderBudget(canvas);
 }
 
 export async function optimizeCookDescriptionImage(file) {
