@@ -9,6 +9,7 @@ const hookedPonds = new WeakSet();
 
 let hookPollIntervalId = null;
 let documentDropHandlerInstalled = false;
+let documentChangeHandlerInstalled = false;
 
 function showCookDescriptionImageError(error) {
     const message = error instanceof Error
@@ -101,38 +102,31 @@ function shouldSkipFileItem(fileItem) {
     return false;
 }
 
-async function replaceFileItemWithOptimized(pond, fileItem, file) {
-    fileItem.setMetadata('cookDescriptionOptimizing', true);
+function assignFileToInput(input, file) {
+    const transfer = new DataTransfer();
 
-    const itemId = fileItem.id;
+    transfer.items.add(file);
+    input.files = transfer.files;
 
-    try {
-        await fileItem.abortProcessing().catch(() => {});
+    return input.files.length === 1 && input.files[0] === file;
+}
 
-        const optimized = await optimizeForUpload(file);
-        const item = pond.getFiles().find((candidate) => candidate.id === itemId);
+async function deliverOptimizedFileToPond(scope, input, file) {
+    if (assignFileToInput(input, file)) {
+        input.dispatchEvent(new Event('change', { bubbles: true }));
 
-        if (! item) {
-            await pond.addFile(optimized, {
-                metadata: { cookDescriptionOptimized: true },
-            });
-
-            return;
-        }
-
-        item.setFile(optimized);
-        item.setMetadata('cookDescriptionOptimized', true);
-        item.setMetadata('cookDescriptionOptimizing', false);
-        await pond.processFile(item.id);
-    } catch {
-        fileItem.setMetadata('cookDescriptionOptimizing', false);
-
-        try {
-            await pond.removeFile(itemId, { revert: false });
-        } catch {
-            // Ignore cleanup failures.
-        }
+        return;
     }
+
+    const pond = getPondForScope(scope);
+
+    if (! pond) {
+        throw new Error('Could not prepare this image for upload.');
+    }
+
+    await pond.addFile(file, {
+        metadata: { cookDescriptionOptimized: true },
+    });
 }
 
 function hookCookDescriptionPond(pond) {
@@ -147,25 +141,33 @@ function hookCookDescriptionPond(pond) {
             return;
         }
 
-        if (fileItem.getMetadata('cookDescriptionOptimizing')) {
-            return;
-        }
+        const file = fileItem.file;
 
-        void replaceFileItemWithOptimized(pond, fileItem, fileItem.file);
+        fileItem.setMetadata('cookDescriptionOptimizing', true);
+
+        void optimizeForUpload(file)
+            .then(async (optimized) => {
+                fileItem.setFile(optimized);
+                fileItem.setMetadata('cookDescriptionOptimized', true);
+                fileItem.setMetadata('cookDescriptionOptimizing', false);
+
+                await pond.processFile(fileItem.id);
+            })
+            .catch(async () => {
+                fileItem.setMetadata('cookDescriptionOptimizing', false);
+
+                try {
+                    await pond.removeFile(fileItem.id, { revert: false });
+                } catch {
+                    // Ignore cleanup failures.
+                }
+            });
     });
 
     pond.on('processfilestart', (fileItem) => {
         if (fileItem.getMetadata('cookDescriptionOptimizing')) {
             void fileItem.abortProcessing().catch(() => {});
-
-            return;
         }
-
-        if (shouldSkipFileItem(fileItem)) {
-            return;
-        }
-
-        void replaceFileItemWithOptimized(pond, fileItem, fileItem.file);
     });
 }
 
@@ -175,6 +177,50 @@ async function addOptimizedFileToPond(pond, file) {
     await pond.addFile(optimized, {
         metadata: { cookDescriptionOptimized: true },
     });
+}
+
+function installDocumentChangeHandler() {
+    if (documentChangeHandlerInstalled) {
+        return;
+    }
+
+    documentChangeHandlerInstalled = true;
+
+    document.addEventListener('change', (event) => {
+        const input = event.target;
+
+        if (! isCookDescriptionImageInput(input) || ! input.files?.length) {
+            return;
+        }
+
+        const selectedFile = input.files[0];
+
+        if (preparedFiles.has(selectedFile)) {
+            return;
+        }
+
+        if (input.dataset.cookDescriptionOptimizing === '1') {
+            return;
+        }
+
+        event.preventDefault();
+        event.stopPropagation();
+
+        input.dataset.cookDescriptionOptimizing = '1';
+
+        const scope = input.closest(COOK_DESCRIPTION_UPLOAD_SELECTOR);
+
+        void optimizeForUpload(selectedFile)
+            .then(async (optimized) => {
+                await deliverOptimizedFileToPond(scope, input, optimized);
+            })
+            .catch(() => {
+                input.value = '';
+            })
+            .finally(() => {
+                delete input.dataset.cookDescriptionOptimizing;
+            });
+    }, true);
 }
 
 function installDocumentDropHandler() {
@@ -246,43 +292,6 @@ function hookCookDescriptionUploadScope(scope) {
     return true;
 }
 
-function installChangeHandler() {
-    if (window.__cookDescriptionImageChangeHandler) {
-        return;
-    }
-
-    document.addEventListener('change', async (event) => {
-        const input = event.target;
-
-        if (! isCookDescriptionImageInput(input) || ! input.files?.length) {
-            return;
-        }
-
-        if (input.dataset.cookDescriptionOptimizing === '1') {
-            return;
-        }
-
-        event.stopImmediatePropagation();
-
-        input.dataset.cookDescriptionOptimizing = '1';
-
-        try {
-            const optimized = await optimizeForUpload(input.files[0]);
-            const transfer = new DataTransfer();
-
-            transfer.items.add(optimized);
-            input.files = transfer.files;
-            input.dispatchEvent(new Event('change', { bubbles: true }));
-        } catch {
-            input.value = '';
-        } finally {
-            delete input.dataset.cookDescriptionOptimizing;
-        }
-    }, true);
-
-    window.__cookDescriptionImageChangeHandler = true;
-}
-
 function stopHookPolling() {
     if (hookPollIntervalId === null) {
         return;
@@ -316,7 +325,7 @@ function startHookPolling() {
 }
 
 function scheduleCookDescriptionUploadHooks() {
-    installChangeHandler();
+    installDocumentChangeHandler();
     installDocumentDropHandler();
 
     const scopes = findCookDescriptionUploadScopes();
