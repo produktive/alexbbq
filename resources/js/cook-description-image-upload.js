@@ -167,40 +167,9 @@ function createCookDescriptionImageOptimizerPlugin() {
     };
 }
 
-function patchFilePondCreate() {
-    if (window.__cookDescriptionFilePondCreatePatched) {
-        return true;
-    }
-
-    const { FilePond } = window;
-
-    if (! FilePond?.create) {
-        return false;
-    }
-
-    const originalCreate = FilePond.create.bind(FilePond);
-
-    FilePond.create = (input, options = {}) => {
-        const element = input instanceof Element ? input : null;
-
-        if (element?.closest(COOK_DESCRIPTION_UPLOAD_SELECTOR)) {
-            options = {
-                ...options,
-                cookDescriptionImageUpload: true,
-            };
-        }
-
-        return originalCreate(input, options);
-    };
-
-    window.__cookDescriptionFilePondCreatePatched = true;
-
-    return true;
-}
-
 function registerCookDescriptionImagePlugin() {
     if (window.__cookDescriptionFilePondPluginRegistered) {
-        return patchFilePondCreate();
+        return true;
     }
 
     const { FilePond } = window;
@@ -212,7 +181,7 @@ function registerCookDescriptionImagePlugin() {
     FilePond.registerPlugin(createCookDescriptionImageOptimizerPlugin());
     window.__cookDescriptionFilePondPluginRegistered = true;
 
-    return patchFilePondCreate();
+    return true;
 }
 
 async function optimizeLivewireUploadFormData(formData) {
