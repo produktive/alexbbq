@@ -3,6 +3,9 @@ import {
     optimizeCookDescriptionImage,
 } from './cook-description-image';
 
+const FILE_POND_POLL_MS = 100;
+const FILE_POND_POLL_TIMEOUT_MS = 30_000;
+
 function showCookDescriptionImageError(error) {
     const message = error instanceof Error
         ? error.message
@@ -56,49 +59,49 @@ function chainBeforeAddFile(original, hook) {
 function installFilePondCookDescriptionHook() {
     const { FilePond } = window;
 
-    if (! FilePond?.create || FilePond.__cookDescriptionHookInstalled) {
-        return;
+    if (! FilePond?.create || FilePond.create.__cookDescriptionHook) {
+        return false;
     }
 
     const originalCreate = FilePond.create.bind(FilePond);
 
-    FilePond.create = (input, options = {}) => {
-        if (isCookDescriptionImageInput(input)) {
-            options = {
-                ...options,
-                beforeAddFile: chainBeforeAddFile(
-                    options.beforeAddFile,
-                    optimizeCookDescriptionFileItem,
-                ),
-            };
+    function wrappedCreate(input, options) {
+        if (isCookDescriptionImageInput(input) && options != null) {
+            options.beforeAddFile = chainBeforeAddFile(
+                options.beforeAddFile,
+                optimizeCookDescriptionFileItem,
+            );
         }
 
         return originalCreate(input, options);
-    };
+    }
 
-    FilePond.__cookDescriptionHookInstalled = true;
+    wrappedCreate.__cookDescriptionHook = true;
+    FilePond.create = wrappedCreate;
+
+    return true;
 }
 
 function watchForFilePond() {
-    installFilePondCookDescriptionHook();
-
-    if (window.FilePond?.__cookDescriptionHookInstalled) {
+    if (installFilePondCookDescriptionHook()) {
         return;
     }
 
-    let filePond = window.FilePond;
+    const startedAt = Date.now();
 
-    Object.defineProperty(window, 'FilePond', {
-        configurable: true,
-        enumerable: true,
-        get() {
-            return filePond;
-        },
-        set(value) {
-            filePond = value;
-            installFilePondCookDescriptionHook();
-        },
-    });
+    const intervalId = window.setInterval(() => {
+        if (installFilePondCookDescriptionHook()) {
+            window.clearInterval(intervalId);
+
+            return;
+        }
+
+        if (Date.now() - startedAt >= FILE_POND_POLL_TIMEOUT_MS) {
+            window.clearInterval(intervalId);
+        }
+    }, FILE_POND_POLL_MS);
 }
 
 watchForFilePond();
+
+document.addEventListener('livewire:navigated', watchForFilePond);
