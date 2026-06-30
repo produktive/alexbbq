@@ -16,24 +16,39 @@
     @if ($canEdit) x-ref="root" @endif
     {{ $attributes }}
 >
-    @if ($canEdit)
-        <div class="cook-chart-panel-header">
-            <div
-                x-show="touchEditing"
-                x-cloak
-                class="flex items-end gap-2 sm:flex-row sm:items-center"
-            >
+    <div
+        class="cook-chart-panel-header"
+        @if (! $canEdit) x-show="isZoomed" x-cloak @endif
+    >
+        @if ($canEdit)
+            <div class="flex flex-wrap items-end gap-2 sm:flex-row sm:items-center">
                 <label class="inline-flex cursor-pointer items-center gap-2">
                     <flux:text size="sm">Edit chart</flux:text>
                     <flux:switch x-model="editMode" />
                 </label>
 
                 <flux:text x-show="editMode" size="sm" class="text-zinc-500 dark:text-zinc-400">
-                    Tap a point or drag to select a range
+                    <span x-show="touchEditing">Tap a point or drag to select a range</span>
+                    <span x-show="! touchEditing">Right-click a point or drag to select a range</span>
+                </flux:text>
+
+                <flux:text x-show="! editMode" size="sm" class="text-zinc-500 dark:text-zinc-400">
+                    <span x-show="touchEditing">Pinch to zoom, drag to pan</span>
+                    <span x-show="! touchEditing">Ctrl+scroll to zoom, drag to pan</span>
                 </flux:text>
             </div>
+        @endif
+
+        <div
+            x-show="isZoomed"
+            x-cloak
+            class="flex items-center gap-1"
+        >
+            <flux:button size="sm" variant="ghost" @click="resetZoom()">
+                Reset view
+            </flux:button>
         </div>
-    @endif
+    </div>
 
     <div class="cook-chart">
         <div class="relative h-full">

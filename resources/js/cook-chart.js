@@ -1,4 +1,7 @@
 import Chart from 'chart.js/auto';
+import zoomPlugin from 'chartjs-plugin-zoom';
+
+Chart.register(zoomPlugin);
 
 function formatClock(startSecondsOfDay, elapsedSeconds, { includeSeconds = true } = {}) {
     const wrapped = ((startSecondsOfDay + Math.round(elapsedSeconds)) % 86400 + 86400) % 86400;
@@ -20,6 +23,7 @@ function formatClock(startSecondsOfDay, elapsedSeconds, { includeSeconds = true 
 }
 
 const MIN_DRAG_PX = 6;
+const MIN_ZOOM_RANGE_SECONDS = 300;
 const MENU_MIN_WIDTH = 224; // matches min-w-56
 const TAP_TOLERANCE_PX = 14; // x-axis only — precise even when points are dense
 
@@ -191,6 +195,7 @@ export default function cookChart(initialData, canModify = false, live = false, 
         canModify,
         touchEditing,
         editMode: false,
+        isZoomed: false,
         activePointerId: null,
 
         loading: shouldLazyLoad,
@@ -232,14 +237,16 @@ export default function cookChart(initialData, canModify = false, live = false, 
                 });
             }
 
-            if (this.touchEditing) {
+            if (canModify) {
                 this.$watch('editMode', (enabled) => {
-                    this.updateCanvasEditState();
+                    this.updateInteractionState();
 
-                    if (! enabled) {
-                        this.closeMenu();
-                        this.clearSelection();
+                    if (enabled) {
+                        return;
                     }
+
+                    this.closeMenu();
+                    this.clearSelection();
                 });
             }
 
@@ -307,6 +314,31 @@ export default function cookChart(initialData, canModify = false, live = false, 
 
                     plugins: {
                         ...SERIES_SWATCH,
+                        zoom: {
+                            limits: {
+                                x: {
+                                    min: 'original',
+                                    max: 'original',
+                                    minRange: MIN_ZOOM_RANGE_SECONDS,
+                                },
+                            },
+                            pan: {
+                                enabled: true,
+                                mode: 'x',
+                                onPanComplete: () => this.syncZoomState(),
+                            },
+                            zoom: {
+                                mode: 'x',
+                                wheel: {
+                                    enabled: true,
+                                    modifierKey: 'ctrl',
+                                },
+                                pinch: {
+                                    enabled: true,
+                                },
+                                onZoomComplete: () => this.syncZoomState(),
+                            },
+                        },
                         tooltip: {
                             callbacks: {
                                 title: (items) => formatClock(data.startSecondsOfDay, items[0].parsed.x),
@@ -343,15 +375,44 @@ export default function cookChart(initialData, canModify = false, live = false, 
                 },
             });
 
-            if (canModify) {
-                this.bindCanvasEvents();
-            }
+            this.bindCanvasEvents();
+            this.updateInteractionState();
+        },
 
-            this.updateCanvasEditState();
+        exploreActive() {
+            return ! canModify || ! this.editMode;
         },
 
         editingActive() {
-            return canModify && (! this.touchEditing || this.editMode);
+            return canModify && this.editMode;
+        },
+
+        syncZoomState() {
+            this.isZoomed = chart?.isZoomedOrPanned() ?? false;
+        },
+
+        syncZoomPanState() {
+            if (! chart?.options?.plugins?.zoom) {
+                return;
+            }
+
+            const explore = this.exploreActive();
+            const zoomOptions = chart.options.plugins.zoom;
+
+            zoomOptions.pan.enabled = explore;
+            zoomOptions.zoom.wheel.enabled = explore;
+            zoomOptions.zoom.pinch.enabled = explore;
+            chart.update('none');
+            this.syncZoomState();
+        },
+
+        resetZoom() {
+            if (! chart?.isZoomedOrPanned()) {
+                return;
+            }
+
+            chart.resetZoom();
+            this.syncZoomState();
         },
 
         closeMenu() {
@@ -360,36 +421,39 @@ export default function cookChart(initialData, canModify = false, live = false, 
             this.menu.useSheet = false;
         },
 
-        updateCanvasEditState() {
+        updateInteractionState() {
             const canvas = this.$refs.canvas;
 
-            if (! canvas) {
-                return;
-            }
-
-            if (this.touchEditing && this.editMode && canModify) {
+            if (canvas && this.touchEditing) {
                 canvas.classList.add('touch-none');
-            } else {
-                canvas.classList.remove('touch-none');
             }
 
             if (! chart) {
                 return;
             }
 
-            chart.options.plugins.tooltip.enabled = ! (this.touchEditing && this.editMode);
-            chart.update('none');
+            chart.options.plugins.tooltip.enabled = this.exploreActive();
+            this.syncZoomPanState();
         },
 
         destroy() {
             const canvas = this.$refs.canvas;
 
-            if (canvas && handlers.pointerdown) {
-                canvas.removeEventListener('pointerdown', handlers.pointerdown);
-                canvas.removeEventListener('pointermove', handlers.pointermove);
-                canvas.removeEventListener('pointerup', handlers.pointerup);
-                canvas.removeEventListener('pointercancel', handlers.pointercancel);
-                canvas.removeEventListener('contextmenu', handlers.contextmenu);
+            if (canvas) {
+                if (handlers.pointerdown) {
+                    canvas.removeEventListener('pointerdown', handlers.pointerdown);
+                    canvas.removeEventListener('pointermove', handlers.pointermove);
+                    canvas.removeEventListener('pointerup', handlers.pointerup);
+                    canvas.removeEventListener('pointercancel', handlers.pointercancel);
+                }
+
+                if (handlers.contextmenu) {
+                    canvas.removeEventListener('contextmenu', handlers.contextmenu);
+                }
+
+                if (handlers.dblclick) {
+                    canvas.removeEventListener('dblclick', handlers.dblclick);
+                }
             }
 
             if (handlers.keydown) {
@@ -417,6 +481,13 @@ export default function cookChart(initialData, canModify = false, live = false, 
         bindCanvasEvents() {
             const canvas = this.$refs.canvas;
 
+            handlers.dblclick = (e) => this.onDoubleClick(e);
+            canvas.addEventListener('dblclick', handlers.dblclick);
+
+            if (! canModify) {
+                return;
+            }
+
             handlers.pointerdown = (e) => this.onPointerDown(e);
             handlers.pointermove = (e) => this.onPointerMove(e);
             handlers.pointerup = (e) => this.onPointerUp(e);
@@ -430,6 +501,15 @@ export default function cookChart(initialData, canModify = false, live = false, 
             canvas.addEventListener('pointercancel', handlers.pointercancel);
             canvas.addEventListener('contextmenu', handlers.contextmenu);
             window.addEventListener('keydown', handlers.keydown);
+        },
+
+        onDoubleClick(e) {
+            if (! this.exploreActive() || ! chart?.isZoomedOrPanned()) {
+                return;
+            }
+
+            e.preventDefault();
+            this.resetZoom();
         },
 
         dataXFromEvent(e) {
@@ -734,13 +814,24 @@ export default function cookChart(initialData, canModify = false, live = false, 
                 return;
             }
 
+            const preserveZoom = chart.isZoomedOrPanned();
+            const xBounds = preserveZoom
+                ? { min: chart.scales.x.min, max: chart.scales.x.max }
+                : null;
+
             chart.data.datasets[0].data = fresh.food;
             chart.data.datasets[1].data = fresh.bbq;
 
-            delete chart.options.scales.x.min;
-            delete chart.options.scales.x.max;
+            if (xBounds) {
+                chart.options.scales.x.min = xBounds.min;
+                chart.options.scales.x.max = xBounds.max;
+            } else {
+                delete chart.options.scales.x.min;
+                delete chart.options.scales.x.max;
+            }
 
             chart.update();
+            this.syncZoomState();
         },
 
         async handleChartRefresh(eventCookId) {
