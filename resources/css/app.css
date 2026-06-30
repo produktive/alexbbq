@@ -153,6 +153,18 @@ p.fi-ta-text-description,
     @apply relative h-125;
 }
 
+.cook-card {
+    @apply rounded-xl border border-neutral-200 bg-neutral-50/50 p-3 dark:border-neutral-700 dark:bg-neutral-900/50;
+}
+
+.cook-chart-panel-header {
+    @apply mb-3 flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between;
+}
+
+.cook-card-notes {
+    @apply mt-4 lg:p-6 p-4;
+}
+
 @media (orientation: landscape) and (max-height: 500px) and (max-width: 896px) {
     .cook-chart-viewport {
         /* Push description/buttons below the first viewport; header not included. */
@@ -167,8 +179,16 @@ p.fi-ta-text-description,
         @apply my-0.5 leading-snug;
     }
 
+    .cook-chart-viewport .cook-chart-panel-header {
+        @apply mb-2;
+    }
+
+    .cook-chart-viewport .cook-card-notes {
+        @apply mt-3 pt-3;
+    }
+
     .cook-chart-viewport .cook-chart {
-        /* Fill landscape viewport minus title/metadata; cap at portrait h-125 (31.25rem). */
-        height: clamp(12rem, calc(100dvh - 5.5rem), 31.25rem);
+        /* Fill landscape viewport minus title/metadata/panel chrome; cap at portrait h-125 (31.25rem). */
+        height: clamp(12rem, calc(100dvh - 7rem), 31.25rem);
     }
 }

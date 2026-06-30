@@ -203,127 +203,17 @@ new class extends Component implements HasActions, HasSchemas {
 }
 ?>
 <flux:container>
-
-    <div class="cook-chart-viewport">
-    <flux:heading level="1" size="xl" class="my-2 shrink-0">
-        {{ $this->cook->title }}
-    </flux:heading>
-
-    <flux:text size="md" class="my-2 shrink-0">
-        Began {{ ($this->cook->getBeganAt() ?? $this->cook->created_at)->format('F j, Y \a\t g:i A') }}
-    </flux:text>
-
-    <flux:text size="sm" class="my-2 shrink-0">
-        {{ $this->cook->getDurationLabel() }}
-    </flux:text>
-
-    <div
-        wire:ignore
-        x-data="window.cookChart(null, @js($this->cook->isOwnedBy(auth()->id())), false, @js($this->cook->id))"
-        x-ref="root"
-    >
+    <x-cook-showcase :cook="$this->cook" editable-chart>
         @if ($this->cook->isOwnedBy(auth()->id()))
-            <div
-                x-show="touchEditing"
-                x-cloak
-                class="mb-2 flex flex-col items-end gap-2 sm:flex-row sm:items-center sm:justify-end"
-            >
-                <flux:text x-show="editMode" size="sm" class="text-zinc-500 dark:text-zinc-400">
-                    Tap a point or drag to select a range
-                </flux:text>
-                <label class="inline-flex cursor-pointer items-center gap-2">
-                    <flux:switch x-model="editMode" />
-                    <flux:text size="sm">Edit chart</flux:text>
-                </label>
-            </div>
+            <x-slot:actions>
+                <flux:button href="{{ route('cooks.edit', $this->cook) }}" wire:navigate size="sm">
+                    Edit Details
+                </flux:button>
+            </x-slot:actions>
         @endif
-
-        <div class="cook-chart">
-        <div class="relative h-full">
-            <canvas x-ref="canvas" class="block h-full w-full"></canvas>
-
-            {{-- Drag-selection highlight --}}
-            <div
-                x-show="selection.dragging || selection.active"
-                x-bind:style="selection.overlayStyle"
-                class="pointer-events-none absolute bg-blue-500/15 border-x border-blue-500"
-                x-cloak
-            ></div>
-        </div>
-
-        <div
-            x-show="loading"
-            class="absolute inset-0 flex items-center justify-center rounded-xl border border-neutral-200 bg-neutral-50/90 dark:border-neutral-700 dark:bg-neutral-900/90"
-        >
-            <div class="flex items-center gap-2 text-sm text-neutral-500 dark:text-neutral-400">
-                <flux:icon.loading variant="mini" />
-                Loading chart…
-            </div>
-        </div>
-
-        <div
-            x-show="loadError"
-            x-cloak
-            class="absolute inset-0 flex items-center justify-center rounded-xl border border-neutral-200 bg-neutral-50/90 dark:border-neutral-700 dark:bg-neutral-900/90"
-        >
-            <flux:text size="sm" class="text-neutral-500 dark:text-neutral-400">
-                Could not load chart data.
-            </flux:text>
-        </div>
-
-        {{-- Desktop context menu --}}
-        @if ($this->cook->isOwnedBy(auth()->id()))
-            <div
-                x-ref="menu"
-                x-show="menu.open && ! menu.useSheet"
-                @click.outside="closeMenu()"
-                class="absolute z-50 min-w-56 rounded border border-zinc-200 bg-white py-1 text-zinc-900 shadow dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
-                :class="{ invisible: ! menu.positioned }"
-                :style="`left:${menu.x}px;top:${menu.y}px`"
-                x-cloak
-            >
-                @include('partials.cook-chart-point-menu')
-            </div>
-        @endif
-        </div>
-
-        {{-- Mobile bottom sheet --}}
-        @if ($this->cook->isOwnedBy(auth()->id()))
-            <template x-teleport="body">
-                <div
-                    x-show="menu.open && menu.useSheet"
-                    x-cloak
-                    class="fixed inset-0 z-50 flex items-end"
-                    @keydown.escape.window="closeMenu()"
-                >
-                    <button
-                        type="button"
-                        class="absolute inset-0 bg-black/40"
-                        aria-label="Close"
-                        @click="closeMenu()"
-                    ></button>
-
-                    <div class="relative w-full rounded-t-xl border border-zinc-200 bg-white py-2 text-zinc-900 shadow-lg dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100">
-                        @include('partials.cook-chart-point-menu')
-                    </div>
-                </div>
-            </template>
-        @endif
-    </div>
-    </div>
-
-    <x-cook-description :html="$this->cook->renderRichContent('description')" />
-
-    @if ($this->cook->isOwnedBy(auth()->id()))
-        <div class="flex justify-end">
-            <flux:button href="{{ route('cooks.edit', $this->cook) }}" wire:navigate>
-                Edit Details
-            </flux:button>
-        </div>
-    @endif
+    </x-cook-showcase>
 
     @if ($this->cook->isOwnedBy(auth()->id()))
         <x-filament-actions::modals />
     @endif
-
 </flux:container>
