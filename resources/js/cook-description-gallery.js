@@ -1,4 +1,7 @@
 export default function cookDescriptionGallery() {
+    let unsubscribeMorph = null;
+    let processFrame = null;
+
     return {
         images: [],
         lightboxOpen: false,
@@ -6,18 +9,66 @@ export default function cookDescriptionGallery() {
         processed: false,
 
         init() {
+            this.scheduleProcess();
+
+            if (typeof Livewire !== 'undefined') {
+                unsubscribeMorph = Livewire.hook('morph.updated', ({ el }) => {
+                    const root = this.$refs.content;
+
+                    if (!root || !root.isConnected) {
+                        return;
+                    }
+
+                    if (el === root || root.contains(el) || el.contains(root)) {
+                        this.scheduleProcess();
+                    }
+                });
+            }
+        },
+
+        destroy() {
+            unsubscribeMorph?.();
+
+            if (processFrame !== null) {
+                cancelAnimationFrame(processFrame);
+            }
+
+            document.body.classList.remove('overflow-hidden');
+        },
+
+        scheduleProcess() {
+            if (processFrame !== null) {
+                cancelAnimationFrame(processFrame);
+            }
+
+            processFrame = requestAnimationFrame(() => {
+                processFrame = null;
+                this.$nextTick(() => this.process());
+            });
+        },
+
+        process() {
             const root = this.$refs.content;
 
             if (!root) {
                 return;
             }
 
-            const imgs = [...root.querySelectorAll('img')];
+            const imgs = [...root.querySelectorAll('img')].filter(
+                (img) => !img.closest('.cook-description-gallery'),
+            );
 
             if (!imgs.length) {
                 this.processed = true;
 
                 return;
+            }
+
+            root.querySelector('.cook-description-gallery')?.remove();
+            this.images = [];
+
+            if (this.lightboxOpen) {
+                this.closeLightbox();
             }
 
             const gallery = document.createElement('div');
