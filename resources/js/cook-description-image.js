@@ -7,6 +7,7 @@ export const COOK_DESCRIPTION_UPLOAD_SELECTOR = '[data-cook-description-image-up
 const IMAGE_EXTENSIONS = new Set(['jpg', 'jpeg', 'png', 'gif', 'webp', 'heic', 'heif']);
 
 let wasmWebpEncoderPromise = null;
+let canvasWebpEncodeSupported = null;
 
 export function isImageUploadFile(file) {
     if (! (file instanceof File)) {
@@ -51,8 +52,22 @@ function canvasToBlob(canvas, type, quality) {
     });
 }
 
-function isWebpBlob(blob) {
-    return blob instanceof Blob && blob.type === 'image/webp' && blob.size > 0;
+function supportsCanvasWebpEncode() {
+    if (canvasWebpEncodeSupported !== null) {
+        return canvasWebpEncodeSupported;
+    }
+
+    try {
+        const canvas = document.createElement('canvas');
+        canvas.width = 1;
+        canvas.height = 1;
+
+        canvasWebpEncodeSupported = canvas.toDataURL('image/webp').startsWith('data:image/webp');
+    } catch {
+        canvasWebpEncodeSupported = false;
+    }
+
+    return canvasWebpEncodeSupported;
 }
 
 function loadWasmWebpEncoder() {
@@ -115,7 +130,7 @@ async function encodeWebpViaCanvas(canvas) {
     for (let quality = 0.85; quality >= 0.45; quality -= 0.05) {
         const blob = await canvasToBlob(canvas, 'image/webp', quality);
 
-        if (isWebpBlob(blob) && blob.size <= COOK_DESCRIPTION_IMAGE_MAX_BYTES) {
+        if (blob instanceof Blob && blob.size > 0 && blob.size <= COOK_DESCRIPTION_IMAGE_MAX_BYTES) {
             return { blob, extension: 'webp', type: 'image/webp' };
         }
     }
@@ -169,10 +184,12 @@ async function encodeJpegUnderBudget(canvas) {
 }
 
 async function encodeUnderBudget(canvas) {
-    const canvasWebp = await encodeWebpViaCanvas(canvas);
+    if (supportsCanvasWebpEncode()) {
+        const canvasWebp = await encodeWebpViaCanvas(canvas);
 
-    if (canvasWebp) {
-        return canvasWebp;
+        if (canvasWebp) {
+            return canvasWebp;
+        }
     }
 
     const wasmWebp = await encodeWebpViaWasm(canvas);
