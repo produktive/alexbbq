@@ -52,7 +52,7 @@
         <div
             x-show="loading"
             x-cloak
-            class="absolute inset-0 flex items-center justify-center rounded-lg border border-neutral-200 bg-neutral-50/90 dark:border-neutral-700 dark:bg-neutral-900/90"
+            class="cook-chart-overlay"
         >
             <div class="flex items-center gap-2 text-sm text-neutral-500 dark:text-neutral-400">
                 <flux:icon.loading variant="mini" />
@@ -63,7 +63,7 @@
         <div
             x-show="loadError"
             x-cloak
-            class="absolute inset-0 flex items-center justify-center rounded-lg border border-neutral-200 bg-neutral-50/90 dark:border-neutral-700 dark:bg-neutral-900/90"
+            class="cook-chart-overlay"
         >
             <flux:text size="sm" class="text-neutral-500 dark:text-neutral-400">
                 Could not load chart data.
