@@ -8,13 +8,19 @@ use Filament\Actions\Contracts\HasActions;
 use Filament\Actions\DeleteAction;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
+use Filament\Support\Enums\IconSize;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Contracts\HasTable;
 use Filament\Tables\Table;
+use Illuminate\Contracts\Support\Htmlable;
+use Illuminate\Support\HtmlString;
+use Illuminate\View\ComponentAttributeBag;
 use Livewire\Attributes\Title;
 use Livewire\Component;
+
+use function Filament\Support\generate_icon_html;
 
 new
 #[Title('Cooks')]
@@ -24,6 +30,25 @@ class extends Component implements HasActions, HasForms, HasTable {
     private function cookHasDescription(Cook $record): bool
     {
         return filled($record->getRawOriginal('description'));
+    }
+
+    private function formatCookTitle(Cook $record): string|Htmlable
+    {
+        if (! $record->hasDescriptionImages()) {
+            return $record->title;
+        }
+
+        $icon = generate_icon_html(
+            Heroicon::Photo,
+            attributes: (new ComponentAttributeBag([
+                'class' => 'inline-block align-text-bottom ms-1 text-zinc-400 dark:text-zinc-500',
+                'title' => 'Has photos',
+                'aria-hidden' => 'true',
+            ])),
+            size: IconSize::Small,
+        );
+
+        return new HtmlString(e($record->title).($icon?->toHtml() ?? ''));
     }
 
     public function table(Table $table): Table
@@ -38,16 +63,16 @@ class extends Component implements HasActions, HasForms, HasTable {
                     ->sortable()
                     ->wrap(),
                 TextColumn::make('description')
-                    ->state(function (Cook $record): string {
+                    ->state(function (Cook $record): string|Htmlable {
                         $text = trim(html_entity_decode(strip_tags($record->getRawOriginal('description'))));
 
-                        return $text !== '' ? $text : $record->title;
+                        return $text !== '' ? $text : $this->formatCookTitle($record);
                     })
                     ->color(fn (Cook $record): ?string => $this->cookHasDescription($record) ? 'gray' : null)
                     ->extraAttributes(fn (Cook $record): array => $this->cookHasDescription($record) ? [] : ['class' => 'cook-list-title-only'])
                     ->label('Description')
                     ->description(
-                        fn (Cook $record): ?string => $this->cookHasDescription($record) ? $record->title : null,
+                        fn (Cook $record): string|Htmlable|null => $this->cookHasDescription($record) ? $this->formatCookTitle($record) : null,
                         position: 'above',
                     )
                     ->wrap()

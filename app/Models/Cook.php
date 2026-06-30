@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\CookDescriptionAttachments;
 use Carbon\Carbon;
 use Carbon\CarbonInterval;
 use Filament\Forms\Components\RichEditor\Models\Concerns\InteractsWithRichContent;
@@ -124,6 +125,11 @@ class Cook extends Model implements HasRichContent
         }
 
         return $this->user_id === $userId;
+    }
+
+    public function hasDescriptionImages(): bool
+    {
+        return filled(app(CookDescriptionAttachments::class)->extractPaths($this->getRawOriginal('description')));
     }
 
     public function smoker(): BelongsTo

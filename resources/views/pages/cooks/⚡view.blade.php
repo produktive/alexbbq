@@ -323,7 +323,7 @@ new class extends Component implements HasActions, HasSchemas {
     @endif
 
     @if ($this->cook->isOwnedBy(auth()->id()))
-        <x-filament-actions::modals/>
+        <x-filament-actions::modals />
     @endif
 
 </flux:container>
