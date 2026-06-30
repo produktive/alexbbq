@@ -93,7 +93,16 @@ function pointHasNote(context) {
     return Boolean(context.raw?.note);
 }
 
+let highlightedPointId = null;
+
+function pointIsHighlighted(context) {
+    const id = context.raw?.id;
+
+    return id != null && highlightedPointId !== null && Number(id) === highlightedPointId;
+}
+
 const NOTE_POINT_COLOR = '#ff1493';
+const HIGHLIGHT_POINT_COLOR = '#2563eb';
 
 const CHART_COLORS = {
     food: {
@@ -161,11 +170,29 @@ const SERIES_SWATCH = {
 };
 
 const DATASET_POINT_STYLE = {
-    pointRadius: (context) => (pointHasNote(context) ? 7 : 4),
+    pointRadius: (context) => {
+        if (pointIsHighlighted(context)) {
+            return 10;
+        }
+
+        return pointHasNote(context) ? 7 : 4;
+    },
     pointStyle: (context) => (pointHasNote(context) ? 'rectRot' : 'circle'),
-    pointBorderWidth: (context) => (pointHasNote(context) ? 2 : 1),
+    pointBorderWidth: (context) => {
+        if (pointIsHighlighted(context)) {
+            return 3;
+        }
+
+        return pointHasNote(context) ? 2 : 1;
+    },
     pointBackgroundColor: (context) => (pointHasNote(context) ? NOTE_POINT_COLOR : context.dataset.borderColor),
-    pointBorderColor: (context) => (pointHasNote(context) ? NOTE_POINT_COLOR : context.dataset.borderColor),
+    pointBorderColor: (context) => {
+        if (pointIsHighlighted(context)) {
+            return HIGHLIGHT_POINT_COLOR;
+        }
+
+        return pointHasNote(context) ? NOTE_POINT_COLOR : context.dataset.borderColor;
+    },
 };
 
 async function fetchChartData(cookId, { editor = false } = {}) {
@@ -419,6 +446,27 @@ export default function cookChart(initialData, canModify = false, live = false, 
             this.menu.open = false;
             this.menu.positioned = false;
             this.menu.useSheet = false;
+            this.clearHighlightedPoint();
+        },
+
+        setHighlightedPoint(id) {
+            highlightedPointId = id != null ? Number(id) : null;
+
+            if (chart) {
+                chart.update('none');
+            }
+        },
+
+        clearHighlightedPoint() {
+            if (highlightedPointId === null) {
+                return;
+            }
+
+            highlightedPointId = null;
+
+            if (chart) {
+                chart.update('none');
+            }
         },
 
         updateInteractionState() {
@@ -476,6 +524,8 @@ export default function cookChart(initialData, canModify = false, live = false, 
                 chart.destroy();
                 chart = null;
             }
+
+            highlightedPointId = null;
         },
 
         bindCanvasEvents() {
@@ -683,6 +733,7 @@ export default function cookChart(initialData, canModify = false, live = false, 
             const seriesLength = chart.data.datasets[0].data.length;
 
             this.clearSelection();
+            this.setHighlightedPoint(point.id);
             this.menu.pointId = Number(point.id);
             this.menu.pointNote = point.note || null;
             this.menu.canDeleteBefore = index > 0;
@@ -696,6 +747,7 @@ export default function cookChart(initialData, canModify = false, live = false, 
                 return;
             }
 
+            this.clearHighlightedPoint();
             this.menu.pointId = null;
             this.menu.pointNote = null;
             this.menu.canDeleteBefore = false;
