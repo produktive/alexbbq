@@ -21,10 +21,10 @@
         @if (! $canEdit) x-show="isZoomed" x-cloak @endif
     >
         @if ($canEdit)
-            <div class="flex flex-wrap items-end gap-2 sm:flex-row sm:items-center">
+            <div class="flex flex-col flex-wrap gap-2">
                 <label class="inline-flex cursor-pointer items-center gap-2">
-                    <flux:text size="sm">Edit chart</flux:text>
                     <flux:switch x-model="editMode" />
+                    <flux:text size="sm">Edit chart</flux:text>
                 </label>
 
                 <flux:text x-show="editMode" size="sm" class="text-zinc-500 dark:text-zinc-400">
