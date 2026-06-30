@@ -5,7 +5,7 @@
 
 @php
     $beganAt = $cook->getBeganAt() ?? $cook->created_at;
-    $beganLabel = 'Began '.$beganAt->format('F j, Y \a\t g:i A');
+    $beganLabel = $beganAt->format('F j, Y \a\t g:i A');
 @endphp
 
 <div {{ $attributes->class('cook-header shrink-0') }}>
@@ -45,6 +45,7 @@
                     <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
                         @auth
                             <x-live-cook-timer
+                                show-in-title-area
                                 :began-at="$cook->getBeganAt()?->toIso8601String()"
                                 x-bind:data-began-at="beganAt"
                             />
