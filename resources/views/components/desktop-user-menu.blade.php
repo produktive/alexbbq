@@ -1,5 +1,9 @@
 @guest
-    <flux:button href="{{ route('login') }}" wire:navigate>
+    <flux:button
+        x-data
+        x-bind:href="'{{ route('login') }}?redirect=' + encodeURIComponent(window.location.href)"
+        wire:navigate
+    >
         {{ __('Log in') }}
     </flux:button>
 @endguest

@@ -95,6 +95,7 @@ p.fi-ta-text-description,
 
 #cook-description a {
     color: deeppink;
+    text-decoration: underline;
 }
 
 #cook-description ul {
@@ -162,7 +163,7 @@ p.fi-ta-text-description,
 }
 
 .cook-chart-panel-header {
-    @apply mb-3 flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between;
+    @apply mb-3 flex items-start justify-between gap-2;
 }
 
 .cook-card-notes {

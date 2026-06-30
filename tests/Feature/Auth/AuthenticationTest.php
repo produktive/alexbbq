@@ -9,6 +9,40 @@ test('login screen can be rendered', function () {
     $response->assertOk();
 });
 
+test('users are redirected back to the page they came from after login', function () {
+    $user = User::factory()->create();
+
+    $this->get(route('login', ['redirect' => '/cooks']));
+
+    $response = $this->post(route('login.store'), [
+        'email' => $user->email,
+        'password' => 'password',
+    ]);
+
+    $response
+        ->assertSessionHasNoErrors()
+        ->assertRedirect('/cooks');
+
+    $this->assertAuthenticated();
+});
+
+test('login ignores unsafe redirect targets', function () {
+    $user = User::factory()->create();
+
+    $this->get(route('login', ['redirect' => 'https://evil.test/phish']));
+
+    $response = $this->post(route('login.store'), [
+        'email' => $user->email,
+        'password' => 'password',
+    ]);
+
+    $response
+        ->assertSessionHasNoErrors()
+        ->assertRedirect(route('home', absolute: false));
+
+    $this->assertAuthenticated();
+});
+
 test('users can authenticate using the login screen', function () {
     $user = User::factory()->create();
 

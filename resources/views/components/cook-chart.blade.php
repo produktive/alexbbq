@@ -21,7 +21,7 @@
         @if (! $canEdit) x-show="isZoomed" x-cloak @endif
     >
         @if ($canEdit)
-            <div class="flex flex-col flex-wrap gap-2">
+            <div class="flex min-w-0 flex-1 flex-col gap-2">
                 <label class="inline-flex cursor-pointer items-center gap-2">
                     <flux:switch x-model="editMode" />
                     <flux:text size="sm">Edit chart</flux:text>
@@ -42,7 +42,7 @@
         <div
             x-show="isZoomed"
             x-cloak
-            class="flex items-center gap-1"
+            class="ms-auto flex shrink-0 items-center gap-1"
         >
             <flux:button size="sm" variant="ghost" @click="resetZoom()">
                 Reset view
