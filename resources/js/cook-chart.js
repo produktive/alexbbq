@@ -5,7 +5,7 @@ import Hammer from 'hammerjs';
 const COARSE_TOUCH_ACTION = 'pan-y';
 
 function patchHammerForPageScroll() {
-    if (! window.matchMedia('(pointer: coarse)').matches || Hammer.Manager.__cookChartPatched) {
+    if (typeof window === 'undefined' || ! window.matchMedia('(pointer: coarse)').matches || Hammer.Manager.__cookChartPatched) {
         return;
     }
 
@@ -21,8 +21,6 @@ function patchHammerForPageScroll() {
     Hammer.Manager.prototype = OriginalManager.prototype;
     Hammer.Manager.__cookChartPatched = true;
 }
-
-patchHammerForPageScroll();
 
 Chart.register(zoomPlugin);
 
@@ -364,6 +362,8 @@ export default function cookChart(initialData, canModify = false, live = false, 
             if (chart || ! data) {
                 return;
             }
+
+            patchHammerForPageScroll();
 
             const colors = chartPalette();
 

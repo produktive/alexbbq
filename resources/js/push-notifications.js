@@ -86,7 +86,7 @@ const unsubscribeFromPush = async () => {
 
     const endpoint = subscription.endpoint;
 
-    await fetch('/push-subscriptions', {
+    const response = await fetch('/push-subscriptions', {
         method: 'DELETE',
         headers: {
             Accept: 'application/json',
@@ -96,6 +96,10 @@ const unsubscribeFromPush = async () => {
         body: JSON.stringify({ endpoint }),
         credentials: 'same-origin',
     });
+
+    if (! response.ok) {
+        throw new Error('Unable to remove push subscription.');
+    }
 
     await subscription.unsubscribe();
 };
@@ -118,8 +122,12 @@ const disable = async () => {
     }
 };
 
-export default {
+const pushNotifications = {
     enable,
     disable,
     registerServiceWorker,
 };
+
+window.pushNotifications = pushNotifications;
+
+export default pushNotifications;

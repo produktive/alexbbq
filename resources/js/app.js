@@ -1,14 +1,13 @@
+import pushNotifications from './push-notifications';
 import './cook-description-image-upload';
 import './echo';
 import cookChart from './cook-chart';
 import cookDescriptionGallery from './cook-description-gallery';
 import liveCookTimer, { initLiveCookTimers, registerLiveCookTimer } from './live-cook-timer';
-import pushNotifications from './push-notifications';
 
 window.cookChart = cookChart;
 window.cookDescriptionGallery = cookDescriptionGallery;
 window.liveCookTimer = liveCookTimer;
-window.pushNotifications = pushNotifications;
 
 if (window.Alpine) {
     registerLiveCookTimer(window.Alpine);

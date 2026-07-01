@@ -38,7 +38,36 @@ new class extends Component {
 }
 ?>
 
-<div class="space-y-4 rounded-xl bg-white p-6 shadow-sm ring-1 ring-gray-950/5 dark:bg-gray-900 dark:ring-white/10">
+<div
+    class="space-y-4 rounded-xl bg-white p-6 shadow-sm ring-1 ring-gray-950/5 dark:bg-gray-900 dark:ring-white/10"
+    x-data="{
+        working: false,
+        async togglePush() {
+            if (this.working) {
+                return;
+            }
+
+            if (! window.pushNotifications) {
+                window.alert('Push notifications are unavailable. Please refresh the page and try again.');
+                return;
+            }
+
+            this.working = true;
+
+            try {
+                if ($wire.enabled) {
+                    await window.pushNotifications.disable();
+                } else {
+                    await window.pushNotifications.enable();
+                }
+
+                await $wire.refreshPushStatus();
+            } finally {
+                this.working = false;
+            }
+        },
+    }"
+>
     <div class="flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
             <flux:heading size="lg">{{ __('Push Notifications') }}</flux:heading>
@@ -56,22 +85,12 @@ new class extends Component {
         </flux:badge>
     </div>
 
-    @if ($enabled)
-        <flux:button
-            variant="ghost"
-            :icon="$this->icon"
-            x-data
-            x-on:click="window.pushNotifications.disable().then(() => $wire.refreshPushStatus())"
-        >
-            {{ $this->label }}
-        </flux:button>
-    @else
-        <flux:button
-            :icon="$this->icon"
-            x-data
-            x-on:click="window.pushNotifications.enable().then(() => $wire.refreshPushStatus())"
-        >
-            {{ $this->label }}
-        </flux:button>
-    @endif
+    <flux:button
+        :variant="$enabled ? 'ghost' : 'primary'"
+        :icon="$this->icon"
+        x-bind:disabled="working"
+        @click="togglePush()"
+    >
+        {{ $this->label }}
+    </flux:button>
 </div>
