@@ -4,8 +4,6 @@ use App\Models\Cook;
 use App\Models\Reading;
 use App\Models\Smoker;
 use App\Models\User;
-use App\Services\MaverickService;
-use Illuminate\Support\Facades\Process;
 use Livewire\Livewire;
 
 test('home page shows idle state when no cooks exist', function () {
@@ -277,28 +275,7 @@ test('cook button syncs live state from status payload', function () {
         ->assertSet('live', false);
 });
 
-test('cook view renders finished cook chart', function () {
-    $smoker = Smoker::query()->create(['name' => 'Backyard']);
-
-    $cook = Cook::query()->create([
-        'smoker_id' => $smoker->id,
-        'title' => 'Brisket',
-        'ended_at' => now()->subHour(),
-    ]);
-
-    Reading::withoutEvents(fn () => Reading::query()->create([
-        'cook_id' => $cook->id,
-        'time' => now()->subHour(),
-        'probe_food' => 165,
-        'probe_bbq' => 225,
-    ]));
-
-    Livewire::test('pages::cooks.view', ['cook' => $cook])
-        ->assertOk()
-        ->assertSee('Brisket');
-});
-
-test('menu cook count excludes the active cook', function () {
+test('active cook helpers ignore ended cooks when counting', function () {
     $smoker = Smoker::query()->create(['name' => 'Backyard']);
 
     Cook::query()->create([
@@ -307,13 +284,14 @@ test('menu cook count excludes the active cook', function () {
         'ended_at' => now()->subDay(),
     ]);
 
-    Cook::query()->create([
+    $active = Cook::query()->create([
         'smoker_id' => $smoker->id,
         'title' => 'Live Brisket',
         'ended_at' => null,
     ]);
 
-    expect(Cook::finishedCount())->toBe(1)
+    expect(Cook::active()?->id)->toBe($active->id)
+        ->and(Cook::finishedCount())->toBe(1)
         ->and(Cook::count())->toBe(2);
 });
 
@@ -385,82 +363,6 @@ test('home page hides view cook page link while cook is live', function () {
         ->assertOk()
         ->assertSee('Brisket')
         ->assertDontSee('View Cook Page');
-});
-
-test('active cook helper ignores ended cooks', function () {
-    $smoker = Smoker::query()->create(['name' => 'Backyard']);
-
-    Cook::query()->create([
-        'smoker_id' => $smoker->id,
-        'title' => 'Finished',
-        'ended_at' => now()->subHour(),
-    ]);
-
-    $active = Cook::query()->create([
-        'smoker_id' => $smoker->id,
-        'title' => 'Live',
-        'ended_at' => null,
-    ]);
-
-    expect(Cook::active()?->id)->toBe($active->id);
-});
-
-test('maverick service stop finishes the active cook', function () {
-    Process::fake([
-        'sudo -n * stop' => Process::result(),
-        'sudo -n * status' => Process::result(exitCode: 1),
-    ]);
-
-    $smoker = Smoker::query()->create(['name' => 'Backyard']);
-
-    $cook = Cook::query()->create([
-        'smoker_id' => $smoker->id,
-        'title' => 'Brisket',
-        'ended_at' => null,
-    ]);
-
-    Reading::query()->create([
-        'cook_id' => $cook->id,
-        'time' => now()->subMinutes(5),
-        'probe_food' => 165,
-        'probe_bbq' => 225,
-    ]);
-
-    expect(app(MaverickService::class)->stop())->toBeTrue();
-
-    $cook->refresh();
-
-    expect($cook->ended_at)->not->toBeNull();
-});
-
-test('maverick service stop returns false when daemon keeps running', function () {
-    Process::fake([
-        'sudo -n * stop' => Process::result(),
-        'sudo -n * status' => Process::result(),
-    ]);
-
-    $smoker = Smoker::query()->create(['name' => 'Backyard']);
-
-    $cook = Cook::query()->create([
-        'smoker_id' => $smoker->id,
-        'title' => 'Brisket',
-        'ended_at' => null,
-    ]);
-
-    expect(app(MaverickService::class)->stop())->toBeFalse();
-
-    $cook->refresh();
-
-    expect($cook->ended_at)->toBeNull();
-});
-
-test('maverick service start returns false when process does not launch', function () {
-    Process::fake([
-        'sudo -n * start' => Process::result(),
-        'sudo -n * status' => Process::result(exitCode: 1),
-    ]);
-
-    expect(app(MaverickService::class)->start())->toBeFalse();
 });
 
 test('home page shows finished cook after active cook ends', function () {

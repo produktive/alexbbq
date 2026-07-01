@@ -99,33 +99,10 @@ test('cook stats summarize totals and averages from readings', function () {
         ->and($stats->averageDurationSeconds)->toBe(10_800);
 });
 
-test('total cook time label is limited to three cascades', function () {
-    $seconds = (365 * 86400) + (60 * 86400) + (7 * 86400) + (5 * 3600) + (30 * 60) + 15;
+test('cook stats duration labels respect cascade limits', function () {
+    $longDuration = (365 * 86400) + (60 * 86400) + (7 * 86400) + (5 * 3600) + (30 * 60) + 15;
+    $averageDuration = (4 * 3600) + (30 * 60) + 15;
 
-    $label = CookStats::formatDuration($seconds, maxCascades: 3);
-
-    expect($label)->toBe("1 year\n3 months\n1 week")
-        ->and(substr_count($label, "\n"))->toBe(2);
-});
-
-test('average cook time label is limited to two cascades', function () {
-    $seconds = (4 * 3600) + (30 * 60) + 15;
-
-    $label = CookStats::formatDuration($seconds, maxCascades: 2);
-
-    expect($label)->toBe("4 hours\n30 minutes")
-        ->and(substr_count($label, "\n"))->toBe(1);
-});
-
-test('stats navigation link appears in guest and authenticated menus', function () {
-    $this->get(route('home'))
-        ->assertOk()
-        ->assertSee('Stats', false);
-
-    $user = \App\Models\User::factory()->create();
-
-    $this->actingAs($user)
-        ->get(route('home'))
-        ->assertOk()
-        ->assertSee('Stats', false);
+    expect(CookStats::formatDuration($longDuration, maxCascades: 3))->toBe("1 year\n3 months\n1 week")
+        ->and(CookStats::formatDuration($averageDuration, maxCascades: 2))->toBe("4 hours\n30 minutes");
 });

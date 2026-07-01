@@ -33,22 +33,15 @@ function cookDescriptionHtml(string ...$filenames): string
     return '<p>Notes</p>'.$images;
 }
 
-test('extractPaths reads data-id and storage src paths', function () {
+test('extractPaths collects valid paths and ignores others', function () {
     $path = cookDescriptionImage('photo.webp');
 
-    $paths = $this->attachments->extractPaths(
+    expect($this->attachments->extractPaths(
         '<img data-id="'.$path.'" src="/storage/'.$path.'" alt="Brisket">',
-    );
-
-    expect($paths)->toBe([$path]);
-});
-
-test('extractPaths ignores paths outside the cook descriptions directory', function () {
-    $paths = $this->attachments->extractPaths(
-        '<img data-id="other/secret.jpg" src="/storage/other/secret.jpg">',
-    );
-
-    expect($paths)->toBe([]);
+    ))->toBe([$path])
+        ->and($this->attachments->extractPaths(
+            '<img data-id="other/secret.jpg" src="/storage/other/secret.jpg">',
+        ))->toBe([]);
 });
 
 test('updating a cook deletes description images that were removed', function () {

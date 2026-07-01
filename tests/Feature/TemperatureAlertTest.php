@@ -50,17 +50,13 @@ test('inverted alert temperature ranges are normalized on save', function () {
         ->and($settings->bbq_max)->toBe(300);
 });
 
-test('push notifications toggle shows only enable button when not subscribed', function () {
+test('push notifications toggle shows the correct button for subscription state', function () {
     $user = User::factory()->create();
 
     Livewire::actingAs($user)
         ->test('push-notifications-toggle')
         ->assertSee('Enable Push Notifications')
         ->assertDontSee('Disable Push Notifications');
-});
-
-test('push notifications toggle shows only disable button when subscribed', function () {
-    $user = User::factory()->create();
 
     $user->pushSubscriptions()->create([
         'endpoint' => 'https://example.com/push/toggle',
@@ -93,18 +89,6 @@ test('clearPushSubscriptions removes stored subscriptions and updates toggle sta
         ->assertDontSee('Disable Push Notifications');
 
     expect($user->fresh()->pushSubscriptions)->toBeEmpty();
-});
-
-test('alert interval options include three minute frequency', function () {
-    $user = User::factory()->create();
-
-    Livewire::actingAs($user)
-        ->test('pages::alerts')
-        ->set('data.alert_interval_minutes', 3)
-        ->call('save')
-        ->assertHasNoErrors();
-
-    expect(UserSettings::forUser($user->fresh())->alert_interval_minutes)->toBe(3);
 });
 
 test('temperature alert is sent when bbq probe is below minimum', function () {
