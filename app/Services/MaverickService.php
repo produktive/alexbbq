@@ -57,11 +57,32 @@ class MaverickService
 
     public function stop(): bool
     {
-        $this->runScript('stop');
+        if (! $this->runScript('stop')->successful()) {
+            return false;
+        }
 
         self::forgetRunningCache();
 
+        if (! $this->waitUntilStopped()) {
+            return false;
+        }
+
         return $this->finishActiveCook();
+    }
+
+    protected function waitUntilStopped(int $attempts = 10, int $intervalMicroseconds = 50_000): bool
+    {
+        for ($i = 0; $i < $attempts; $i++) {
+            if (! $this->probeRunning()) {
+                self::$runningCache = false;
+
+                return true;
+            }
+
+            usleep($intervalMicroseconds);
+        }
+
+        return false;
     }
 
     public function finishActiveCook(): bool

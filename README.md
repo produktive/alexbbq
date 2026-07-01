@@ -294,7 +294,7 @@ npm run build  # production build
 On the Pi, compile the C binary (requires [pigpio](https://abyz.me.uk/rpi/pigpio/download.html)):
 
 ```bash
-gcc -o maverick maverick.c -lpigpio -lrt -pthread
+gcc -o maverick maverick.c -lpigpio -lsqlite3 -lrt -pthread
 chmod +x maverick maverick.sh maverick-artisan.sh
 ```
 

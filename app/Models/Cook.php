@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Support\CookDescriptionAttachments;
+use App\Support\ProbeTemperature;
 use Carbon\Carbon;
 use Carbon\CarbonInterval;
 use Filament\Forms\Components\RichEditor\Models\Concerns\InteractsWithRichContent;
@@ -170,14 +171,9 @@ class Cook extends Model implements HasRichContent
         }
 
         return [
-            'food' => self::cleanProbeTemp($reading->probe_food),
-            'bbq' => self::cleanProbeTemp($reading->probe_bbq),
+            'food' => ProbeTemperature::clean($reading->probe_food),
+            'bbq' => ProbeTemperature::clean($reading->probe_bbq),
         ];
-    }
-
-    private static function cleanProbeTemp(?int $value): ?int
-    {
-        return $value === 0 ? null : $value;
     }
 
     public function getBeganAt(): ?Carbon
@@ -204,13 +200,17 @@ class Cook extends Model implements HasRichContent
 
     public function getElapsedSeconds(): int
     {
-        $start = $this->readingTimeBounds()['min'];
+        ['min' => $start, 'max' => $maxReadingTime] = $this->readingTimeBounds();
 
         if (! $start) {
             return 0;
         }
 
-        return Carbon::parse($start)->diffInSeconds(now());
+        $end = $this->isActive()
+            ? now()
+            : ($this->ended_at ?? Carbon::parse($maxReadingTime ?? $start));
+
+        return Carbon::parse($start)->diffInSeconds($end);
     }
 
     public function getDurationLabel(): string

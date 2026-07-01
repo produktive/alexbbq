@@ -6,6 +6,7 @@ use App\Models\Reading;
 use App\Models\User;
 use App\Models\UserSettings;
 use App\Notifications\TemperatureAlertNotification;
+use App\Support\TemperatureAlertViolation;
 use App\Support\WebPushResultRecorder;
 use Illuminate\Support\Facades\Log;
 
@@ -89,7 +90,7 @@ class TemperatureAlertService
             return;
         }
 
-        $violation = $this->violationMessage($probeLabel, $temperature, $min, $max);
+        $violation = TemperatureAlertViolation::message($probeLabel, $temperature, $min, $max);
 
         if ($violation === null) {
             if ($settings->{$lastAlertColumn} !== null) {
@@ -133,18 +134,5 @@ class TemperatureAlertService
         }
 
         return $recorder->sent > 0;
-    }
-
-    private function violationMessage(string $probeLabel, int $temperature, int $min, int $max): ?string
-    {
-        if ($min > UserSettings::TEMPERATURE_OFF && $temperature < $min) {
-            return "{$probeLabel} probe is {$temperature}°F, below your minimum of {$min}°F.";
-        }
-
-        if ($temperature > $max) {
-            return "{$probeLabel} probe is {$temperature}°F, above your maximum of {$max}°F.";
-        }
-
-        return null;
     }
 }

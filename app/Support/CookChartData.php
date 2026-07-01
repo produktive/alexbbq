@@ -87,12 +87,12 @@ class CookChartData
 
             $foodPoint = [
                 'x' => $x,
-                'y' => self::cleanTemp($reading->probe_food),
+                'y' => ProbeTemperature::clean($reading->probe_food),
             ];
 
             $bbqPoint = [
                 'x' => $x,
-                'y' => self::cleanTemp($reading->probe_bbq),
+                'y' => ProbeTemperature::clean($reading->probe_bbq),
             ];
 
             if ($forDisplay) {
@@ -167,10 +167,5 @@ class CookChartData
         }
 
         return $sampled->unique('id')->values();
-    }
-
-    private static function cleanTemp(?int $value): ?int
-    {
-        return $value === 0 ? null : $value;
     }
 }

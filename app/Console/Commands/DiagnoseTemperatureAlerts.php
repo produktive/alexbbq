@@ -6,6 +6,7 @@ use App\Models\Reading;
 use App\Models\User;
 use App\Models\UserSettings;
 use App\Services\TemperatureAlertService;
+use App\Support\TemperatureAlertViolation;
 use App\Support\WebPushResultRecorder;
 use Illuminate\Console\Command;
 
@@ -129,7 +130,7 @@ class DiagnoseTemperatureAlerts extends Command
     {
         $violations = [];
 
-        $foodViolation = $this->violationMessage(
+        $foodViolation = TemperatureAlertViolation::message(
             'Food',
             (int) $reading->probe_food,
             $settings->food_min,
@@ -140,7 +141,7 @@ class DiagnoseTemperatureAlerts extends Command
             $violations[] = $foodViolation;
         }
 
-        $bbqViolation = $this->violationMessage(
+        $bbqViolation = TemperatureAlertViolation::message(
             'BBQ',
             (int) $reading->probe_bbq,
             $settings->bbq_min,
@@ -152,23 +153,6 @@ class DiagnoseTemperatureAlerts extends Command
         }
 
         return $violations;
-    }
-
-    private function violationMessage(string $probeLabel, int $temperature, int $min, int $max): ?string
-    {
-        if ($temperature <= 0) {
-            return null;
-        }
-
-        if ($min > UserSettings::TEMPERATURE_OFF && $temperature < $min) {
-            return "{$probeLabel} probe is {$temperature}°F, below your minimum of {$min}°F.";
-        }
-
-        if ($temperature > $max) {
-            return "{$probeLabel} probe is {$temperature}°F, above your maximum of {$max}°F.";
-        }
-
-        return null;
     }
 
     private function resolveReading(): ?Reading

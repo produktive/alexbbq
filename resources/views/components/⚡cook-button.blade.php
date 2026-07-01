@@ -51,7 +51,20 @@ new class extends Component implements HasActions, HasSchemas {
             ->modalDescription(__('This will stop temperature recording for the current cook.'))
             ->modalSubmitActionLabel(__('Stop Cook'))
             ->action(function (): void {
-                app(MaverickService::class)->stop();
+                $maverick = app(MaverickService::class);
+
+                if (! $maverick->stop()) {
+                    Flux::toast(
+                        variant: 'warning',
+                        text: __('Could not stop the maverick recorder. Check :log.', [
+                            'log' => str_replace(base_path().'/', '', $maverick->logPath()),
+                        ]),
+                    );
+
+                    $this->syncLiveState();
+
+                    return;
+                }
 
                 $this->syncLiveState();
             });

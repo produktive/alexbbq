@@ -63,15 +63,40 @@ class UserSettings extends Model
 
     public function fillFromAlertFormState(array $state): void
     {
-        $food = $state['food'] ?? [32, 203];
-        $bbq = $state['bbq'] ?? [225, 275];
+        [$foodMin, $foodMax] = self::normalizeTemperatureRange(
+            $state['food'] ?? [32, 203],
+            defaultMin: 32,
+            defaultMax: 203,
+        );
+
+        [$bbqMin, $bbqMax] = self::normalizeTemperatureRange(
+            $state['bbq'] ?? [225, 275],
+            defaultMin: 225,
+            defaultMax: 275,
+        );
 
         $this->fill([
-            'food_min' => (int) ($food[0] ?? 32),
-            'food_max' => (int) ($food[1] ?? 203),
-            'bbq_min' => (int) ($bbq[0] ?? 225),
-            'bbq_max' => (int) ($bbq[1] ?? 275),
+            'food_min' => $foodMin,
+            'food_max' => $foodMax,
+            'bbq_min' => $bbqMin,
+            'bbq_max' => $bbqMax,
             'alert_interval_minutes' => (int) ($state['alert_interval_minutes'] ?? 5),
         ]);
+    }
+
+    /**
+     * @param  array{0?: int|string, 1?: int|string}  $range
+     * @return array{0: int, 1: int}
+     */
+    private static function normalizeTemperatureRange(array $range, int $defaultMin, int $defaultMax): array
+    {
+        $min = (int) ($range[0] ?? $defaultMin);
+        $max = (int) ($range[1] ?? $defaultMax);
+
+        if ($min > $max) {
+            [$min, $max] = [$max, $min];
+        }
+
+        return [$min, $max];
     }
 }

@@ -33,6 +33,23 @@ test('alert settings can be saved from the alerts page', function () {
         ->and($settings->alert_interval_minutes)->toBe(10);
 });
 
+test('inverted alert temperature ranges are normalized on save', function () {
+    $user = User::factory()->create();
+    $settings = UserSettings::forUser($user);
+
+    $settings->fillFromAlertFormState([
+        'food' => [195, 165],
+        'bbq' => [300, 225],
+        'alert_interval_minutes' => 5,
+    ]);
+    $settings->save();
+
+    expect($settings->food_min)->toBe(165)
+        ->and($settings->food_max)->toBe(195)
+        ->and($settings->bbq_min)->toBe(225)
+        ->and($settings->bbq_max)->toBe(300);
+});
+
 test('push notifications toggle shows only enable button when not subscribed', function () {
     $user = User::factory()->create();
 

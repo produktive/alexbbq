@@ -408,6 +408,7 @@ test('active cook helper ignores ended cooks', function () {
 test('maverick service stop finishes the active cook', function () {
     Process::fake([
         'sudo -n * stop' => Process::result(),
+        'sudo -n * status' => Process::result(exitCode: 1),
     ]);
 
     $smoker = Smoker::query()->create(['name' => 'Backyard']);
@@ -425,11 +426,32 @@ test('maverick service stop finishes the active cook', function () {
         'probe_bbq' => 225,
     ]);
 
-    app(MaverickService::class)->stop();
+    expect(app(MaverickService::class)->stop())->toBeTrue();
 
     $cook->refresh();
 
     expect($cook->ended_at)->not->toBeNull();
+});
+
+test('maverick service stop returns false when daemon keeps running', function () {
+    Process::fake([
+        'sudo -n * stop' => Process::result(),
+        'sudo -n * status' => Process::result(),
+    ]);
+
+    $smoker = Smoker::query()->create(['name' => 'Backyard']);
+
+    $cook = Cook::query()->create([
+        'smoker_id' => $smoker->id,
+        'title' => 'Brisket',
+        'ended_at' => null,
+    ]);
+
+    expect(app(MaverickService::class)->stop())->toBeFalse();
+
+    $cook->refresh();
+
+    expect($cook->ended_at)->toBeNull();
 });
 
 test('maverick service start returns false when process does not launch', function () {
