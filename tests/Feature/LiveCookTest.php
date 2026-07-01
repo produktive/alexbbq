@@ -66,7 +66,38 @@ test('home page shows live chart for active cook', function () {
 
     $response->assertOk();
     $response->assertSee('Brisket');
+    $response->assertSee('165°');
+    $response->assertSee('225°');
     $response->assertDontSee('No cooks yet');
+});
+
+test('cook latest probe temps return most recent reading values', function () {
+    $smoker = Smoker::query()->create(['name' => 'Backyard']);
+
+    $cook = Cook::query()->create([
+        'smoker_id' => $smoker->id,
+        'title' => 'Brisket',
+        'ended_at' => null,
+    ]);
+
+    Reading::query()->create([
+        'cook_id' => $cook->id,
+        'time' => now()->subMinutes(10),
+        'probe_food' => 150,
+        'probe_bbq' => 210,
+    ]);
+
+    Reading::query()->create([
+        'cook_id' => $cook->id,
+        'time' => now(),
+        'probe_food' => 172,
+        'probe_bbq' => 228,
+    ]);
+
+    expect($cook->fresh()->latestProbeTemps())->toBe([
+        'food' => 172,
+        'bbq' => 228,
+    ]);
 });
 
 test('home page syncs display cook during hydration', function () {

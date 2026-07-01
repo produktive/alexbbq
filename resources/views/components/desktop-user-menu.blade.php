@@ -1,11 +1,17 @@
 @guest
-    <flux:button
+    <form
+        method="POST"
+        action="{{ route('login.intended') }}"
+        class="contents"
         x-data
-        x-bind:href="'{{ route('login') }}?redirect=' + encodeURIComponent(window.location.href)"
-        wire:navigate
+        @submit="$refs.redirect.value = window.location.href"
     >
-        {{ __('Log in') }}
-    </flux:button>
+        @csrf
+        <input type="hidden" name="redirect" x-ref="redirect" value="{{ url()->current() }}">
+        <flux:button type="submit">
+            {{ __('Log in') }}
+        </flux:button>
+    </form>
 @endguest
 @auth
     <flux:dropdown position="bottom" align="start">

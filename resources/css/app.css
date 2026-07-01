@@ -162,6 +162,34 @@ p.fi-ta-text-description,
     @apply rounded-xl border border-neutral-200 bg-neutral-50/50 p-3 dark:border-neutral-700 dark:bg-neutral-900/50;
 }
 
+.cook-probe-card {
+    @apply rounded-xl border p-4;
+}
+
+.cook-probe-card--food {
+    @apply border-teal-500/25 bg-teal-500/10;
+}
+
+.cook-probe-card--bbq {
+    @apply border-amber-600/25 bg-amber-600/10 dark:border-amber-500/25 dark:bg-amber-500/10;
+}
+
+.cook-probe-card-label {
+    @apply font-medium;
+}
+
+.cook-probe-card--food .cook-probe-card-label {
+    @apply text-teal-800 dark:text-teal-300;
+}
+
+.cook-probe-card--bbq .cook-probe-card-label {
+    @apply text-amber-900 dark:text-amber-300;
+}
+
+.cook-probe-card-value {
+    @apply mt-1 text-3xl font-semibold tabular-nums tracking-tight text-zinc-900 dark:text-zinc-100;
+}
+
 .cook-chart-panel-header {
     @apply mb-3 flex items-start justify-between gap-2;
 }

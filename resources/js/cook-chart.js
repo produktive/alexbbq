@@ -209,6 +209,36 @@ async function fetchChartData(cookId, { editor = false } = {}) {
     return response.json();
 }
 
+function latestProbeValue(points) {
+    if (! points?.length) {
+        return null;
+    }
+
+    for (let i = points.length - 1; i >= 0; i--) {
+        const value = points[i]?.y;
+
+        if (value != null) {
+            return value;
+        }
+    }
+
+    return null;
+}
+
+function dispatchProbeUpdate(cookId, fresh) {
+    if (cookId == null || ! fresh) {
+        return;
+    }
+
+    window.dispatchEvent(new CustomEvent('cook-readings-updated', {
+        detail: {
+            cookId: Number(cookId),
+            food: latestProbeValue(fresh.food),
+            bbq: latestProbeValue(fresh.bbq),
+        },
+    }));
+}
+
 export default function cookChart(initialData, canModify = false, live = false, cookId = null) {
     let data = initialData;
     let chart = null;
@@ -298,7 +328,13 @@ export default function cookChart(initialData, canModify = false, live = false, 
                 return;
             }
 
-            this.$nextTick(() => this.renderChart());
+            this.$nextTick(() => {
+                this.renderChart();
+
+                if (live) {
+                    dispatchProbeUpdate(cookId, data);
+                }
+            });
         },
 
         renderChart() {
@@ -861,7 +897,13 @@ export default function cookChart(initialData, canModify = false, live = false, 
             if (! chart) {
                 this.loading = false;
                 this.loadError = false;
-                this.$nextTick(() => this.renderChart());
+                this.$nextTick(() => {
+                    this.renderChart();
+
+                    if (live) {
+                        dispatchProbeUpdate(cookId, fresh);
+                    }
+                });
 
                 return;
             }
@@ -884,6 +926,10 @@ export default function cookChart(initialData, canModify = false, live = false, 
 
             chart.update();
             this.syncZoomState();
+
+            if (live) {
+                dispatchProbeUpdate(cookId, fresh);
+            }
         },
 
         async handleChartRefresh(eventCookId) {

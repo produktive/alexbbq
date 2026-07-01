@@ -14,6 +14,10 @@
         @endisset
     </x-cook-header>
 
+    @if ($isLive)
+        <x-cook-probe-cards :cook="$cook" />
+    @endif
+
     <div class="cook-card">
         <x-cook-chart
             :cook="$cook"

@@ -15,10 +15,8 @@ class AuthRedirect
         '/reset-password',
     ];
 
-    public static function storeIntended(Request $request): void
+    public static function storeIntendedUrl(?string $redirect, Request $request): void
     {
-        $redirect = $request->query('redirect');
-
         if (! is_string($redirect) || $redirect === '') {
             return;
         }

@@ -147,6 +147,39 @@ class Cook extends Model implements HasRichContent
         return $this->readingTimeBounds()['min'] !== null;
     }
 
+    public function latestReading(): ?Reading
+    {
+        if ($this->relationLoaded('readings') && $this->readings->isNotEmpty()) {
+            return $this->readings->sortByDesc('time')->first();
+        }
+
+        return $this->readings()
+            ->latest('time')
+            ->first(['id', 'time', 'probe_food', 'probe_bbq']);
+    }
+
+    /**
+     * @return array{food: ?int, bbq: ?int}
+     */
+    public function latestProbeTemps(): array
+    {
+        $reading = $this->latestReading();
+
+        if ($reading === null) {
+            return ['food' => null, 'bbq' => null];
+        }
+
+        return [
+            'food' => self::cleanProbeTemp($reading->probe_food),
+            'bbq' => self::cleanProbeTemp($reading->probe_bbq),
+        ];
+    }
+
+    private static function cleanProbeTemp(?int $value): ?int
+    {
+        return $value === 0 ? null : $value;
+    }
+
     public function getBeganAt(): ?Carbon
     {
         $firstReadingTime = $this->readingTimeBounds()['min'];

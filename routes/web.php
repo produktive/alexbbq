@@ -2,6 +2,8 @@
 
 use App\Http\Controllers\LiveCookController;
 use App\Http\Controllers\PushSubscriptionController;
+use App\Support\AuthRedirect;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 Route::livewire('/', 'pages::home')->name('home');
@@ -21,5 +23,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
 });
 
 Route::livewire('/cooks/{cook}', 'pages::cooks.view')->whereNumber('cook')->name('cooks.view');
+
+Route::middleware('guest')->post('/login/intended', function (Request $request) {
+    AuthRedirect::storeIntendedUrl($request->input('redirect'), $request);
+
+    return redirect()->route('login');
+})->name('login.intended');
 
 require __DIR__.'/settings.php';
