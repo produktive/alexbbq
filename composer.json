@@ -23,7 +23,7 @@
         "laravel-notification-channels/webpush": "^11.0",
         "laravel/chisel": "^0.1.1",
         "laravel/fortify": "^1.37.2",
-        "laravel/framework": "^13.17",
+        "laravel/framework": "^13.18",
         "laravel/reverb": "^1.10.2",
         "laravel/tinker": "^3.0.2",
         "livewire/flux": "^2.15.0",
