@@ -64,7 +64,7 @@ class CookStats
             [$interval->years, 'year', 'years'],
             [$interval->months, 'month', 'months'],
             [$interval->weeks, 'week', 'weeks'],
-            [$interval->days, 'day', 'days'],
+            [$interval->dayzExcludeWeeks, 'day', 'days'],
             [$interval->hours, 'hour', 'hours'],
             [$interval->minutes, 'minute', 'minutes'],
             [$interval->seconds, 'second', 'seconds'],
