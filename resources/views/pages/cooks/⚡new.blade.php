@@ -7,6 +7,7 @@ use App\Models\Cook;
 use App\Models\Smoker;
 use App\Models\UserSettings;
 use App\Services\MaverickService;
+use App\Support\RichEditorDocument;
 use Filament\Actions\Concerns\InteractsWithActions;
 use Filament\Actions\Contracts\HasActions;
 use Filament\Forms\Concerns\InteractsWithForms;
@@ -85,11 +86,15 @@ class extends Component implements HasActions, HasForms {
             return;
         }
 
+        $description = filled($state['description'] ?? null)
+            ? RichEditorDocument::sanitizeHtml($state['description'])
+            : null;
+
         $cook = Cook::query()->create([
             'user_id' => Auth::id(),
             'smoker_id' => $state['smoker_id'],
             'title' => $state['title'],
-            'description' => $state['description'] ?? null,
+            'description' => $description,
         ]);
 
         Cook::flushRequestCache();

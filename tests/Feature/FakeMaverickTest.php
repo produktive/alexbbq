@@ -5,6 +5,7 @@ use App\Models\Reading;
 use App\Models\Smoker;
 use App\Services\FakeMaverickSimulator;
 use App\Services\MaverickService;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Process;
 
 test('fake maverick simulator produces realistic temperatures', function () {
@@ -55,6 +56,23 @@ test('maverick service resolves php binary for fake script', function () {
 
     expect($php)->not->toContain('fpm')
         ->and(is_executable($php))->toBeTrue();
+});
+
+test('maverick simulate picks up a cook created after the cache was primed', function () {
+    expect(Cook::active())->toBeNull();
+
+    $smoker = Smoker::query()->create(['name' => 'Backyard']);
+    $cook = Cook::query()->create([
+        'smoker_id' => $smoker->id,
+        'title' => 'Brisket',
+        'ended_at' => null,
+    ]);
+
+    expect(Cook::active())->toBeNull();
+
+    Artisan::call('maverick:simulate', ['--once' => true]);
+
+    expect(Reading::query()->where('cook_id', $cook->id)->exists())->toBeTrue();
 });
 
 test('fake maverick script start and stop work without sudo', function () {

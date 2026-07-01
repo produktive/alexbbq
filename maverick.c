@@ -169,23 +169,6 @@ static void run_artisan_command(const char *command, sqlite3_int64 id) {
         system(shell);
 }
 
-static int default_smoker_id(void) {
-        sqlite3_stmt *stmt = NULL;
-        int smoker_id = 1;
-
-        if (sqlite3_prepare_v2(db, "SELECT id FROM smokers ORDER BY id LIMIT 1", -1, &stmt, NULL) != SQLITE_OK) {
-                return smoker_id;
-        }
-
-        if (sqlite3_step(stmt) == SQLITE_ROW) {
-                smoker_id = sqlite3_column_int(stmt, 0);
-        }
-
-        sqlite3_finalize(stmt);
-
-        return smoker_id;
-}
-
 static void finish_cook(void) {
         char sql[160];
         char ended_at[20];
@@ -515,36 +498,9 @@ static int start_cook(void) {
                 sqlite3_finalize(stmt);
         }
 
-        char sql[256];
-        char started_at[20];
-        int smoker_id;
-        time_t now = time(NULL);
+        printf("No active cook found; start a cook from the dashboard before starting maverick.\n");
 
-        strftime(started_at, sizeof(started_at), "%Y-%m-%d %H:%M:%S", localtime(&now));
-        smoker_id = default_smoker_id();
-
-        snprintf(
-                sql,
-                sizeof(sql),
-                "INSERT INTO cooks (smoker_id, title, created_at, updated_at, ended_at) "
-                "VALUES (%d, 'Live Cook', '%s', '%s', NULL);",
-                smoker_id,
-                started_at,
-                started_at
-        );
-
-        rc = sqlite3_exec(db, sql, callback, 0, &zErrMsg);
-        if (rc != SQLITE_OK) {
-                printf("SQL error inserting into cooks: %s\n", zErrMsg);
-                sqlite3_free(zErrMsg);
-                zErrMsg = 0;
-                return 0;
-        }
-
-        cookID = (unsigned int) sqlite3_last_insert_rowid(db);
-        printf("Cook ID is %d\n", cookID);
-
-        return 1;
+        return 0;
 }
 
 int main(int argc, char **argv)

@@ -345,6 +345,40 @@ test('start cook page saves alert settings when recording starts', function () {
         ->and($cook->ended_at)->toBeNull();
 });
 
+test('creating a reading does not evaluate alerts on its own', function () {
+    Notification::fake();
+
+    $user = User::factory()->create();
+    UserSettings::forUser($user)->update([
+        'food_min' => 165,
+        'food_max' => 195,
+        'alert_interval_minutes' => 5,
+    ]);
+
+    $user->pushSubscriptions()->create([
+        'endpoint' => 'https://example.com/push/no-auto-eval',
+        'public_key' => 'test-public-key',
+        'auth_token' => 'test-auth-token',
+        'content_encoding' => 'aesgcm',
+    ]);
+
+    $smoker = Smoker::query()->create(['name' => 'Backyard']);
+    $cook = Cook::query()->create([
+        'smoker_id' => $smoker->id,
+        'title' => 'Brisket',
+        'ended_at' => null,
+    ]);
+
+    Reading::query()->create([
+        'cook_id' => $cook->id,
+        'time' => now(),
+        'probe_food' => 200,
+        'probe_bbq' => 250,
+    ]);
+
+    Notification::assertNothingSent();
+});
+
 test('evaluate cook alerts command evaluates a reading', function () {
     Notification::fake();
 

@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Artisan;
 
 class SimulateMaverick extends Command
 {
-    protected $signature = 'maverick:simulate';
+    protected $signature = 'maverick:simulate {--once : Process one loop iteration and exit}';
 
     protected $description = 'Simulate Maverick probe readings for local development';
 
@@ -28,9 +28,15 @@ class SimulateMaverick extends Command
         $this->info("Fake maverick running (interval: {$interval}s). Press Ctrl+C to stop.");
 
         while (! $this->shouldStop) {
+            Cook::flushRequestCache();
+
             $cook = Cook::active();
 
             if ($cook === null) {
+                if ($this->option('once')) {
+                    break;
+                }
+
                 sleep(1);
 
                 continue;
@@ -63,6 +69,10 @@ class SimulateMaverick extends Command
                 $temperatures['probe_food'],
                 $temperatures['probe_bbq'],
             ));
+
+            if ($this->option('once')) {
+                break;
+            }
 
             for ($elapsed = 0; $elapsed < $interval && ! $this->shouldStop; $elapsed++) {
                 sleep(1);
