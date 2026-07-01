@@ -7,7 +7,7 @@
         <div>
             <flux:heading size="xl">{{ __('Cook Statistics') }}</flux:heading>
             <flux:text>
-                Read some completely unnecessary data statistics about the cooks.
+                Read some superfluous data about the cooks.
             </flux:text>
         </div>
 
