@@ -1,5 +1,28 @@
 import Chart from 'chart.js/auto';
 import zoomPlugin from 'chartjs-plugin-zoom';
+import Hammer from 'hammerjs';
+
+const COARSE_TOUCH_ACTION = 'pan-y pinch-zoom';
+
+function patchHammerForPageScroll() {
+    if (! window.matchMedia('(pointer: coarse)').matches || Hammer.Manager.__cookChartPatched) {
+        return;
+    }
+
+    const OriginalManager = Hammer.Manager;
+
+    Hammer.Manager = function (element, options = {}) {
+        return new OriginalManager(element, {
+            touchAction: COARSE_TOUCH_ACTION,
+            ...options,
+        });
+    };
+
+    Hammer.Manager.prototype = OriginalManager.prototype;
+    Hammer.Manager.__cookChartPatched = true;
+}
+
+patchHammerForPageScroll();
 
 Chart.register(zoomPlugin);
 
@@ -454,6 +477,18 @@ export default function cookChart(initialData, canModify = false, live = false, 
             this.isZoomed = chart?.isZoomedOrPanned() ?? false;
         },
 
+        applyCanvasTouchAction() {
+            if (! this.touchEditing) {
+                return;
+            }
+
+            const canvas = this.$refs.canvas;
+
+            if (canvas) {
+                canvas.style.touchAction = COARSE_TOUCH_ACTION;
+            }
+        },
+
         syncZoomPanState() {
             if (! chart?.options?.plugins?.zoom) {
                 return;
@@ -506,18 +541,13 @@ export default function cookChart(initialData, canModify = false, live = false, 
         },
 
         updateInteractionState() {
-            const canvas = this.$refs.canvas;
-
-            if (canvas && this.touchEditing) {
-                canvas.classList.add('touch-none');
-            }
-
             if (! chart) {
                 return;
             }
 
             chart.options.plugins.tooltip.enabled = this.exploreActive();
             this.syncZoomPanState();
+            this.applyCanvasTouchAction();
         },
 
         destroy() {
