@@ -23,6 +23,48 @@ const registerServiceWorker = async () => {
     return navigator.serviceWorker.register('/sw.js');
 };
 
+const getServiceWorkerRegistration = async () => {
+    const registration = await navigator.serviceWorker.getRegistration();
+
+    if (registration) {
+        return registration;
+    }
+
+    if (! navigator.serviceWorker.controller) {
+        return null;
+    }
+
+    return navigator.serviceWorker.ready;
+};
+
+const unsubscribeBrowser = async () => {
+    const registration = await getServiceWorkerRegistration();
+    const subscription = await registration?.pushManager.getSubscription();
+
+    if (! subscription) {
+        return;
+    }
+
+    await subscription.unsubscribe();
+};
+
+const removeServerSubscription = async (endpoint = null) => {
+    const response = await fetch('/push-subscriptions', {
+        method: 'DELETE',
+        headers: {
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': csrfToken(),
+        },
+        body: JSON.stringify(endpoint ? { endpoint } : {}),
+        credentials: 'same-origin',
+    });
+
+    if (! response.ok) {
+        throw new Error('Unable to remove push subscription.');
+    }
+};
+
 const subscribeToPush = async () => {
     if (!('PushManager' in window)) {
         throw new Error('Push notifications are not supported in this browser.');
@@ -77,31 +119,11 @@ const subscribeToPush = async () => {
 };
 
 const unsubscribeFromPush = async () => {
-    const registration = await navigator.serviceWorker.getRegistration('/sw.js');
+    const registration = await getServiceWorkerRegistration();
     const subscription = await registration?.pushManager.getSubscription();
 
-    if (!subscription) {
-        return;
-    }
-
-    const endpoint = subscription.endpoint;
-
-    const response = await fetch('/push-subscriptions', {
-        method: 'DELETE',
-        headers: {
-            Accept: 'application/json',
-            'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': csrfToken(),
-        },
-        body: JSON.stringify({ endpoint }),
-        credentials: 'same-origin',
-    });
-
-    if (! response.ok) {
-        throw new Error('Unable to remove push subscription.');
-    }
-
-    await subscription.unsubscribe();
+    await removeServerSubscription(subscription?.endpoint ?? null);
+    await unsubscribeBrowser();
 };
 
 const enable = async () => {

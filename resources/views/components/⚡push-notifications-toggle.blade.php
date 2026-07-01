@@ -17,6 +17,12 @@ new class extends Component {
         $this->syncEnabledState();
     }
 
+    public function clearPushSubscriptions(): void
+    {
+        Auth::user()->pushSubscriptions()->delete();
+        $this->syncEnabledState();
+    }
+
     #[Computed]
     public function label(): string
     {
@@ -56,12 +62,15 @@ new class extends Component {
 
             try {
                 if ($wire.enabled) {
-                    await window.pushNotifications.disable();
+                    try {
+                        await window.pushNotifications.disable();
+                    } finally {
+                        await $wire.clearPushSubscriptions();
+                    }
                 } else {
                     await window.pushNotifications.enable();
+                    await $wire.refreshPushStatus();
                 }
-
-                await $wire.refreshPushStatus();
             } finally {
                 this.working = false;
             }

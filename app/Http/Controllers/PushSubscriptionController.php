@@ -35,10 +35,16 @@ class PushSubscriptionController extends Controller
     public function destroy(Request $request): Response
     {
         $validated = $request->validate([
-            'endpoint' => ['required', 'string', 'max:500'],
+            'endpoint' => ['nullable', 'string', 'max:500'],
         ]);
 
-        $request->user()->deletePushSubscription($validated['endpoint']);
+        $user = $request->user();
+
+        if (filled($validated['endpoint'] ?? null)) {
+            $user->deletePushSubscription($validated['endpoint']);
+        } else {
+            $user->pushSubscriptions()->delete();
+        }
 
         return response()->noContent();
     }

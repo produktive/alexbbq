@@ -58,6 +58,26 @@ test('push notifications toggle shows only disable button when subscribed', func
         ->assertDontSee('Enable Push Notifications');
 });
 
+test('clearPushSubscriptions removes stored subscriptions and updates toggle state', function () {
+    $user = User::factory()->create();
+
+    $user->pushSubscriptions()->create([
+        'endpoint' => 'https://example.com/push/toggle',
+        'public_key' => 'public-key',
+        'auth_token' => 'auth-token',
+        'content_encoding' => 'aes128gcm',
+    ]);
+
+    Livewire::actingAs($user)
+        ->test('push-notifications-toggle')
+        ->call('clearPushSubscriptions')
+        ->assertSet('enabled', false)
+        ->assertSee('Enable Push Notifications')
+        ->assertDontSee('Disable Push Notifications');
+
+    expect($user->fresh()->pushSubscriptions)->toBeEmpty();
+});
+
 test('alert interval options include three minute frequency', function () {
     $user = User::factory()->create();
 
@@ -375,6 +395,22 @@ test('push subscription endpoint can be stored for authenticated users', functio
     $response->assertNoContent();
 
     expect($user->pushSubscriptions()->count())->toBe(1);
+});
+
+test('push subscription endpoint can be removed without an endpoint payload', function () {
+    $user = User::factory()->create();
+
+    $user->pushSubscriptions()->create([
+        'endpoint' => 'https://example.com/push/old',
+        'public_key' => 'old-public-key',
+        'auth_token' => 'old-auth-token',
+        'content_encoding' => 'aes128gcm',
+    ]);
+
+    $this->actingAs($user)->deleteJson(route('push-subscriptions.destroy'), [])
+        ->assertNoContent();
+
+    expect($user->fresh()->pushSubscriptions)->toBeEmpty();
 });
 
 test('storing a push subscription replaces previous subscriptions for the user', function () {
