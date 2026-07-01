@@ -33,7 +33,7 @@
                 </flux:text>
 
                 <flux:text x-show="! editMode" size="sm" class="text-zinc-500 dark:text-zinc-400">
-                    <span x-show="touchEditing">Pinch to zoom, drag to pan</span>
+                    <span x-show="touchEditing">Pinch to zoom<span x-show="isZoomed">, drag to pan</span></span>
                     <span x-show="! touchEditing">Ctrl+scroll to zoom, drag to pan</span>
                 </flux:text>
             </div>

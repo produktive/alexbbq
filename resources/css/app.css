@@ -156,7 +156,7 @@ p.fi-ta-text-description,
 
 @media (pointer: coarse) {
     .cook-chart canvas {
-        touch-action: pan-y pinch-zoom;
+        touch-action: pan-y;
     }
 }
 
