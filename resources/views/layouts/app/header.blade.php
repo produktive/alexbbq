@@ -19,6 +19,14 @@
         </flux:navbar.item>
 
         <livewire:cooks-nav-item variant="navbar" :navigate="true" />
+
+        <flux:navbar.item :href="route('stats')"
+                          :current="request()->routeIs('stats')"
+                          icon="chart-bar"
+                          wire:navigate
+        >
+            {{ __('Stats') }}
+        </flux:navbar.item>
     </flux:navbar>
 
     <flux:spacer/>
@@ -44,6 +52,9 @@
                 {{ __('Home') }}
             </flux:sidebar.item>
             <livewire:cooks-nav-item variant="sidebar" :navigate="true" />
+            <flux:sidebar.item icon="chart-bar" :href="route('stats')" :current="request()->routeIs('stats')" wire:navigate>
+                {{ __('Stats') }}
+            </flux:sidebar.item>
         </flux:sidebar.group>
     </flux:sidebar.nav>
 </flux:sidebar>

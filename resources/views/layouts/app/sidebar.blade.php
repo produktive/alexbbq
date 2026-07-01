@@ -27,6 +27,10 @@
                                    wire:navigate>
                     {{ __('Smokers') }}
                 </flux:sidebar.item>
+
+                <flux:sidebar.item icon="chart-bar" :href="route('stats')" :current="request()->routeIs('stats')" wire:navigate>
+                    {{ __('Stats') }}
+                </flux:sidebar.item>
             </flux:sidebar.group>
         </flux:sidebar.nav>
 

@@ -3,12 +3,13 @@
 use App\Http\Controllers\LiveCookController;
 use App\Http\Controllers\PushSubscriptionController;
 use App\Support\AuthRedirect;
+use App\Support\CookStats;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 Route::livewire('/', 'pages::home')->name('home');
 Route::livewire('/cooks', 'pages::cooks.index')->name('cooks');
-Route::view('/stats', 'stats')->name('stats');
+Route::get('/stats', fn () => view('stats', ['stats' => CookStats::summarize()]))->name('stats');
 
 Route::get('/live/cook-status', [LiveCookController::class, 'status'])->name('live.cook-status');
 Route::get('/cooks/{cook}/chart-data', [LiveCookController::class, 'chartData'])->whereNumber('cook')->name('cooks.chart-data');
