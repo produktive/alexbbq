@@ -4,6 +4,7 @@
     "description": "Live BBQ temperature monitoring for the Maverick ET-732.",
     "start_url": "/",
     "scope": "/",
+    "id": "/",
     "display": "standalone",
     "background_color": "#ffffff",
     "theme_color": "#18181b",

@@ -1,4 +1,4 @@
-import { mkdir, readFile } from 'node:fs/promises';
+import { mkdir } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import sharp from 'sharp';
@@ -21,16 +21,40 @@ const splashSizes = [
         icon: 280,
     },
     {
+        file: 'iphone-15-portrait.png',
+        width: 1179,
+        height: 2556,
+        icon: 280,
+    },
+    {
         file: 'iphone-14-pro-max-portrait.png',
         width: 1290,
         height: 2796,
         icon: 300,
     },
     {
+        file: 'iphone-16-pro-portrait.png',
+        width: 1206,
+        height: 2622,
+        icon: 290,
+    },
+    {
+        file: 'iphone-16-pro-max-portrait.png',
+        width: 1320,
+        height: 2868,
+        icon: 310,
+    },
+    {
         file: 'ipad-pro-12-portrait.png',
         width: 2048,
         height: 2732,
         icon: 360,
+    },
+    {
+        file: 'fallback-portrait.png',
+        width: 1290,
+        height: 2796,
+        icon: 300,
     },
 ];
 
