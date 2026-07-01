@@ -4,7 +4,8 @@
     "type": "module",
     "scripts": {
         "build": "vite build",
-        "dev": "vite"
+        "dev": "vite",
+        "pwa:splash": "node scripts/generate-pwa-splash.mjs"
     },
     "dependencies": {
         "@jsquash/webp": "^1.5.0",
@@ -24,5 +25,8 @@
         "@rollup/rollup-linux-x64-gnu": "4.9.5",
         "@tailwindcss/oxide-linux-x64-gnu": "^4.0.1",
         "lightningcss-linux-x64-gnu": "^1.29.1"
+    },
+    "devDependencies": {
+        "sharp": "^0.35.3"
     }
 }

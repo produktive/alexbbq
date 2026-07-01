@@ -15,6 +15,8 @@
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 
+@include('partials.pwa-splash')
+
 @fonts
 
 @if (config('broadcasting.default') === 'reverb' && filled(config('broadcasting.connections.reverb.key')))
