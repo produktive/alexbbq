@@ -1,4 +1,4 @@
-import { mkdir } from 'node:fs/promises';
+import { mkdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import sharp from 'sharp';
@@ -58,6 +58,50 @@ const splashSizes = [
     },
 ];
 
+function escapeXml(value) {
+    return value
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&apos;');
+}
+
+async function readAppName() {
+    try {
+        const env = await readFile(path.join(root, '.env'), 'utf8');
+        const match = env.match(/^APP_NAME=(.+)$/m);
+
+        if (match) {
+            return match[1].trim().replace(/^["']|["']$/g, '');
+        }
+    } catch {
+        //
+    }
+
+    return 'Alex.bbq';
+}
+
+function textSvg(width, label) {
+    const fontSize = Math.max(28, Math.round(width * 0.045));
+    const height = Math.round(fontSize * 1.6);
+
+    return Buffer.from(`<svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
+  <text
+    x="50%"
+    y="50%"
+    text-anchor="middle"
+    dominant-baseline="middle"
+    font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
+    font-size="${fontSize}"
+    font-weight="600"
+    fill="#18181b"
+  >${escapeXml(label)}</text>
+</svg>`);
+}
+
+const appName = await readAppName();
+
 await mkdir(outputDir, { recursive: true });
 
 for (const size of splashSizes) {
@@ -65,6 +109,17 @@ for (const size of splashSizes) {
         .resize(size.icon, size.icon)
         .png()
         .toBuffer();
+
+    const text = await sharp(textSvg(size.width, appName))
+        .png()
+        .toBuffer();
+
+    const textMeta = await sharp(text).metadata();
+    const textHeight = textMeta.height ?? 0;
+    const gap = Math.round(size.width * 0.035);
+    const stackHeight = size.icon + gap + textHeight;
+    const top = Math.round((size.height - stackHeight) / 2);
+    const iconLeft = Math.round((size.width - size.icon) / 2);
 
     await sharp({
         create: {
@@ -74,9 +129,14 @@ for (const size of splashSizes) {
             background: { r: 255, g: 255, b: 255, alpha: 1 },
         },
     })
-        .composite([{ input: icon, gravity: 'center' }])
+        .composite([
+            { input: icon, top, left: iconLeft },
+            { input: text, top: top + size.icon + gap, left: 0 },
+        ])
         .png()
         .toFile(path.join(outputDir, size.file));
 
     console.log(`Wrote ${size.file}`);
 }
+
+console.log(`Splash label: ${appName}`);
