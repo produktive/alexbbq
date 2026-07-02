@@ -74,3 +74,23 @@ test('web app manifest colors can be overridden', function () {
         ->background_color->toBe('#001133')
         ->theme_color->toBe('#001133');
 });
+
+test('web app manifest includes polish metadata', function () {
+    config([
+        'app.locale' => 'en',
+        'pwa.lang' => null,
+        'pwa.dir' => 'ltr',
+        'pwa.orientation' => 'any',
+        'pwa.prefer_related_applications' => false,
+        'pwa.categories' => ['utilities', 'food'],
+    ]);
+
+    $response = $this->get(route('manifest'));
+
+    expect($response->json())
+        ->lang->toBe('en')
+        ->dir->toBe('ltr')
+        ->orientation->toBe('any')
+        ->prefer_related_applications->toBeFalse()
+        ->and($response->json('categories'))->toBe(['utilities', 'food']);
+});

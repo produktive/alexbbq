@@ -7,6 +7,7 @@
     $initialElapsed = filled($beganAt) ? \App\Support\FormatElapsed::fromIso8601($beganAt) : null;
     $isConnecting = blank($beganAt);
     $displayClass = $showInTitleArea ? 'hidden lg:inline-flex' : 'inline-flex';
+    $hideWhileConnectingInTitle = $showInTitleArea && $isConnecting;
 @endphp
 
 <div
@@ -15,7 +16,14 @@
     @if (filled($beganAt))
         data-began-at="{{ $beganAt }}"
     @endif
-    {{ $attributes->class("$displayClass items-center gap-2 rounded-full border px-3 py-1 text-sm font-medium") }}
+    @if ($showInTitleArea)
+        x-show="! connecting"
+        x-cloak
+    @endif
+    {{ $attributes->class([
+        "$displayClass items-center gap-2 rounded-full border px-3 py-1 text-sm font-medium",
+        'hidden' => $hideWhileConnectingInTitle,
+    ]) }}
     :class="connecting
         ? 'border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-400'
         : 'border-red-500/30 bg-red-500/10 text-red-600 dark:text-red-400'"

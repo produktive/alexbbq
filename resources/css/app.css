@@ -323,3 +323,11 @@ p.fi-ta-text-description,
         height: clamp(12rem, calc(100dvh - 7rem), 31.25rem);
     }
 }
+
+.offline-status-banner {
+    @apply fixed inset-x-0 top-0 z-50 bg-amber-600 px-4 py-2 text-center text-sm font-medium text-white;
+}
+
+.offline-status-banner[hidden] {
+    display: none;
+}

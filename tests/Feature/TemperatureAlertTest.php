@@ -183,7 +183,8 @@ test('temperature alert is sent when bbq probe is below minimum', function () {
     app(TemperatureAlertService::class)->evaluate($reading);
 
     Notification::assertSentTo($user, TemperatureAlertNotification::class, function (TemperatureAlertNotification $notification) {
-        return str_contains($notification->body, 'BBQ probe is 71°F');
+        return str_contains($notification->body, 'BBQ probe is 71°F')
+            && str_contains($notification->url, route('home'));
     });
 });
 

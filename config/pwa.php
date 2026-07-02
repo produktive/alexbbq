@@ -15,6 +15,19 @@ return [
 
     'short_name' => env('PWA_SHORT_NAME'),
 
+    'lang' => env('PWA_LANG'),
+
+    'dir' => env('PWA_DIR', 'ltr'),
+
+    'orientation' => env('PWA_ORIENTATION', 'any'),
+
+    'prefer_related_applications' => env('PWA_PREFER_RELATED_APPLICATIONS', false),
+
+    'categories' => [
+        'utilities',
+        'food',
+    ],
+
     'shortcuts' => [
         ['name' => 'Home', 'short_name' => 'Home', 'route' => 'home'],
         ['name' => 'Cooks', 'short_name' => 'Cooks', 'route' => 'cooks'],

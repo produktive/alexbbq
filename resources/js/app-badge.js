@@ -61,6 +61,16 @@ export function listenForAppBadgeSync() {
             if (event.data?.type === 'clear-app-badge') {
                 clearAppBadge();
             }
+
+            if (event.data?.navigate) {
+                const target = new URL(event.data.navigate, window.location.origin);
+
+                if (window.Livewire?.navigate) {
+                    window.Livewire.navigate(`${target.pathname}${target.search}`);
+                } else {
+                    window.location.href = target.href;
+                }
+            }
         });
     }
 }

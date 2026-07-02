@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="dark">
+    <meta name="theme-color" content="#1f1f1f">
+    <title>Offline</title>
+    <style>
+        :root {
+            color-scheme: dark;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100dvh;
+            display: grid;
+            place-items: center;
+            padding: 1.5rem;
+            font-family: ui-sans-serif, system-ui, sans-serif;
+            background: #1f1f1f;
+            color: #f5f5f5;
+        }
+
+        main {
+            width: min(100%, 24rem);
+            text-align: center;
+        }
+
+        img {
+            width: 5rem;
+            height: 5rem;
+            margin: 0 auto 1.5rem;
+            border-radius: 1rem;
+        }
+
+        h1 {
+            margin: 0 0 0.75rem;
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        p {
+            margin: 0 0 1.5rem;
+            line-height: 1.5;
+            color: #a3a3a3;
+        }
+
+        button {
+            border: 0;
+            border-radius: 9999px;
+            padding: 0.75rem 1.25rem;
+            font: inherit;
+            font-weight: 600;
+            color: #171717;
+            background: #f5f5f5;
+            cursor: pointer;
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+    </style>
+</head>
+<body>
+    <main>
+        <img src="/pwa-icon-512.png" alt="" width="80" height="80">
+        <h1>You are offline</h1>
+        <p>Live temperatures and charts need a network connection. Cached pages may still be available once you reconnect.</p>
+        <button type="button" onclick="window.location.reload()">Try again</button>
+    </main>
+</body>
+</html>
