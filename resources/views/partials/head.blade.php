@@ -19,44 +19,10 @@
 <script>
     if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone) {
         document.cookie = 'pwa_mode=1; path=/; max-age=31536000; SameSite=Lax';
-
-        function markPwaClientInServiceWorker() {
-            if (! ('serviceWorker' in navigator)) {
-                return;
-            }
-
-            navigator.serviceWorker.ready.then(function (registration) {
-                registration.active?.postMessage({ type: 'mark-pwa-client' });
-            }).catch(function () {});
-        }
-
-        markPwaClientInServiceWorker();
     }
 
     if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('/sw.js').then(function (registration) {
-            if (! (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone)) {
-                return;
-            }
-
-            function markPwaClientInServiceWorker() {
-                registration.active?.postMessage({ type: 'mark-pwa-client' });
-            }
-
-            if (registration.active) {
-                markPwaClientInServiceWorker();
-            }
-
-            registration.addEventListener('updatefound', function () {
-                registration.installing?.addEventListener('statechange', function () {
-                    if (registration.active) {
-                        markPwaClientInServiceWorker();
-                    }
-                });
-            });
-
-            navigator.serviceWorker.ready.then(markPwaClientInServiceWorker).catch(function () {});
-        }).catch(function () {});
+        navigator.serviceWorker.register('/sw.js').catch(function () {});
     }
 </script>
 <link rel="apple-touch-icon" sizes="180x180" href="{{ PwaAsset::url('apple-touch-icon.png') }}">

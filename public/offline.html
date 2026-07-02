@@ -6,72 +6,9 @@
     <meta name="color-scheme" content="dark">
     <meta name="theme-color" content="#1f1f1f">
     <title>Offline</title>
-    <script>
-        document.documentElement.classList.add('booting');
-
-        if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone) {
-            document.cookie = 'pwa_mode=1; path=/; max-age=31536000; SameSite=Lax';
-        }
-
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('/sw.js').then(function (registration) {
-                if (! (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone)) {
-                    return;
-                }
-
-                function markPwaClientInServiceWorker() {
-                    registration.active?.postMessage({ type: 'mark-pwa-client' });
-                }
-
-                if (registration.active) {
-                    markPwaClientInServiceWorker();
-                }
-
-                navigator.serviceWorker.ready.then(markPwaClientInServiceWorker).catch(function () {});
-            }).catch(function () {});
-        }
-
-        (function () {
-            async function showOfflinePage() {
-                document.documentElement.classList.remove('booting');
-            }
-
-            async function redirectHomeIfOnline() {
-                if (! navigator.onLine) {
-                    await showOfflinePage();
-
-                    return;
-                }
-
-                try {
-                    const response = await fetch('/live/cook-status', {
-                        cache: 'no-store',
-                        credentials: 'same-origin',
-                        headers: { Accept: 'application/json' },
-                    });
-
-                    if (response.ok) {
-                        window.location.replace('/');
-
-                        return;
-                    }
-                } catch {
-                    //
-                }
-
-                await showOfflinePage();
-            }
-
-            redirectHomeIfOnline();
-        })();
-    </script>
     <style>
         :root {
             color-scheme: dark;
-        }
-
-        html.booting body {
-            visibility: hidden;
         }
 
         * {
@@ -111,18 +48,6 @@
             margin: 0 0 1.5rem;
             line-height: 1.5;
             color: #a3a3a3;
-        }
-
-        ul {
-            margin: 0 0 1.5rem;
-            padding-left: 1.25rem;
-            text-align: left;
-            line-height: 1.5;
-            color: #a3a3a3;
-        }
-
-        li + li {
-            margin-top: 0.5rem;
         }
 
         #retry-status {
@@ -203,8 +128,13 @@
 
             async function isCooksPageCached() {
                 if (! ('caches' in window)) {
-                    return false;
+                    return true;
                 }
+
+                const cooksRequest = new Request('/cooks', {
+                    method: 'GET',
+                    credentials: 'same-origin',
+                });
 
                 const cacheNames = await caches.keys();
 
@@ -214,7 +144,8 @@
                     }
 
                     const cache = await caches.open(cacheName);
-                    const match = await cache.match('/cooks');
+                    const match = await cache.match(cooksRequest)
+                        ?? await cache.match('/cooks');
 
                     if (match) {
                         return true;

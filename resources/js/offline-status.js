@@ -3,25 +3,12 @@ function isStandalonePwa() {
         || window.navigator.standalone === true;
 }
 
-function notifyServiceWorkerOfPwaClient() {
-    if (! isStandalonePwa() || ! ('serviceWorker' in navigator)) {
-        return;
-    }
-
-    navigator.serviceWorker.ready
-        .then((registration) => {
-            registration.active?.postMessage({ type: 'mark-pwa-client' });
-        })
-        .catch(() => {});
-}
-
 export function markStandalonePwa() {
     if (! isStandalonePwa()) {
         return;
     }
 
     document.cookie = 'pwa_mode=1; path=/; max-age=31536000; SameSite=Lax';
-    notifyServiceWorkerOfPwaClient();
 }
 
 function ensureOfflineBanner() {

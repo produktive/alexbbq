@@ -1,12 +1,11 @@
-const CACHE_VERSION = 'v12';
+const CACHE_VERSION = 'v13';
 const SHELL_CACHE = `alexbbq-shell-${CACHE_VERSION}`;
 const ASSET_CACHE = `alexbbq-assets-${CACHE_VERSION}`;
 const COOK_PAGE_CACHE = `alexbbq-cook-pages-${CACHE_VERSION}`;
-const PWA_MARKER_CACHE = `alexbbq-pwa-marker-${CACHE_VERSION}`;
-const PWA_MARKER_URL = '/__pwa_client__';
+const OFFLINE_URL = '/offline.html';
 
 const PRECACHE_URLS = [
-    '/offline.html',
+    OFFLINE_URL,
     '/pwa-icon-512.png',
     '/apple-touch-icon.png',
     '/favicon.ico',
@@ -37,7 +36,7 @@ const OFFLINE_FALLBACK_HTML = `<!DOCTYPE html>
 </div>
 </main>
 <script>
-(function(){const b=document.getElementById("retry-button"),s=document.getElementById("retry-status"),l=document.getElementById("cached-cooks-link");async function c(){if(!("caches"in window))return!1;for(const n of await caches.keys()){if(!n.includes("cook-pages"))continue;if(await(await caches.open(n)).match("/cooks"))return!0}return!1}(async function(){if(await c())l.hidden=!1})();async function o(){try{const r=await fetch("/live/cook-status",{cache:"no-store",credentials:"same-origin",headers:{Accept:"application/json"}});return r.ok}catch{return!1}}b.addEventListener("click",async function(){b.disabled=!0;s.textContent="Checking connection…";if(!await o()){b.disabled=!1;s.textContent="Still offline. Check your connection and try again.";return}window.location.replace("/?_retry="+Date.now())});window.addEventListener("online",function(){s.textContent="Connection restored. Tap try again."})})();
+(function(){const b=document.getElementById("retry-button"),s=document.getElementById("retry-status"),l=document.getElementById("cached-cooks-link");async function c(){if(!("caches"in window))return!0;const r=new Request("/cooks",{method:"GET",credentials:"same-origin"});for(const n of await caches.keys()){if(!n.includes("cook-pages"))continue;const t=await caches.open(n);if(await t.match(r)||await t.match("/cooks"))return!0}return!1}(async function(){if(await c())l.hidden=!1})();async function o(){try{const r=await fetch("/live/cook-status",{cache:"no-store",credentials:"same-origin",headers:{Accept:"application/json"}});return r.ok}catch{return!1}}b.addEventListener("click",async function(){b.disabled=!0;s.textContent="Checking connection…";if(!await o()){b.disabled=!1;s.textContent="Still offline. Check your connection and try again.";return}window.location.replace("/?_retry="+Date.now())});window.addEventListener("online",function(){s.textContent="Connection restored. Tap try again."})})();
 </script>
 </body>
 </html>`;
@@ -160,40 +159,8 @@ function shouldCacheAsset(pathname) {
         || /\.(?:css|js|png|jpe?g|gif|webp|svg|ico|woff2?|ttf|eot)$/i.test(pathname);
 }
 
-function isDocumentNavigation(request) {
-    if (request.mode === 'navigate') {
-        return true;
-    }
-
-    return request.method === 'GET' && request.destination === 'document';
-}
-
-function hasPwaCookie(request) {
-    const cookies = request.headers.get('Cookie') ?? '';
-
-    return /(?:^|;\s*)pwa_mode=1(?:;|$)/.test(cookies);
-}
-
-async function isPwaClientMarked() {
-    try {
-        const cache = await caches.open(PWA_MARKER_CACHE);
-
-        return (await cache.match(PWA_MARKER_URL)) !== undefined;
-    } catch {
-        return false;
-    }
-}
-
-async function markPwaClient() {
-    const cache = await caches.open(PWA_MARKER_CACHE);
-
-    await cache.put(PWA_MARKER_URL, new Response('1', {
-        headers: { 'Content-Type': 'text/plain' },
-    }));
-}
-
-async function isPwaClient(request) {
-    return hasPwaCookie(request) || await isPwaClientMarked();
+function isNavigationRequest(request) {
+    return request.mode === 'navigate';
 }
 
 function offlineHtmlResponse() {
@@ -205,42 +172,10 @@ function offlineHtmlResponse() {
     });
 }
 
-async function handleOfflinePageRequest(request) {
-    try {
-        const shellCache = await caches.open(SHELL_CACHE);
-        const cached = await shellCache.match('/offline.html');
-
-        if (cached) {
-            return cached;
-        }
-    } catch {
-        //
-    }
-
-    try {
-        const response = await fetch(request, { credentials: 'same-origin' });
-
-        if (response.ok) {
-            try {
-                const shellCache = await caches.open(SHELL_CACHE);
-                await shellCache.put('/offline.html', response.clone());
-            } catch {
-                //
-            }
-
-            return response;
-        }
-    } catch {
-        //
-    }
-
-    return offlineHtmlResponse();
-}
-
 async function getOfflinePage() {
     try {
         const shellCache = await caches.open(SHELL_CACHE);
-        const cached = await shellCache.match('/offline.html');
+        const cached = await shellCache.match(OFFLINE_URL);
 
         if (cached) {
             return cached;
@@ -249,39 +184,31 @@ async function getOfflinePage() {
         //
     }
 
-    const cached = await caches.match('/offline.html');
+    const cached = await caches.match(OFFLINE_URL);
 
     if (cached) {
         return cached;
     }
 
-    try {
-        const response = await fetch('/offline.html', { credentials: 'same-origin' });
+    return offlineHtmlResponse();
+}
 
-        if (response.ok) {
-            return response;
+async function handleNavigate(request, event) {
+    try {
+        const preloadResponse = await event.preloadResponse;
+
+        if (preloadResponse) {
+            return preloadResponse;
         }
     } catch {
         //
     }
 
-    return offlineHtmlResponse();
-}
-
-async function handlePwaNavigate(request) {
     try {
         return await fetch(request, { credentials: 'same-origin' });
     } catch {
         return getOfflinePage();
     }
-}
-
-async function handleDocumentNavigation(request) {
-    if (! await isPwaClient(request)) {
-        return fetch(request, { credentials: 'same-origin' });
-    }
-
-    return handlePwaNavigate(request);
 }
 
 async function warmOfflineCache(path) {
@@ -385,12 +312,6 @@ async function openOrFocusClient(targetUrl) {
 }
 
 self.addEventListener('message', (event) => {
-    if (event.data?.type === 'mark-pwa-client') {
-        event.waitUntil(markPwaClient());
-
-        return;
-    }
-
     if (event.data?.type !== 'warm-offline-cache') {
         return;
     }
@@ -464,8 +385,8 @@ self.addEventListener('install', (event) => {
                             await cache.put(url, response);
                         }
                     } catch {
-                        if (url === '/offline.html') {
-                            await cache.put('/offline.html', offlineHtmlResponse());
+                        if (url === OFFLINE_URL) {
+                            await cache.put(OFFLINE_URL, offlineHtmlResponse());
                         }
                     }
                 }
@@ -477,7 +398,7 @@ self.addEventListener('install', (event) => {
 });
 
 self.addEventListener('activate', (event) => {
-    const activeCaches = [SHELL_CACHE, ASSET_CACHE, COOK_PAGE_CACHE, PWA_MARKER_CACHE];
+    const activeCaches = [SHELL_CACHE, ASSET_CACHE, COOK_PAGE_CACHE];
 
     event.waitUntil(
         caches.keys()
@@ -503,12 +424,6 @@ self.addEventListener('fetch', (event) => {
         return;
     }
 
-    if (url.pathname === '/offline.html') {
-        event.respondWith(handleOfflinePageRequest(request));
-
-        return;
-    }
-
     if (shouldBypassCache(url.pathname)) {
         return;
     }
@@ -519,12 +434,8 @@ self.addEventListener('fetch', (event) => {
         return;
     }
 
-    if (isDocumentNavigation(request)) {
-        if (hasPwaCookie(request)) {
-            event.waitUntil(markPwaClient());
-        }
-
-        event.respondWith(handleDocumentNavigation(request));
+    if (isNavigationRequest(request)) {
+        event.respondWith(handleNavigate(request, event));
 
         return;
     }

@@ -15,7 +15,7 @@ return [
 
     'short_name' => env('PWA_SHORT_NAME'),
 
-    'start_url' => env('PWA_START_URL', '/offline.html'),
+    'start_url' => env('PWA_START_URL', '/'),
 
     'lang' => env('PWA_LANG'),
 
