@@ -16,6 +16,11 @@
 @endphp
 
 <link rel="manifest" href="{{ route('manifest') }}">
+<script>
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/sw.js').catch(function () {});
+    }
+</script>
 <link rel="apple-touch-icon" sizes="180x180" href="{{ PwaAsset::url('apple-touch-icon.png') }}">
 <link rel="apple-touch-icon" sizes="192x192" href="{{ PwaAsset::url('pwa-icon-192.png') }}">
 <link rel="apple-touch-icon" sizes="512x512" href="{{ PwaAsset::url('pwa-icon-512.png') }}">

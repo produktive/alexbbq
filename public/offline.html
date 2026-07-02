@@ -184,6 +184,14 @@
                 }
             }
 
+            async function redirectWhenOnline() {
+                if (! await isOnline()) {
+                    return;
+                }
+
+                window.location.replace('/');
+            }
+
             async function retryConnection() {
                 button.disabled = true;
                 setStatus('Checking connection…');
@@ -195,10 +203,7 @@
                     return;
                 }
 
-                const target = new URL(window.location.pathname || '/', window.location.origin);
-                target.searchParams.set('_retry', String(Date.now()));
-
-                window.location.replace(target.href);
+                window.location.replace('/?_retry=' + Date.now());
             }
 
             button.addEventListener('click', retryConnection);
@@ -208,6 +213,7 @@
             });
 
             showCachedCooksLink();
+            redirectWhenOnline();
         })();
     </script>
 </body>

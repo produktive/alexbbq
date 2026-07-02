@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'v6';
+const CACHE_VERSION = 'v7';
 const SHELL_CACHE = `alexbbq-shell-${CACHE_VERSION}`;
 const ASSET_CACHE = `alexbbq-assets-${CACHE_VERSION}`;
 const COOK_PAGE_CACHE = `alexbbq-cook-pages-${CACHE_VERSION}`;
@@ -11,12 +11,13 @@ const PRECACHE_URLS = [
     '/favicon.svg',
 ];
 
+const NETWORK_TIMEOUT_MS = 4000;
+
 const OFFLINE_FALLBACK_HTML = `<!DOCTYPE html>
 <html lang="en" class="dark">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="color-scheme" content="dark">
 <title>Offline</title>
 <style>
 body{margin:0;min-height:100dvh;display:grid;place-items:center;padding:1.5rem;font-family:ui-sans-serif,system-ui,sans-serif;background:#1f1f1f;color:#f5f5f5;text-align:center}
@@ -31,20 +32,6 @@ a,button{display:inline-block;margin-top:1rem;padding:.75rem 1.25rem;border-radi
 <a href="/cooks" id="cached-cooks-link" hidden>View cached cooks</a>
 <button type="button" onclick="window.location.replace('/')">Try again</button>
 </main>
-<script>
-(async function () {
-    const link = document.getElementById('cached-cooks-link');
-    if (!('caches' in window)) return;
-    for (const name of await caches.keys()) {
-        if (!name.includes('cook-pages')) continue;
-        const cache = await caches.open(name);
-        if (await cache.match('/cooks')) {
-            link.hidden = false;
-            break;
-        }
-    }
-})();
-</script>
 </body>
 </html>`;
 
@@ -176,15 +163,44 @@ async function getOfflinePage() {
     return offlineHtmlResponse();
 }
 
+async function fetchWithTimeout(request, timeoutMs = NETWORK_TIMEOUT_MS) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), timeoutMs);
+
+    try {
+        return await fetch(request, {
+            cache: 'no-store',
+            credentials: 'same-origin',
+            signal: controller.signal,
+        });
+    } finally {
+        clearTimeout(timeout);
+    }
+}
+
+async function handleOfflineHtmlRequest(request) {
+    const shellCache = await caches.open(SHELL_CACHE);
+    const cached = await shellCache.match('/offline.html');
+
+    try {
+        const response = await fetchWithTimeout(request);
+
+        if (response.ok) {
+            await shellCache.put('/offline.html', response.clone());
+        }
+
+        return response;
+    } catch {
+        return cached ?? offlineHtmlResponse();
+    }
+}
+
 async function handleOfflineCacheableRequest(request) {
     const cache = await caches.open(COOK_PAGE_CACHE);
     const cacheKey = cacheLookupKey(request);
 
     try {
-        const response = await fetch(request, {
-            cache: 'no-store',
-            credentials: 'same-origin',
-        });
+        const response = await fetchWithTimeout(request);
 
         if (response.ok) {
             await cache.put(cacheKey, response.clone());
@@ -204,10 +220,7 @@ async function handleOfflineCacheableRequest(request) {
 
 async function handleNavigate(request) {
     try {
-        const response = await fetch(request, {
-            cache: 'no-store',
-            credentials: 'same-origin',
-        });
+        const response = await fetchWithTimeout(request);
 
         if (response.ok) {
             return response;
@@ -269,7 +282,7 @@ self.addEventListener('push', (event) => {
     const options = {
         body: payload.body ?? '',
         icon: payload.icon ?? '/pwa-icon-512.png',
-        badge: payload.badge ?? '/pwa-icon-512.png',
+        badge: payload.icon ?? '/pwa-icon-512.png',
         data: payload.data ?? {},
         tag: payload.tag ?? 'temperature-alert',
         renotify: true,
@@ -341,6 +354,12 @@ self.addEventListener('fetch', (event) => {
     }
 
     if (shouldBypassCache(url.pathname)) {
+        return;
+    }
+
+    if (url.pathname === '/offline.html') {
+        event.respondWith(handleOfflineHtmlRequest(request));
+
         return;
     }
 

@@ -325,7 +325,12 @@ p.fi-ta-text-description,
 }
 
 .offline-status-banner {
-    @apply sticky top-0 z-50 bg-amber-600 px-4 py-2 text-center text-sm font-medium text-white;
+    @apply pointer-events-none fixed inset-x-0 bottom-0 z-50 bg-amber-600 px-4 py-2 text-center text-sm font-medium text-white;
+    padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
+}
+
+body:has(.offline-status-banner:not([hidden])) {
+    padding-bottom: 3rem;
 }
 
 .offline-status-banner[hidden] {

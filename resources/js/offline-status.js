@@ -7,19 +7,15 @@ function ensureOfflineBanner() {
         banner.className = 'offline-status-banner';
         banner.hidden = true;
         banner.setAttribute('role', 'status');
-        banner.textContent = 'You are offline. Open Cooks to view finished cooks you have opened before. Live temperatures need a connection.';
-        document.body.prepend(banner);
+        banner.textContent = 'Offline — open Cooks for cached pages. Live temps need a connection.';
+        document.body.append(banner);
     }
 
     return banner;
 }
 
 function updateOfflineBanner() {
-    const isOnline = navigator.onLine;
-    const banner = ensureOfflineBanner();
-
-    banner.hidden = isOnline;
-    document.body.classList.toggle('offline-banner-visible', ! isOnline);
+    ensureOfflineBanner().hidden = navigator.onLine;
 }
 
 export function listenForOfflineStatus() {
