@@ -1,9 +1,5 @@
-<meta name="apple-mobile-web-app-capable" content="yes" />
-<meta name="apple-mobile-web-app-title" content="{{ config('app.name') }}" />
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-
 @php
-    $splashVersion = @filemtime(public_path('pwa-splash/fallback-portrait.png')) ?: 1;
+    use App\Support\PwaAsset;
 
     $splashScreens = [
         ['file' => 'fallback-portrait.png', 'media' => null],
@@ -21,11 +17,15 @@
     ];
 @endphp
 
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-title" content="{{ config('app.name') }}" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
 {{-- iOS uses the last matching startup image. List the generic fallback first. --}}
 @foreach ($splashScreens as $screen)
     @if (filled($screen['media']))
-        <link rel="apple-touch-startup-image" href="/pwa-splash/{{ $screen['file'] }}?v={{ $splashVersion }}" media="{{ $screen['media'] }}" />
+        <link rel="apple-touch-startup-image" href="{{ PwaAsset::url('pwa-splash/'.$screen['file']) }}" media="{{ $screen['media'] }}" />
     @else
-        <link rel="apple-touch-startup-image" href="/pwa-splash/{{ $screen['file'] }}?v={{ $splashVersion }}" />
+        <link rel="apple-touch-startup-image" href="{{ PwaAsset::url('pwa-splash/'.$screen['file']) }}" />
     @endif
 @endforeach

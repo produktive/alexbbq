@@ -28,6 +28,14 @@ test('web app manifest short name can be overridden', function () {
         ->assertJsonPath('short_name', 'BBQ');
 });
 
+test('web app manifest icons include cache busting versions', function () {
+    $response = $this->get(route('manifest'));
+
+    foreach ($response->json('icons') as $icon) {
+        expect($icon['src'])->toContain('?v=');
+    }
+});
+
 test('web app manifest colors can be overridden', function () {
     config([
         'pwa.background_color' => '#001133',

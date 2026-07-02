@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Support\PwaAsset;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Str;
 
@@ -23,19 +24,19 @@ class WebAppManifestController extends Controller
             'theme_color' => config('pwa.theme_color'),
             'icons' => [
                 [
-                    'src' => '/apple-touch-icon.png',
+                    'src' => PwaAsset::url('apple-touch-icon.png'),
                     'sizes' => '180x180',
                     'type' => 'image/png',
                     'purpose' => 'any',
                 ],
                 [
-                    'src' => '/pwa-icon-192.png',
+                    'src' => PwaAsset::url('pwa-icon-192.png'),
                     'sizes' => '192x192',
                     'type' => 'image/png',
                     'purpose' => 'any',
                 ],
                 [
-                    'src' => '/pwa-icon-512.png',
+                    'src' => PwaAsset::url('pwa-icon-512.png'),
                     'sizes' => '512x512',
                     'type' => 'image/png',
                     'purpose' => 'any',

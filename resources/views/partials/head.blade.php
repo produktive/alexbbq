@@ -12,13 +12,14 @@
 </title>
 
 @php
-    $touchIconVersion = @filemtime(public_path('apple-touch-icon.png')) ?: 1;
+    use App\Support\PwaAsset;
 @endphp
 
 <link rel="manifest" href="{{ route('manifest') }}">
-<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png?v={{ $touchIconVersion }}">
-<link rel="apple-touch-icon" sizes="512x512" href="/pwa-icon-512.png?v={{ $touchIconVersion }}">
-<link rel="apple-touch-icon-precomposed" sizes="180x180" href="/apple-touch-icon.png?v={{ $touchIconVersion }}">
+<link rel="apple-touch-icon" sizes="180x180" href="{{ PwaAsset::url('apple-touch-icon.png') }}">
+<link rel="apple-touch-icon" sizes="192x192" href="{{ PwaAsset::url('pwa-icon-192.png') }}">
+<link rel="apple-touch-icon" sizes="512x512" href="{{ PwaAsset::url('pwa-icon-512.png') }}">
+<link rel="apple-touch-icon-precomposed" sizes="180x180" href="{{ PwaAsset::url('apple-touch-icon.png') }}">
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 

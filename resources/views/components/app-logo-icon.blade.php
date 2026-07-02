@@ -1,10 +1,15 @@
+@php
+    use App\Support\PwaAsset;
+
+    $darkIconUrl = PwaAsset::url('pwa-icon-512.png');
+    $lightIconUrl = PwaAsset::url('app-icon-light.png');
+@endphp
+
 <img
-    src="/app-icon-light.png"
+    src="{{ $darkIconUrl }}"
     alt=""
-    {{ $attributes->class(['dark:hidden rounded-md']) }}
-/>
-<img
-    src="/pwa-icon-512.png"
-    alt=""
-    {{ $attributes->class(['hidden dark:block rounded-md']) }}
+    {{ $attributes->class(['rounded-md object-cover']) }}
+    x-bind:src="($flux.appearance === 'dark' || ($flux.appearance === 'system' && $flux.dark))
+        ? @js($darkIconUrl)
+        : @js($lightIconUrl)"
 />
