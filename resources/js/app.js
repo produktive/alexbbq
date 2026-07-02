@@ -1,7 +1,7 @@
 import pushNotifications from './push-notifications';
 import { listenForAppBadgeSync, syncAppBadgeFromServer } from './app-badge';
 import { listenForOfflineStatus } from './offline-status';
-import { listenForOfflineNavigation, warmOfflineCacheForCurrentPage } from './offline-navigation';
+import { warmOfflineCacheForCurrentPage } from './offline-navigation';
 import './cook-description-image-upload';
 import './echo';
 import cookChart from './cook-chart';
@@ -45,7 +45,6 @@ if ('serviceWorker' in navigator) {
 listenForAppBadgeSync();
 syncAppBadgeFromServer();
 listenForOfflineStatus();
-listenForOfflineNavigation();
 warmOfflineCacheForCurrentPage();
 
 document.addEventListener('livewire:navigated', () => {

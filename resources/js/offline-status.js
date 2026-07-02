@@ -1,3 +1,8 @@
+function isStandalonePwa() {
+    return window.matchMedia('(display-mode: standalone)').matches
+        || window.navigator.standalone === true;
+}
+
 function ensureOfflineBanner() {
     let banner = document.getElementById('offline-status-banner');
 
@@ -19,6 +24,10 @@ function updateOfflineBanner() {
 }
 
 export function listenForOfflineStatus() {
+    if (! isStandalonePwa()) {
+        return;
+    }
+
     window.addEventListener('online', updateOfflineBanner);
     window.addEventListener('offline', updateOfflineBanner);
     updateOfflineBanner();

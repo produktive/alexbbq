@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'v8';
+const CACHE_VERSION = 'v9';
 const SHELL_CACHE = `alexbbq-shell-${CACHE_VERSION}`;
 const ASSET_CACHE = `alexbbq-assets-${CACHE_VERSION}`;
 const COOK_PAGE_CACHE = `alexbbq-cook-pages-${CACHE_VERSION}`;
@@ -10,29 +10,6 @@ const PRECACHE_URLS = [
     '/favicon.ico',
     '/favicon.svg',
 ];
-
-const NETWORK_TIMEOUT_MS = 4000;
-
-const OFFLINE_FALLBACK_HTML = `<!DOCTYPE html>
-<html lang="en" class="dark">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Offline</title>
-<style>
-body{margin:0;min-height:100dvh;display:grid;place-items:center;padding:1.5rem;font-family:ui-sans-serif,system-ui,sans-serif;background:#1f1f1f;color:#f5f5f5;text-align:center}
-p{color:#a3a3a3;line-height:1.5}
-a,button{display:inline-block;margin-top:1rem;padding:.75rem 1.25rem;border-radius:9999px;font-weight:600;text-decoration:none;color:#171717;background:#f5f5f5;border:0}
-</style>
-</head>
-<body>
-<main>
-<h1>You are offline</h1>
-<p>The live dashboard needs a network connection.</p>
-<a href="/cooks">View cached cooks</a>
-</main>
-</body>
-</html>`;
 
 async function setAppBadge(count = 1) {
     if (! ('setAppBadge' in self.navigator)) {
@@ -152,51 +129,6 @@ function shouldCacheAsset(pathname) {
         || /\.(?:css|js|png|jpe?g|gif|webp|svg|ico|woff2?|ttf|eot)$/i.test(pathname);
 }
 
-function offlineHtmlResponse() {
-    return new Response(OFFLINE_FALLBACK_HTML, {
-        headers: {
-            'Content-Type': 'text/html; charset=utf-8',
-            'Cache-Control': 'no-store',
-        },
-    });
-}
-
-async function getOfflinePage() {
-    try {
-        const shellCache = await caches.open(SHELL_CACHE);
-        const cached = await shellCache.match('/offline.html');
-
-        if (cached) {
-            return cached;
-        }
-    } catch {
-        //
-    }
-
-    const cached = await caches.match('/offline.html');
-
-    if (cached) {
-        return cached;
-    }
-
-    return offlineHtmlResponse();
-}
-
-async function fetchWithTimeout(request, timeoutMs = NETWORK_TIMEOUT_MS) {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), timeoutMs);
-
-    try {
-        return await fetch(request, {
-            cache: 'no-store',
-            credentials: 'same-origin',
-            signal: controller.signal,
-        });
-    } finally {
-        clearTimeout(timeout);
-    }
-}
-
 async function warmOfflineCache(path) {
     const cache = await caches.open(COOK_PAGE_CACHE);
 
@@ -247,43 +179,24 @@ async function warmOfflineCache(path) {
 
 async function handleOfflineCacheableRequest(request) {
     const cache = await caches.open(COOK_PAGE_CACHE);
-    const cached = await readCachedResponse(cache, request);
 
     try {
-        const response = await fetchWithTimeout(request);
+        const response = await fetch(request, { credentials: 'same-origin' });
 
         if (response.ok) {
             await storeCachedResponse(cache, request, response);
         }
 
         return response;
-    } catch {
+    } catch (error) {
+        const cached = await readCachedResponse(cache, request);
+
         if (cached) {
             return cached;
         }
 
-        return Response.error();
+        throw error;
     }
-}
-
-async function handleNavigate(request) {
-    const url = new URL(request.url);
-
-    if (isOfflineCacheablePagePath(url.pathname)) {
-        return handleOfflineCacheableRequest(request);
-    }
-
-    try {
-        const response = await fetchWithTimeout(request);
-
-        if (response.ok) {
-            return response;
-        }
-    } catch {
-        //
-    }
-
-    return getOfflinePage();
 }
 
 async function openOrFocusClient(targetUrl) {
@@ -376,21 +289,9 @@ self.addEventListener('notificationclick', (event) => {
 
 self.addEventListener('install', (event) => {
     event.waitUntil(
-        (async () => {
-            const shellCache = await caches.open(SHELL_CACHE);
-
-            await Promise.all(PRECACHE_URLS.map(async (url) => {
-                try {
-                    await shellCache.add(url);
-                } catch {
-                    if (url === '/offline.html') {
-                        await shellCache.put('/offline.html', offlineHtmlResponse());
-                    }
-                }
-            }));
-
-            await self.skipWaiting();
-        })(),
+        caches.open(SHELL_CACHE)
+            .then((cache) => cache.addAll(PRECACHE_URLS))
+            .then(() => self.skipWaiting()),
     );
 });
 
@@ -427,12 +328,6 @@ self.addEventListener('fetch', (event) => {
 
     if (isOfflineCacheableRequest(url.pathname)) {
         event.respondWith(handleOfflineCacheableRequest(request));
-
-        return;
-    }
-
-    if (request.mode === 'navigate') {
-        event.respondWith(handleNavigate(request));
 
         return;
     }
