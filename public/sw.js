@@ -1,6 +1,7 @@
-const CACHE_VERSION = 'v1';
+const CACHE_VERSION = 'v3';
 const SHELL_CACHE = `alexbbq-shell-${CACHE_VERSION}`;
 const ASSET_CACHE = `alexbbq-assets-${CACHE_VERSION}`;
+const COOK_PAGE_CACHE = `alexbbq-cook-pages-${CACHE_VERSION}`;
 
 const PRECACHE_URLS = [
     '/offline.html',
@@ -55,11 +56,85 @@ function sameDocumentLocation(clientUrl, targetUrl) {
     }
 }
 
+function isCookViewPath(pathname) {
+    return /^\/cooks\/\d+$/.test(pathname);
+}
+
+function isCookChartDataPath(pathname) {
+    return /^\/cooks\/\d+\/chart-data$/.test(pathname);
+}
+
+function isCookPageRequest(request, pathname) {
+    if (isCookChartDataPath(pathname)) {
+        return true;
+    }
+
+    if (! isCookViewPath(pathname)) {
+        return false;
+    }
+
+    return request.mode === 'navigate'
+        || request.headers.get('accept')?.includes('text/html');
+}
+
 function shouldBypassCache(pathname) {
+    if (isCookChartDataPath(pathname)) {
+        return false;
+    }
+
     return pathname.startsWith('/live/')
         || pathname.endsWith('/chart-data')
         || pathname.startsWith('/push-subscriptions')
         || pathname.startsWith('/broadcasting/');
+}
+
+function shouldCacheAsset(pathname) {
+    return pathname.startsWith('/build/')
+        || /\.(?:css|js|png|jpe?g|gif|webp|svg|ico|woff2?|ttf|eot)$/i.test(pathname);
+}
+
+async function handleCookPageRequest(request) {
+    const cache = await caches.open(COOK_PAGE_CACHE);
+
+    try {
+        const response = await fetch(request, { cache: 'no-store' });
+
+        if (response.ok) {
+            await cache.put(request, response.clone());
+        }
+
+        return response;
+    } catch {
+        const cached = await cache.match(request);
+
+        if (cached) {
+            return cached;
+        }
+
+        if (request.mode === 'navigate') {
+            const offlinePage = await caches.match('/offline.html');
+
+            return offlinePage ?? Response.error();
+        }
+
+        return Response.error();
+    }
+}
+
+async function handleNavigate(request) {
+    try {
+        const response = await fetch(request, { cache: 'no-store' });
+
+        if (response.ok) {
+            return response;
+        }
+    } catch {
+        //
+    }
+
+    const offlinePage = await caches.match('/offline.html');
+
+    return offlinePage ?? Response.error();
 }
 
 async function openOrFocusClient(targetUrl) {
@@ -145,11 +220,13 @@ self.addEventListener('install', (event) => {
 });
 
 self.addEventListener('activate', (event) => {
+    const activeCaches = [SHELL_CACHE, ASSET_CACHE, COOK_PAGE_CACHE];
+
     event.waitUntil(
         caches.keys()
             .then((keys) => Promise.all(
                 keys
-                    .filter((key) => key !== SHELL_CACHE && key !== ASSET_CACHE)
+                    .filter((key) => ! activeCaches.includes(key))
                     .map((key) => caches.delete(key)),
             ))
             .then(() => self.clients.claim()),
@@ -173,15 +250,19 @@ self.addEventListener('fetch', (event) => {
         return;
     }
 
+    if (isCookPageRequest(request, url.pathname)) {
+        event.respondWith(handleCookPageRequest(request));
+
+        return;
+    }
+
     if (request.mode === 'navigate') {
-        event.respondWith(
-            fetch(request).catch(async () => {
-                const offlinePage = await caches.match('/offline.html');
+        event.respondWith(handleNavigate(request));
 
-                return offlinePage ?? Response.error();
-            }),
-        );
+        return;
+    }
 
+    if (! shouldCacheAsset(url.pathname)) {
         return;
     }
 

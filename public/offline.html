@@ -50,6 +50,13 @@
             color: #a3a3a3;
         }
 
+        #retry-status {
+            min-height: 1.25rem;
+            margin: 0 0 1rem;
+            font-size: 0.875rem;
+            color: #fbbf24;
+        }
+
         button {
             border: 0;
             border-radius: 9999px;
@@ -61,7 +68,12 @@
             cursor: pointer;
         }
 
-        button:active {
+        button:disabled {
+            opacity: 0.6;
+            cursor: wait;
+        }
+
+        button:active:not(:disabled) {
             transform: scale(0.98);
         }
     </style>
@@ -70,8 +82,56 @@
     <main>
         <img src="/pwa-icon-512.png" alt="" width="80" height="80">
         <h1>You are offline</h1>
-        <p>Live temperatures and charts need a network connection. Cached pages may still be available once you reconnect.</p>
-        <button type="button" onclick="window.location.reload()">Try again</button>
+        <p>Live temperatures need a network connection. Finished cook pages you have opened before may still be available offline.</p>
+        <p id="retry-status" aria-live="polite"></p>
+        <button id="retry-button" type="button">Try again</button>
     </main>
+    <script>
+        (function () {
+            const button = document.getElementById('retry-button');
+            const status = document.getElementById('retry-status');
+
+            function setStatus(message) {
+                status.textContent = message;
+            }
+
+            async function isOnline() {
+                try {
+                    const response = await fetch('/live/cook-status', {
+                        cache: 'no-store',
+                        credentials: 'same-origin',
+                        headers: { Accept: 'application/json' },
+                    });
+
+                    return response.ok;
+                } catch {
+                    return false;
+                }
+            }
+
+            async function retryConnection() {
+                button.disabled = true;
+                setStatus('Checking connection…');
+
+                if (! await isOnline()) {
+                    button.disabled = false;
+                    setStatus('Still offline. Check your connection and try again.');
+
+                    return;
+                }
+
+                const target = new URL(window.location.pathname || '/', window.location.origin);
+                target.searchParams.set('_retry', String(Date.now()));
+
+                window.location.replace(target.href);
+            }
+
+            button.addEventListener('click', retryConnection);
+
+            window.addEventListener('online', () => {
+                setStatus('Connection restored. Tap try again.');
+            });
+        })();
+    </script>
 </body>
 </html>
