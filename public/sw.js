@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'v5';
+const CACHE_VERSION = 'v6';
 const SHELL_CACHE = `alexbbq-shell-${CACHE_VERSION}`;
 const ASSET_CACHE = `alexbbq-assets-${CACHE_VERSION}`;
 const COOK_PAGE_CACHE = `alexbbq-cook-pages-${CACHE_VERSION}`;
@@ -10,6 +10,43 @@ const PRECACHE_URLS = [
     '/favicon.ico',
     '/favicon.svg',
 ];
+
+const OFFLINE_FALLBACK_HTML = `<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="dark">
+<title>Offline</title>
+<style>
+body{margin:0;min-height:100dvh;display:grid;place-items:center;padding:1.5rem;font-family:ui-sans-serif,system-ui,sans-serif;background:#1f1f1f;color:#f5f5f5;text-align:center}
+p{color:#a3a3a3;line-height:1.5}
+a,button{display:inline-block;margin-top:1rem;padding:.75rem 1.25rem;border-radius:9999px;font-weight:600;text-decoration:none;color:#171717;background:#f5f5f5;border:0}
+</style>
+</head>
+<body>
+<main>
+<h1>You are offline</h1>
+<p>The live dashboard needs a network connection.</p>
+<a href="/cooks" id="cached-cooks-link" hidden>View cached cooks</a>
+<button type="button" onclick="window.location.replace('/')">Try again</button>
+</main>
+<script>
+(async function () {
+    const link = document.getElementById('cached-cooks-link');
+    if (!('caches' in window)) return;
+    for (const name of await caches.keys()) {
+        if (!name.includes('cook-pages')) continue;
+        const cache = await caches.open(name);
+        if (await cache.match('/cooks')) {
+            link.hidden = false;
+            break;
+        }
+    }
+})();
+</script>
+</body>
+</html>`;
 
 async function setAppBadge(count = 1) {
     if (! ('setAppBadge' in self.navigator)) {
@@ -72,18 +109,8 @@ function isOfflineCacheablePagePath(pathname) {
     return isCookViewPath(pathname) || isCookListPath(pathname);
 }
 
-function isOfflineCacheableRequest(request, pathname) {
-    if (isCookChartDataPath(pathname)) {
-        return true;
-    }
-
-    if (! isOfflineCacheablePagePath(pathname)) {
-        return false;
-    }
-
-    return request.mode === 'navigate'
-        || request.headers.get('X-Livewire-Navigate') === '1'
-        || request.headers.get('accept')?.includes('text/html');
+function isOfflineCacheableRequest(pathname) {
+    return isOfflineCacheablePagePath(pathname) || isCookChartDataPath(pathname);
 }
 
 function cacheLookupKey(request) {
@@ -93,7 +120,8 @@ function cacheLookupKey(request) {
 }
 
 async function readCachedResponse(cache, request) {
-    const cached = await cache.match(cacheLookupKey(request));
+    const cacheKey = cacheLookupKey(request);
+    const cached = await cache.match(cacheKey);
 
     if (cached) {
         return cached;
@@ -118,12 +146,45 @@ function shouldCacheAsset(pathname) {
         || /\.(?:css|js|png|jpe?g|gif|webp|svg|ico|woff2?|ttf|eot)$/i.test(pathname);
 }
 
+function offlineHtmlResponse() {
+    return new Response(OFFLINE_FALLBACK_HTML, {
+        headers: {
+            'Content-Type': 'text/html; charset=utf-8',
+            'Cache-Control': 'no-store',
+        },
+    });
+}
+
+async function getOfflinePage() {
+    try {
+        const shellCache = await caches.open(SHELL_CACHE);
+        const cached = await shellCache.match('/offline.html');
+
+        if (cached) {
+            return cached;
+        }
+    } catch {
+        //
+    }
+
+    const cached = await caches.match('/offline.html');
+
+    if (cached) {
+        return cached;
+    }
+
+    return offlineHtmlResponse();
+}
+
 async function handleOfflineCacheableRequest(request) {
     const cache = await caches.open(COOK_PAGE_CACHE);
     const cacheKey = cacheLookupKey(request);
 
     try {
-        const response = await fetch(request, { cache: 'no-store' });
+        const response = await fetch(request, {
+            cache: 'no-store',
+            credentials: 'same-origin',
+        });
 
         if (response.ok) {
             await cache.put(cacheKey, response.clone());
@@ -137,19 +198,16 @@ async function handleOfflineCacheableRequest(request) {
             return cached;
         }
 
-        if (request.mode === 'navigate') {
-            const offlinePage = await caches.match('/offline.html');
-
-            return offlinePage ?? Response.error();
-        }
-
         return Response.error();
     }
 }
 
 async function handleNavigate(request) {
     try {
-        const response = await fetch(request, { cache: 'no-store' });
+        const response = await fetch(request, {
+            cache: 'no-store',
+            credentials: 'same-origin',
+        });
 
         if (response.ok) {
             return response;
@@ -158,9 +216,7 @@ async function handleNavigate(request) {
         //
     }
 
-    const offlinePage = await caches.match('/offline.html');
-
-    return offlinePage ?? Response.error();
+    return getOfflinePage();
 }
 
 async function openOrFocusClient(targetUrl) {
@@ -239,9 +295,21 @@ self.addEventListener('notificationclick', (event) => {
 
 self.addEventListener('install', (event) => {
     event.waitUntil(
-        caches.open(SHELL_CACHE)
-            .then((cache) => cache.addAll(PRECACHE_URLS))
-            .then(() => self.skipWaiting()),
+        (async () => {
+            const shellCache = await caches.open(SHELL_CACHE);
+
+            await Promise.all(PRECACHE_URLS.map(async (url) => {
+                try {
+                    await shellCache.add(url);
+                } catch {
+                    if (url === '/offline.html') {
+                        await shellCache.put('/offline.html', offlineHtmlResponse());
+                    }
+                }
+            }));
+
+            await self.skipWaiting();
+        })(),
     );
 });
 
@@ -276,7 +344,7 @@ self.addEventListener('fetch', (event) => {
         return;
     }
 
-    if (isOfflineCacheableRequest(request, url.pathname)) {
+    if (isOfflineCacheableRequest(url.pathname)) {
         event.respondWith(handleOfflineCacheableRequest(request));
 
         return;

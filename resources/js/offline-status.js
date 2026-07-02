@@ -15,7 +15,11 @@ function ensureOfflineBanner() {
 }
 
 function updateOfflineBanner() {
-    ensureOfflineBanner().hidden = navigator.onLine;
+    const isOnline = navigator.onLine;
+    const banner = ensureOfflineBanner();
+
+    banner.hidden = isOnline;
+    document.body.classList.toggle('offline-banner-visible', ! isOnline);
 }
 
 export function listenForOfflineStatus() {
