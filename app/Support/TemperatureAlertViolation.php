@@ -22,4 +22,25 @@ class TemperatureAlertViolation
 
         return null;
     }
+
+    public static function countForTemperatures(
+        int $probeFood,
+        int $probeBbq,
+        int $foodMin,
+        int $foodMax,
+        int $bbqMin,
+        int $bbqMax,
+    ): int {
+        $count = 0;
+
+        if (self::message('Food', $probeFood, $foodMin, $foodMax) !== null) {
+            $count++;
+        }
+
+        if (self::message('BBQ', $probeBbq, $bbqMin, $bbqMax) !== null) {
+            $count++;
+        }
+
+        return $count;
+    }
 }

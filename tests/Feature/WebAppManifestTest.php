@@ -14,7 +14,7 @@ test('web app manifest uses the configured application name', function () {
         ->display->toBe('standalone')
         ->background_color->toBe('#1f1f1f')
         ->theme_color->toBe('#1f1f1f')
-        ->and($response->json('icons'))->toHaveCount(3);
+        ->and($response->json('icons'))->toHaveCount(4);
 });
 
 test('web app manifest short name can be overridden', function () {
@@ -28,11 +28,37 @@ test('web app manifest short name can be overridden', function () {
         ->assertJsonPath('short_name', 'BBQ');
 });
 
+test('web app manifest includes a maskable icon', function () {
+    $response = $this->get(route('manifest'));
+
+    expect(collect($response->json('icons'))->firstWhere('purpose', 'maskable'))
+        ->not->toBeNull()
+        ->src->toContain('pwa-icon-512-maskable.png')
+        ->and(collect($response->json('icons'))->firstWhere('purpose', 'maskable')['src'])
+        ->toContain('?v=');
+});
+
 test('web app manifest icons include cache busting versions', function () {
     $response = $this->get(route('manifest'));
 
     foreach ($response->json('icons') as $icon) {
         expect($icon['src'])->toContain('?v=');
+    }
+});
+
+test('web app manifest includes shortcuts for primary navigation', function () {
+    $response = $this->get(route('manifest'));
+
+    expect($response->json('shortcuts'))->toHaveCount(3)
+        ->and($response->json('shortcuts.0.name'))->toBe('Home')
+        ->and($response->json('shortcuts.0.url'))->toBe('/')
+        ->and($response->json('shortcuts.1.name'))->toBe('Cooks')
+        ->and($response->json('shortcuts.1.url'))->toBe('/cooks')
+        ->and($response->json('shortcuts.2.name'))->toBe('Stats')
+        ->and($response->json('shortcuts.2.url'))->toBe('/stats');
+
+    foreach ($response->json('shortcuts') as $shortcut) {
+        expect($shortcut['icons'][0]['src'])->toContain('?v=');
     }
 });
 

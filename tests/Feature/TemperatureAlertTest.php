@@ -91,6 +91,64 @@ test('clearPushSubscriptions removes stored subscriptions and updates toggle sta
     expect($user->fresh()->pushSubscriptions)->toBeEmpty();
 });
 
+test('alert badge endpoint returns active violation count for authenticated users', function () {
+    $user = User::factory()->create();
+    UserSettings::forUser($user)->update([
+        'food_min' => 165,
+        'food_max' => 195,
+        'bbq_min' => 225,
+        'bbq_max' => 275,
+    ]);
+
+    $smoker = Smoker::query()->create(['name' => 'Backyard']);
+    $cook = Cook::query()->create([
+        'smoker_id' => $smoker->id,
+        'title' => 'Brisket',
+        'ended_at' => null,
+    ]);
+
+    Reading::query()->create([
+        'cook_id' => $cook->id,
+        'time' => now(),
+        'probe_food' => 160,
+        'probe_bbq' => 220,
+    ]);
+
+    $this->actingAs($user)
+        ->getJson(route('live.alert-badge'))
+        ->assertSuccessful()
+        ->assertJson(['count' => 2]);
+});
+
+test('alert badge endpoint returns zero when probes are in range', function () {
+    $user = User::factory()->create();
+    UserSettings::forUser($user);
+
+    $smoker = Smoker::query()->create(['name' => 'Backyard']);
+    $cook = Cook::query()->create([
+        'smoker_id' => $smoker->id,
+        'title' => 'Brisket',
+        'ended_at' => null,
+    ]);
+
+    Reading::query()->create([
+        'cook_id' => $cook->id,
+        'time' => now(),
+        'probe_food' => 170,
+        'probe_bbq' => 250,
+    ]);
+
+    $this->actingAs($user)
+        ->getJson(route('live.alert-badge'))
+        ->assertSuccessful()
+        ->assertJson(['count' => 0]);
+});
+
+test('alert badge endpoint requires authentication', function () {
+    $this->getJson(route('live.alert-badge'))
+        ->assertRedirect(route('login'));
+});
+
 test('temperature alert is sent when bbq probe is below minimum', function () {
     Notification::fake();
 

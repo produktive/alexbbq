@@ -23,6 +23,7 @@ Route::middleware(['auth'])->group(function () {
     Route::livewire('smokers', 'pages::smokers')->name('smokers');
     Route::post('push-subscriptions', [PushSubscriptionController::class, 'store'])->name('push-subscriptions.store');
     Route::delete('push-subscriptions', [PushSubscriptionController::class, 'destroy'])->name('push-subscriptions.destroy');
+    Route::get('/live/alert-badge', [LiveCookController::class, 'alertBadge'])->name('live.alert-badge');
 });
 
 Route::livewire('/cooks/{cook}', 'pages::cooks.view')->whereNumber('cook')->name('cooks.view');

@@ -1,3 +1,27 @@
+async function setAppBadge(count = 1) {
+    if (! ('setAppBadge' in self.navigator)) {
+        return;
+    }
+
+    try {
+        await self.navigator.setAppBadge(count);
+    } catch {
+        //
+    }
+}
+
+async function clearAppBadge() {
+    if (! ('clearAppBadge' in self.navigator)) {
+        return;
+    }
+
+    try {
+        await self.navigator.clearAppBadge();
+    } catch {
+        //
+    }
+}
+
 self.addEventListener('push', (event) => {
     if (!event.data) {
         return;
@@ -24,7 +48,10 @@ self.addEventListener('push', (event) => {
         renotify: true,
     };
 
-    event.waitUntil(self.registration.showNotification(title, options));
+    event.waitUntil(Promise.all([
+        self.registration.showNotification(title, options),
+        setAppBadge(1),
+    ]));
 });
 
 self.addEventListener('notificationclick', (event) => {
@@ -32,10 +59,13 @@ self.addEventListener('notificationclick', (event) => {
 
     const targetUrl = event.notification.data?.url ?? '/';
 
-    event.waitUntil(
+    event.waitUntil(Promise.all([
+        clearAppBadge(),
         self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clients) => {
             for (const client of clients) {
                 if (client.url.includes(targetUrl) && 'focus' in client) {
+                    client.postMessage({ type: 'clear-app-badge' });
+
                     return client.focus();
                 }
             }
@@ -46,7 +76,7 @@ self.addEventListener('notificationclick', (event) => {
 
             return undefined;
         }),
-    );
+    ]));
 });
 
 self.addEventListener('install', (event) => {

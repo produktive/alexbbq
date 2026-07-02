@@ -41,7 +41,38 @@ class WebAppManifestController extends Controller
                     'type' => 'image/png',
                     'purpose' => 'any',
                 ],
+                [
+                    'src' => PwaAsset::url('pwa-icon-512-maskable.png'),
+                    'sizes' => '512x512',
+                    'type' => 'image/png',
+                    'purpose' => 'maskable',
+                ],
             ],
+            'shortcuts' => $this->shortcuts(),
         ])->header('Content-Type', 'application/manifest+json');
+    }
+
+    /**
+     * @return list<array{name: string, short_name: string, url: string, icons: list<array{src: string, sizes: string, type: string}>}>
+     */
+    private function shortcuts(): array
+    {
+        $icon = [
+            [
+                'src' => PwaAsset::url('pwa-icon-192.png'),
+                'sizes' => '192x192',
+                'type' => 'image/png',
+            ],
+        ];
+
+        return collect(config('pwa.shortcuts', []))
+            ->map(fn (array $shortcut) => [
+                'name' => $shortcut['name'],
+                'short_name' => $shortcut['short_name'],
+                'url' => route($shortcut['route'], absolute: false),
+                'icons' => $icon,
+            ])
+            ->values()
+            ->all();
     }
 }

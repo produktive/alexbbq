@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Cook;
 use App\Services\MaverickService;
 use App\Support\CookChartData;
+use App\Support\TemperatureAlertViolation;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -21,6 +22,38 @@ class LiveCookController extends Controller
             'waitingForReading' => $cook !== null && $cook->isActive() && ! $cook->hasReadings(),
             'maverickRunning' => app(MaverickService::class)->isRunning(),
             'finishedCount' => Cook::finishedCount(),
+        ]);
+    }
+
+    public function alertBadge(Request $request): JsonResponse
+    {
+        $settings = $request->user()?->alertSettings;
+
+        if ($settings === null) {
+            return response()->json(['count' => 0]);
+        }
+
+        $cook = Cook::active();
+
+        if ($cook === null) {
+            return response()->json(['count' => 0]);
+        }
+
+        $reading = $cook->latestReading();
+
+        if ($reading === null) {
+            return response()->json(['count' => 0]);
+        }
+
+        return response()->json([
+            'count' => TemperatureAlertViolation::countForTemperatures(
+                probeFood: (int) $reading->probe_food,
+                probeBbq: (int) $reading->probe_bbq,
+                foodMin: $settings->food_min,
+                foodMax: $settings->food_max,
+                bbqMin: $settings->bbq_min,
+                bbqMax: $settings->bbq_max,
+            ),
         ]);
     }
 

@@ -1,3 +1,5 @@
+import { syncAppBadgeFromServer } from './app-badge';
+
 let channel = null;
 let handler = null;
 let echoInstance = null;
@@ -28,6 +30,7 @@ async function dispatchLiveCookUpdate(payload) {
 
             if (status) {
                 window.dispatchEvent(new CustomEvent('live-cook-status', { detail: status }));
+                syncAppBadgeFromServer();
             }
         }
 
@@ -38,6 +41,7 @@ async function dispatchLiveCookUpdate(payload) {
 
     if (status) {
         window.dispatchEvent(new CustomEvent('live-cook-status', { detail: status }));
+        syncAppBadgeFromServer();
     }
 
     if (type !== 'started' && type !== 'stopped') {

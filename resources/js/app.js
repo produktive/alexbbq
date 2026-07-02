@@ -1,4 +1,5 @@
 import pushNotifications from './push-notifications';
+import { listenForAppBadgeSync, syncAppBadgeFromServer } from './app-badge';
 import './cook-description-image-upload';
 import './echo';
 import cookChart from './cook-chart';
@@ -37,3 +38,10 @@ document.addEventListener('livewire:navigated', () => {
 if ('serviceWorker' in navigator) {
     pushNotifications.registerServiceWorker().catch(() => {});
 }
+
+listenForAppBadgeSync();
+syncAppBadgeFromServer();
+
+document.addEventListener('livewire:navigated', () => {
+    syncAppBadgeFromServer();
+});

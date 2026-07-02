@@ -44,4 +44,20 @@ await sharp(normalized).toFile(source);
 await sharp(normalized).resize(180, 180).png().toFile(path.join(root, 'public/apple-touch-icon.png'));
 await sharp(normalized).resize(192, 192).png().toFile(path.join(root, 'public/pwa-icon-192.png'));
 
+const maskableSize = 512;
+const safeZoneSize = Math.round(maskableSize * 0.8);
+const maskableIcon = await sharp(normalized).resize(safeZoneSize, safeZoneSize).png().toBuffer();
+
+await sharp({
+    create: {
+        width: maskableSize,
+        height: maskableSize,
+        channels: 4,
+        background: { ...background, alpha: 1 },
+    },
+})
+    .composite([{ input: maskableIcon, gravity: 'center' }])
+    .png()
+    .toFile(path.join(root, 'public/pwa-icon-512-maskable.png'));
+
 console.log('Generated PWA icons with #1f1f1f background from pwa-icon-512.png');
