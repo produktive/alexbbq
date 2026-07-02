@@ -5,7 +5,9 @@
     "scripts": {
         "build": "vite build",
         "dev": "vite",
-        "pwa:splash": "node scripts/generate-pwa-splash.mjs"
+        "pwa:icons": "node scripts/generate-pwa-icons.mjs",
+        "pwa:splash": "node scripts/generate-pwa-splash.mjs",
+        "pwa:assets": "npm run pwa:icons && npm run pwa:splash"
     },
     "dependencies": {
         "@jsquash/webp": "^1.5.0",

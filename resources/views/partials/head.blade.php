@@ -1,5 +1,5 @@
 <meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 <meta name="color-scheme" content="light dark" />
 <meta name="csrf-token" content="{{ csrf_token() }}" />
 <meta name="theme-color" content="{{ config('pwa.theme_color') }}" />
@@ -11,10 +11,16 @@
     {{ filled($title ?? null) ? $title.' - '.config('app.name', 'Laravel') : config('app.name', 'Laravel') }}
 </title>
 
+@php
+    $touchIconVersion = @filemtime(public_path('apple-touch-icon.png')) ?: 1;
+@endphp
+
 <link rel="manifest" href="{{ route('manifest') }}">
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png?v={{ $touchIconVersion }}">
+<link rel="apple-touch-icon" sizes="512x512" href="/pwa-icon-512.png?v={{ $touchIconVersion }}">
+<link rel="apple-touch-icon-precomposed" sizes="180x180" href="/apple-touch-icon.png?v={{ $touchIconVersion }}">
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-<link rel="apple-touch-icon" href="/apple-touch-icon.png">
 
 @include('partials.pwa-splash')
 

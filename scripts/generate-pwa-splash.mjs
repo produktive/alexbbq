@@ -1,4 +1,4 @@
-import { mkdir, readFile, readdir, unlink } from 'node:fs/promises';
+import { mkdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import sharp from 'sharp';
@@ -16,48 +16,84 @@ const splashSizes = [
         width: 750,
         height: 1334,
         icon: 180,
+        media: '(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)',
+    },
+    {
+        file: 'iphone-x-portrait.png',
+        width: 1125,
+        height: 2436,
+        icon: 260,
+        media: '(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)',
+    },
+    {
+        file: 'iphone-xr-portrait.png',
+        width: 828,
+        height: 1792,
+        icon: 200,
+        media: '(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)',
+    },
+    {
+        file: 'iphone-xs-max-portrait.png',
+        width: 1242,
+        height: 2688,
+        icon: 290,
+        media: '(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)',
     },
     {
         file: 'iphone-14-portrait.png',
         width: 1170,
         height: 2532,
         icon: 280,
+        media: '(device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)',
     },
     {
         file: 'iphone-15-portrait.png',
         width: 1179,
         height: 2556,
         icon: 280,
+        media: '(device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)',
+    },
+    {
+        file: 'iphone-14-plus-portrait.png',
+        width: 1284,
+        height: 2778,
+        icon: 300,
+        media: '(device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)',
     },
     {
         file: 'iphone-14-pro-max-portrait.png',
         width: 1290,
         height: 2796,
         icon: 300,
+        media: '(device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)',
     },
     {
         file: 'iphone-16-pro-portrait.png',
         width: 1206,
         height: 2622,
         icon: 290,
+        media: '(device-width: 402px) and (device-height: 874px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)',
     },
     {
         file: 'iphone-16-pro-max-portrait.png',
         width: 1320,
         height: 2868,
         icon: 310,
+        media: '(device-width: 440px) and (device-height: 956px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)',
     },
     {
         file: 'ipad-pro-12-portrait.png',
         width: 2048,
         height: 2732,
         icon: 360,
+        media: '(device-width: 1024px) and (device-height: 1366px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)',
     },
     {
         file: 'fallback-portrait.png',
         width: 1290,
         height: 2796,
         icon: 300,
+        media: null,
     },
 ];
 
@@ -110,12 +146,6 @@ async function renderIcon(size) {
 const appName = await readAppName();
 
 await mkdir(outputDir, { recursive: true });
-
-for (const file of await readdir(outputDir)) {
-    if (file.endsWith('-dark.png')) {
-        await unlink(path.join(outputDir, file));
-    }
-}
 
 for (const size of splashSizes) {
     const icon = await renderIcon(size.icon);
