@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'v7';
+const CACHE_VERSION = 'v8';
 const SHELL_CACHE = `alexbbq-shell-${CACHE_VERSION}`;
 const ASSET_CACHE = `alexbbq-assets-${CACHE_VERSION}`;
 const COOK_PAGE_CACHE = `alexbbq-cook-pages-${CACHE_VERSION}`;
@@ -29,8 +29,7 @@ a,button{display:inline-block;margin-top:1rem;padding:.75rem 1.25rem;border-radi
 <main>
 <h1>You are offline</h1>
 <p>The live dashboard needs a network connection.</p>
-<a href="/cooks" id="cached-cooks-link" hidden>View cached cooks</a>
-<button type="button" onclick="window.location.replace('/')">Try again</button>
+<a href="/cooks">View cached cooks</a>
 </main>
 </body>
 </html>`;
@@ -100,21 +99,41 @@ function isOfflineCacheableRequest(pathname) {
     return isOfflineCacheablePagePath(pathname) || isCookChartDataPath(pathname);
 }
 
-function cacheLookupKey(request) {
+function pageCacheRequest(pathname, search = '') {
+    return new Request(`${pathname}${search}`, {
+        method: 'GET',
+        credentials: 'same-origin',
+    });
+}
+
+function chartDataCacheRequest(pathname) {
+    return new Request(pathname, {
+        method: 'GET',
+        credentials: 'same-origin',
+        headers: { Accept: 'application/json' },
+    });
+}
+
+function cacheRequestForFetch(request) {
     const url = new URL(request.url);
 
-    return url.pathname + url.search;
+    if (isCookChartDataPath(url.pathname)) {
+        return chartDataCacheRequest(url.pathname);
+    }
+
+    return pageCacheRequest(url.pathname, url.search);
 }
 
 async function readCachedResponse(cache, request) {
-    const cacheKey = cacheLookupKey(request);
-    const cached = await cache.match(cacheKey);
+    const cacheRequest = cacheRequestForFetch(request);
 
-    if (cached) {
-        return cached;
-    }
+    return (await cache.match(cacheRequest))
+        ?? (await cache.match(request))
+        ?? (await cache.match(new URL(request.url).pathname));
+}
 
-    return cache.match(request);
+async function storeCachedResponse(cache, request, response) {
+    await cache.put(cacheRequestForFetch(request), response.clone());
 }
 
 function shouldBypassCache(pathname) {
@@ -178,38 +197,67 @@ async function fetchWithTimeout(request, timeoutMs = NETWORK_TIMEOUT_MS) {
     }
 }
 
-async function handleOfflineHtmlRequest(request) {
-    const shellCache = await caches.open(SHELL_CACHE);
-    const cached = await shellCache.match('/offline.html');
+async function warmOfflineCache(path) {
+    const cache = await caches.open(COOK_PAGE_CACHE);
 
-    try {
-        const response = await fetchWithTimeout(request);
+    if (isCookViewPath(path) || isCookListPath(path)) {
+        const pageRequest = pageCacheRequest(path);
 
-        if (response.ok) {
-            await shellCache.put('/offline.html', response.clone());
+        try {
+            const response = await fetch(pageRequest);
+
+            if (response.ok) {
+                await cache.put(pageRequest, response.clone());
+            }
+        } catch {
+            //
         }
 
-        return response;
-    } catch {
-        return cached ?? offlineHtmlResponse();
+        if (isCookViewPath(path)) {
+            const chartRequest = chartDataCacheRequest(`${path}/chart-data`);
+
+            try {
+                const chartResponse = await fetch(chartRequest);
+
+                if (chartResponse.ok) {
+                    await cache.put(chartRequest, chartResponse.clone());
+                }
+            } catch {
+                //
+            }
+        }
+
+        return;
+    }
+
+    if (isCookChartDataPath(path)) {
+        const chartRequest = chartDataCacheRequest(path);
+
+        try {
+            const response = await fetch(chartRequest);
+
+            if (response.ok) {
+                await cache.put(chartRequest, response.clone());
+            }
+        } catch {
+            //
+        }
     }
 }
 
 async function handleOfflineCacheableRequest(request) {
     const cache = await caches.open(COOK_PAGE_CACHE);
-    const cacheKey = cacheLookupKey(request);
+    const cached = await readCachedResponse(cache, request);
 
     try {
         const response = await fetchWithTimeout(request);
 
         if (response.ok) {
-            await cache.put(cacheKey, response.clone());
+            await storeCachedResponse(cache, request, response);
         }
 
         return response;
     } catch {
-        const cached = await readCachedResponse(cache, request);
-
         if (cached) {
             return cached;
         }
@@ -219,6 +267,12 @@ async function handleOfflineCacheableRequest(request) {
 }
 
 async function handleNavigate(request) {
+    const url = new URL(request.url);
+
+    if (isOfflineCacheablePagePath(url.pathname)) {
+        return handleOfflineCacheableRequest(request);
+    }
+
     try {
         const response = await fetchWithTimeout(request);
 
@@ -262,6 +316,20 @@ async function openOrFocusClient(targetUrl) {
     return undefined;
 }
 
+self.addEventListener('message', (event) => {
+    if (event.data?.type !== 'warm-offline-cache') {
+        return;
+    }
+
+    const path = event.data.path;
+
+    if (typeof path !== 'string' || ! isOfflineCacheablePagePath(path)) {
+        return;
+    }
+
+    event.waitUntil(warmOfflineCache(path));
+});
+
 self.addEventListener('push', (event) => {
     if (!event.data) {
         return;
@@ -282,7 +350,7 @@ self.addEventListener('push', (event) => {
     const options = {
         body: payload.body ?? '',
         icon: payload.icon ?? '/pwa-icon-512.png',
-        badge: payload.icon ?? '/pwa-icon-512.png',
+        badge: payload.badge ?? '/pwa-icon-512.png',
         data: payload.data ?? {},
         tag: payload.tag ?? 'temperature-alert',
         renotify: true,
@@ -354,12 +422,6 @@ self.addEventListener('fetch', (event) => {
     }
 
     if (shouldBypassCache(url.pathname)) {
-        return;
-    }
-
-    if (url.pathname === '/offline.html') {
-        event.respondWith(handleOfflineHtmlRequest(request));
-
         return;
     }
 

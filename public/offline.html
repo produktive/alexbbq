@@ -121,10 +121,7 @@
         <img src="/pwa-icon-512.png" alt="" width="80" height="80">
         <h1>You are offline</h1>
         <p>The live dashboard needs a network connection. Finished cook pages you opened while online can still be viewed from the Cooks list.</p>
-        <ul>
-            <li>Cold start while offline opens this page.</li>
-            <li>With the app already open, go to Cooks and tap a cook you visited before.</li>
-        </ul>
+        <p>Visit a cook from the Cooks page while online before expecting it to work offline.</p>
         <p id="retry-status" aria-live="polite"></p>
         <div class="actions">
             <a id="cached-cooks-link" class="button-link" href="/cooks" hidden>View cached cooks</a>
@@ -184,14 +181,6 @@
                 }
             }
 
-            async function redirectWhenOnline() {
-                if (! await isOnline()) {
-                    return;
-                }
-
-                window.location.replace('/');
-            }
-
             async function retryConnection() {
                 button.disabled = true;
                 setStatus('Checking connection…');
@@ -213,7 +202,6 @@
             });
 
             showCachedCooksLink();
-            redirectWhenOnline();
         })();
     </script>
 </body>

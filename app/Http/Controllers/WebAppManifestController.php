@@ -18,7 +18,7 @@ class WebAppManifestController extends Controller
             'description' => config('pwa.description'),
             'lang' => str_replace('_', '-', config('pwa.lang') ?? app()->getLocale()),
             'dir' => config('pwa.dir', 'ltr'),
-            'start_url' => config('pwa.start_url', '/offline.html'),
+            'start_url' => config('pwa.start_url', '/'),
             'scope' => '/',
             'id' => '/',
             'display' => 'standalone',

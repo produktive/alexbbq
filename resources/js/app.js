@@ -1,7 +1,7 @@
 import pushNotifications from './push-notifications';
 import { listenForAppBadgeSync, syncAppBadgeFromServer } from './app-badge';
 import { listenForOfflineStatus } from './offline-status';
-import { listenForOfflineNavigation } from './offline-navigation';
+import { listenForOfflineNavigation, warmOfflineCacheForCurrentPage } from './offline-navigation';
 import './cook-description-image-upload';
 import './echo';
 import cookChart from './cook-chart';
@@ -34,6 +34,7 @@ document.addEventListener('livewire:navigated', () => {
     requestAnimationFrame(() => {
         initFilamentAlpineComponents();
         initLiveCookTimers();
+        warmOfflineCacheForCurrentPage();
     });
 });
 
@@ -45,6 +46,7 @@ listenForAppBadgeSync();
 syncAppBadgeFromServer();
 listenForOfflineStatus();
 listenForOfflineNavigation();
+warmOfflineCacheForCurrentPage();
 
 document.addEventListener('livewire:navigated', () => {
     syncAppBadgeFromServer();
