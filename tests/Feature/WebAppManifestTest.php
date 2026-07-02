@@ -12,8 +12,8 @@ test('web app manifest uses the configured application name', function () {
         ->name->toBe('Alex.bbq')
         ->short_name->toBe('Alex.bbq')
         ->display->toBe('standalone')
-        ->background_color->toBe('#030d2d')
-        ->theme_color->toBe('#030d2d')
+        ->background_color->toBe('#1f1f1f')
+        ->theme_color->toBe('#1f1f1f')
         ->and($response->json('icons'))->toHaveCount(3);
 });
 

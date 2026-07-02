@@ -7,7 +7,7 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const iconPath = path.join(root, 'public/pwa-icon-512.png');
 const outputDir = path.join(root, 'public/pwa-splash');
 
-const background = { r: 3, g: 13, b: 45, alpha: 1 };
+const background = { r: 31, g: 31, b: 31, alpha: 1 };
 const textColor = '#fafafa';
 
 const splashSizes = [

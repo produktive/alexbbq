@@ -7,9 +7,9 @@ return [
         'Live BBQ temperature monitoring for the Maverick ET-732.',
     ),
 
-    'theme_color' => env('PWA_THEME_COLOR', '#030d2d'),
+    'theme_color' => env('PWA_THEME_COLOR', '#1f1f1f'),
 
-    'background_color' => env('PWA_BACKGROUND_COLOR', '#030d2d'),
+    'background_color' => env('PWA_BACKGROUND_COLOR', '#1f1f1f'),
 
     'short_name' => env('PWA_SHORT_NAME'),
 
