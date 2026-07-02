@@ -19,33 +19,9 @@ class WebAppManifestController extends Controller
             'scope' => '/',
             'id' => '/',
             'display' => 'standalone',
-            'background_color' => [
-                [
-                    'color' => config('pwa.background_color'),
-                    'media' => '(prefers-color-scheme: light)',
-                ],
-                [
-                    'color' => config('pwa.dark_background_color'),
-                    'media' => '(prefers-color-scheme: dark)',
-                ],
-            ],
-            'theme_color' => [
-                [
-                    'color' => config('pwa.theme_color'),
-                    'media' => '(prefers-color-scheme: light)',
-                ],
-                [
-                    'color' => config('pwa.dark_theme_color'),
-                    'media' => '(prefers-color-scheme: dark)',
-                ],
-            ],
+            'background_color' => config('pwa.background_color'),
+            'theme_color' => config('pwa.theme_color'),
             'icons' => [
-                [
-                    'src' => '/pwa-icon.svg',
-                    'sizes' => 'any',
-                    'type' => 'image/svg+xml',
-                    'purpose' => 'any',
-                ],
                 [
                     'src' => '/apple-touch-icon.png',
                     'sizes' => '180x180',

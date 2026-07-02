@@ -26,7 +26,7 @@ class TemperatureAlertNotification extends Notification
     {
         return (new WebPushMessage)
             ->title($this->title)
-            ->icon(url('/pwa-icon.svg'))
+            ->icon(url('/pwa-icon-512.png'))
             ->body($this->body)
             ->tag('temperature-alert')
             ->renotify()

@@ -1,15 +1,6 @@
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-title" content="{{ config('app.name') }}" />
-<meta
-    name="apple-mobile-web-app-status-bar-style"
-    content="default"
-    media="(prefers-color-scheme: light)"
-/>
-<meta
-    name="apple-mobile-web-app-status-bar-style"
-    content="black-translucent"
-    media="(prefers-color-scheme: dark)"
-/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 
 @php
     $splashScreens = [
@@ -24,24 +15,11 @@
     ];
 @endphp
 
-{{--
-    iOS picks the last matching startup image. Light images use device media only;
-    dark images add prefers-color-scheme: dark and must be listed after light ones.
---}}
+{{-- iOS matches startup images by exact device-width/height. Include a fallback without media. --}}
 @foreach ($splashScreens as $screen)
     @if (filled($screen['media']))
         <link rel="apple-touch-startup-image" href="/pwa-splash/{{ $screen['file'] }}" media="{{ $screen['media'] }}" />
     @else
         <link rel="apple-touch-startup-image" href="/pwa-splash/{{ $screen['file'] }}" />
     @endif
-@endforeach
-
-@foreach ($splashScreens as $screen)
-    @php
-        $file = str_replace('.png', '-dark.png', $screen['file']);
-        $media = filled($screen['media'])
-            ? "(prefers-color-scheme: dark) and {$screen['media']}"
-            : '(prefers-color-scheme: dark)';
-    @endphp
-    <link rel="apple-touch-startup-image" href="/pwa-splash/{{ $file }}" media="{{ $media }}" />
 @endforeach

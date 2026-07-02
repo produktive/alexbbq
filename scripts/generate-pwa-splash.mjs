@@ -1,11 +1,14 @@
-import { mkdir, readFile } from 'node:fs/promises';
+import { mkdir, readFile, readdir, unlink } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import sharp from 'sharp';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const iconSvgPath = path.join(root, 'public/pwa-icon.svg');
+const iconPath = path.join(root, 'public/pwa-icon-512.png');
 const outputDir = path.join(root, 'public/pwa-splash');
+
+const background = { r: 3, g: 13, b: 45, alpha: 1 };
+const textColor = '#fafafa';
 
 const splashSizes = [
     {
@@ -58,21 +61,6 @@ const splashSizes = [
     },
 ];
 
-const themes = [
-    {
-        suffix: '',
-        background: { r: 255, g: 255, b: 255, alpha: 1 },
-        iconBackground: '#ffffff',
-        textColor: '#18181b',
-    },
-    {
-        suffix: '-dark',
-        background: { r: 24, g: 24, b: 27, alpha: 1 },
-        iconBackground: '#171717',
-        textColor: '#fafafa',
-    },
-];
-
 function escapeXml(value) {
     return value
         .replaceAll('&', '&amp;')
@@ -97,7 +85,7 @@ async function readAppName() {
     return 'Alex.bbq';
 }
 
-function textSvg(width, label, textColor) {
+function textSvg(width, label) {
     const fontSize = Math.max(28, Math.round(width * 0.045));
     const height = Math.round(fontSize * 1.6);
 
@@ -115,56 +103,50 @@ function textSvg(width, label, textColor) {
 </svg>`);
 }
 
-function themedFileName(file, suffix) {
-    return file.replace(/\.png$/, `${suffix}.png`);
-}
-
-async function renderIcon(size, iconBackground) {
-    const svg = (await readFile(iconSvgPath, 'utf8')).replace(
-        'fill="#ffffff"',
-        `fill="${iconBackground}"`,
-    );
-
-    return sharp(Buffer.from(svg)).resize(size, size).png().toBuffer();
+async function renderIcon(size) {
+    return sharp(iconPath).resize(size, size).png().toBuffer();
 }
 
 const appName = await readAppName();
 
 await mkdir(outputDir, { recursive: true });
 
-for (const theme of themes) {
-    for (const size of splashSizes) {
-        const icon = await renderIcon(size.icon, theme.iconBackground);
-
-        const text = await sharp(textSvg(size.width, appName, theme.textColor))
-            .png()
-            .toBuffer();
-
-        const textMeta = await sharp(text).metadata();
-        const textHeight = textMeta.height ?? 0;
-        const gap = Math.round(size.width * 0.035);
-        const stackHeight = size.icon + gap + textHeight;
-        const top = Math.round((size.height - stackHeight) / 2);
-        const iconLeft = Math.round((size.width - size.icon) / 2);
-        const outputFile = themedFileName(size.file, theme.suffix);
-
-        await sharp({
-            create: {
-                width: size.width,
-                height: size.height,
-                channels: 4,
-                background: theme.background,
-            },
-        })
-            .composite([
-                { input: icon, top, left: iconLeft },
-                { input: text, top: top + size.icon + gap, left: 0 },
-            ])
-            .png()
-            .toFile(path.join(outputDir, outputFile));
-
-        console.log(`Wrote ${outputFile}`);
+for (const file of await readdir(outputDir)) {
+    if (file.endsWith('-dark.png')) {
+        await unlink(path.join(outputDir, file));
     }
+}
+
+for (const size of splashSizes) {
+    const icon = await renderIcon(size.icon);
+
+    const text = await sharp(textSvg(size.width, appName))
+        .png()
+        .toBuffer();
+
+    const textMeta = await sharp(text).metadata();
+    const textHeight = textMeta.height ?? 0;
+    const gap = Math.round(size.width * 0.035);
+    const stackHeight = size.icon + gap + textHeight;
+    const top = Math.round((size.height - stackHeight) / 2);
+    const iconLeft = Math.round((size.width - size.icon) / 2);
+
+    await sharp({
+        create: {
+            width: size.width,
+            height: size.height,
+            channels: 4,
+            background,
+        },
+    })
+        .composite([
+            { input: icon, top, left: iconLeft },
+            { input: text, top: top + size.icon + gap, left: 0 },
+        ])
+        .png()
+        .toFile(path.join(outputDir, size.file));
+
+    console.log(`Wrote ${size.file}`);
 }
 
 console.log(`Splash label: ${appName}`);

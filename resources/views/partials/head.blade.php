@@ -2,8 +2,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <meta name="color-scheme" content="light dark" />
 <meta name="csrf-token" content="{{ csrf_token() }}" />
-<meta name="theme-color" content="{{ config('pwa.theme_color') }}" media="(prefers-color-scheme: light)" />
-<meta name="theme-color" content="{{ config('pwa.dark_theme_color') }}" media="(prefers-color-scheme: dark)" />
+<meta name="theme-color" content="{{ config('pwa.theme_color') }}" />
 @if (filled(config('webpush.vapid.public_key')))
     <meta name="vapid-public-key" content="{{ config('webpush.vapid.public_key') }}" />
 @endif
