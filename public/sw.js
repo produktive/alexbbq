@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'v9';
+const CACHE_VERSION = 'v10';
 const SHELL_CACHE = `alexbbq-shell-${CACHE_VERSION}`;
 const ASSET_CACHE = `alexbbq-assets-${CACHE_VERSION}`;
 const COOK_PAGE_CACHE = `alexbbq-cook-pages-${CACHE_VERSION}`;
@@ -127,6 +127,43 @@ function shouldBypassCache(pathname) {
 function shouldCacheAsset(pathname) {
     return pathname.startsWith('/build/')
         || /\.(?:css|js|png|jpe?g|gif|webp|svg|ico|woff2?|ttf|eot)$/i.test(pathname);
+}
+
+function isPwaNavigate(request) {
+    const cookies = request.headers.get('Cookie') ?? '';
+
+    return /(?:^|;\s*)pwa_mode=1(?:;|$)/.test(cookies);
+}
+
+async function getOfflinePage() {
+    try {
+        const shellCache = await caches.open(SHELL_CACHE);
+        const cached = await shellCache.match('/offline.html');
+
+        if (cached) {
+            return cached;
+        }
+    } catch {
+        //
+    }
+
+    const cached = await caches.match('/offline.html');
+
+    if (cached) {
+        return cached;
+    }
+
+    return fetch('/offline.html', { credentials: 'same-origin' }).catch(() => Response.error());
+}
+
+async function handlePwaNavigate(request) {
+    try {
+        return await fetch(request, { credentials: 'same-origin' });
+    } catch {
+        const offlinePage = await getOfflinePage();
+
+        return offlinePage ?? Response.error();
+    }
 }
 
 async function warmOfflineCache(path) {
@@ -328,6 +365,12 @@ self.addEventListener('fetch', (event) => {
 
     if (isOfflineCacheableRequest(url.pathname)) {
         event.respondWith(handleOfflineCacheableRequest(request));
+
+        return;
+    }
+
+    if (request.mode === 'navigate' && isPwaNavigate(request)) {
+        event.respondWith(handlePwaNavigate(request));
 
         return;
     }

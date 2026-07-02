@@ -3,6 +3,14 @@ function isStandalonePwa() {
         || window.navigator.standalone === true;
 }
 
+export function markStandalonePwa() {
+    if (! isStandalonePwa()) {
+        return;
+    }
+
+    document.cookie = 'pwa_mode=1; path=/; max-age=31536000; SameSite=Lax';
+}
+
 function ensureOfflineBanner() {
     let banner = document.getElementById('offline-status-banner');
 
@@ -24,6 +32,8 @@ function updateOfflineBanner() {
 }
 
 export function listenForOfflineStatus() {
+    markStandalonePwa();
+
     if (! isStandalonePwa()) {
         return;
     }

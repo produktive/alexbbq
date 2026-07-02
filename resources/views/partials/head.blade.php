@@ -17,6 +17,10 @@
 
 <link rel="manifest" href="{{ route('manifest') }}">
 <script>
+    if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone) {
+        document.cookie = 'pwa_mode=1; path=/; max-age=31536000; SameSite=Lax';
+    }
+
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('/sw.js').catch(function () {});
     }
