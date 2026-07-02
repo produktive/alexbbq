@@ -97,10 +97,6 @@ p.fi-ta-text-description,
     Custom-added
  */
 
-body {
-    overscroll-behavior-y: auto;
-}
-
 #cook-description a {
     color: deeppink;
     text-decoration: underline;

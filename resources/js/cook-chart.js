@@ -170,7 +170,7 @@ function lineDataset(label, points, colors) {
         backgroundColor: (context) => seriesAreaFill(context, colors.area),
         fill: 'start',
         borderWidth: 2,
-        pointHitRadius: 0,
+        pointHitRadius: 4,
         ...DATASET_POINT_STYLE,
     };
 }
