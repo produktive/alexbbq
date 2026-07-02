@@ -50,6 +50,18 @@
             color: #a3a3a3;
         }
 
+        ul {
+            margin: 0 0 1.5rem;
+            padding-left: 1.25rem;
+            text-align: left;
+            line-height: 1.5;
+            color: #a3a3a3;
+        }
+
+        li + li {
+            margin-top: 0.5rem;
+        }
+
         #retry-status {
             min-height: 1.25rem;
             margin: 0 0 1rem;
@@ -57,15 +69,40 @@
             color: #fbbf24;
         }
 
-        button {
+        .actions {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            align-items: center;
+        }
+
+        button,
+        .button-link {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
             border: 0;
             border-radius: 9999px;
             padding: 0.75rem 1.25rem;
             font: inherit;
             font-weight: 600;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        button {
             color: #171717;
             background: #f5f5f5;
-            cursor: pointer;
+        }
+
+        .button-link {
+            color: #f5f5f5;
+            background: transparent;
+            border: 1px solid #525252;
+        }
+
+        #cached-cooks-link[hidden] {
+            display: none;
         }
 
         button:disabled {
@@ -73,7 +110,8 @@
             cursor: wait;
         }
 
-        button:active:not(:disabled) {
+        button:active:not(:disabled),
+        .button-link:active {
             transform: scale(0.98);
         }
     </style>
@@ -82,17 +120,54 @@
     <main>
         <img src="/pwa-icon-512.png" alt="" width="80" height="80">
         <h1>You are offline</h1>
-        <p>Live temperatures need a network connection. Finished cook pages you have opened before may still be available offline.</p>
+        <p>The live dashboard needs a network connection. Finished cook pages you opened while online can still be viewed from the Cooks list.</p>
+        <ul>
+            <li>Cold start while offline opens this page.</li>
+            <li>With the app already open, go to Cooks and tap a cook you visited before.</li>
+        </ul>
         <p id="retry-status" aria-live="polite"></p>
-        <button id="retry-button" type="button">Try again</button>
+        <div class="actions">
+            <a id="cached-cooks-link" class="button-link" href="/cooks" hidden>View cached cooks</a>
+            <button id="retry-button" type="button">Try again</button>
+        </div>
     </main>
     <script>
         (function () {
             const button = document.getElementById('retry-button');
             const status = document.getElementById('retry-status');
+            const cachedCooksLink = document.getElementById('cached-cooks-link');
 
             function setStatus(message) {
                 status.textContent = message;
+            }
+
+            async function isCooksPageCached() {
+                if (! ('caches' in window)) {
+                    return false;
+                }
+
+                const cacheNames = await caches.keys();
+
+                for (const cacheName of cacheNames) {
+                    if (! cacheName.includes('cook-pages')) {
+                        continue;
+                    }
+
+                    const cache = await caches.open(cacheName);
+                    const match = await cache.match('/cooks');
+
+                    if (match) {
+                        return true;
+                    }
+                }
+
+                return false;
+            }
+
+            async function showCachedCooksLink() {
+                if (await isCooksPageCached()) {
+                    cachedCooksLink.hidden = false;
+                }
             }
 
             async function isOnline() {
@@ -131,6 +206,8 @@
             window.addEventListener('online', () => {
                 setStatus('Connection restored. Tap try again.');
             });
+
+            showCachedCooksLink();
         })();
     </script>
 </body>

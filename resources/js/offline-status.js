@@ -7,7 +7,7 @@ function ensureOfflineBanner() {
         banner.className = 'offline-status-banner';
         banner.hidden = true;
         banner.setAttribute('role', 'status');
-        banner.textContent = 'You are offline. Live temperatures may be unavailable.';
+        banner.textContent = 'You are offline. Open Cooks to view finished cooks you have opened before. Live temperatures need a connection.';
         document.body.prepend(banner);
     }
 

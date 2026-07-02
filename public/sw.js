@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'v3';
+const CACHE_VERSION = 'v5';
 const SHELL_CACHE = `alexbbq-shell-${CACHE_VERSION}`;
 const ASSET_CACHE = `alexbbq-assets-${CACHE_VERSION}`;
 const COOK_PAGE_CACHE = `alexbbq-cook-pages-${CACHE_VERSION}`;
@@ -60,21 +60,46 @@ function isCookViewPath(pathname) {
     return /^\/cooks\/\d+$/.test(pathname);
 }
 
+function isCookListPath(pathname) {
+    return pathname === '/cooks';
+}
+
 function isCookChartDataPath(pathname) {
     return /^\/cooks\/\d+\/chart-data$/.test(pathname);
 }
 
-function isCookPageRequest(request, pathname) {
+function isOfflineCacheablePagePath(pathname) {
+    return isCookViewPath(pathname) || isCookListPath(pathname);
+}
+
+function isOfflineCacheableRequest(request, pathname) {
     if (isCookChartDataPath(pathname)) {
         return true;
     }
 
-    if (! isCookViewPath(pathname)) {
+    if (! isOfflineCacheablePagePath(pathname)) {
         return false;
     }
 
     return request.mode === 'navigate'
+        || request.headers.get('X-Livewire-Navigate') === '1'
         || request.headers.get('accept')?.includes('text/html');
+}
+
+function cacheLookupKey(request) {
+    const url = new URL(request.url);
+
+    return url.pathname + url.search;
+}
+
+async function readCachedResponse(cache, request) {
+    const cached = await cache.match(cacheLookupKey(request));
+
+    if (cached) {
+        return cached;
+    }
+
+    return cache.match(request);
 }
 
 function shouldBypassCache(pathname) {
@@ -93,19 +118,20 @@ function shouldCacheAsset(pathname) {
         || /\.(?:css|js|png|jpe?g|gif|webp|svg|ico|woff2?|ttf|eot)$/i.test(pathname);
 }
 
-async function handleCookPageRequest(request) {
+async function handleOfflineCacheableRequest(request) {
     const cache = await caches.open(COOK_PAGE_CACHE);
+    const cacheKey = cacheLookupKey(request);
 
     try {
         const response = await fetch(request, { cache: 'no-store' });
 
         if (response.ok) {
-            await cache.put(request, response.clone());
+            await cache.put(cacheKey, response.clone());
         }
 
         return response;
     } catch {
-        const cached = await cache.match(request);
+        const cached = await readCachedResponse(cache, request);
 
         if (cached) {
             return cached;
@@ -250,8 +276,8 @@ self.addEventListener('fetch', (event) => {
         return;
     }
 
-    if (isCookPageRequest(request, url.pathname)) {
-        event.respondWith(handleCookPageRequest(request));
+    if (isOfflineCacheableRequest(request, url.pathname)) {
+        event.respondWith(handleOfflineCacheableRequest(request));
 
         return;
     }
