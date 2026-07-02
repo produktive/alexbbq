@@ -93,6 +93,14 @@ p.fi-ta-text-description,
     color: var(--color-white);
 }
 
+/*
+    Custom-added
+ */
+
+body {
+    overscroll-behavior-y: auto;
+}
+
 #cook-description a {
     color: deeppink;
     text-decoration: underline;
