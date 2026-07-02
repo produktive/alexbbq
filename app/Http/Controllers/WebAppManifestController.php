@@ -19,8 +19,26 @@ class WebAppManifestController extends Controller
             'scope' => '/',
             'id' => '/',
             'display' => 'standalone',
-            'background_color' => config('pwa.background_color'),
-            'theme_color' => config('pwa.theme_color'),
+            'background_color' => [
+                [
+                    'color' => config('pwa.background_color'),
+                    'media' => '(prefers-color-scheme: light)',
+                ],
+                [
+                    'color' => config('pwa.dark_background_color'),
+                    'media' => '(prefers-color-scheme: dark)',
+                ],
+            ],
+            'theme_color' => [
+                [
+                    'color' => config('pwa.theme_color'),
+                    'media' => '(prefers-color-scheme: light)',
+                ],
+                [
+                    'color' => config('pwa.dark_theme_color'),
+                    'media' => '(prefers-color-scheme: dark)',
+                ],
+            ],
             'icons' => [
                 [
                     'src' => '/pwa-icon.svg',

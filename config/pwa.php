@@ -11,6 +11,10 @@ return [
 
     'background_color' => env('PWA_BACKGROUND_COLOR', '#ffffff'),
 
+    'dark_theme_color' => env('PWA_DARK_THEME_COLOR', '#18181b'),
+
+    'dark_background_color' => env('PWA_DARK_BACKGROUND_COLOR', '#18181b'),
+
     'short_name' => env('PWA_SHORT_NAME'),
 
 ];

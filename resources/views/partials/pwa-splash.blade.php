@@ -1,42 +1,38 @@
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-title" content="{{ config('app.name') }}" />
-<meta name="apple-mobile-web-app-status-bar-style" content="default" />
+<meta
+    name="apple-mobile-web-app-status-bar-style"
+    content="default"
+    media="(prefers-color-scheme: light)"
+/>
+<meta
+    name="apple-mobile-web-app-status-bar-style"
+    content="black-translucent"
+    media="(prefers-color-scheme: dark)"
+/>
 
-{{-- iOS matches startup images by exact device-width/height. Include a fallback without media. --}}
-<link rel="apple-touch-startup-image" href="/pwa-splash/fallback-portrait.png" />
+@php
+    $splashScreens = [
+        ['file' => 'fallback-portrait.png', 'media' => null],
+        ['file' => 'iphone-se-portrait.png', 'media' => '(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)'],
+        ['file' => 'iphone-14-portrait.png', 'media' => '(device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)'],
+        ['file' => 'iphone-15-portrait.png', 'media' => '(device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)'],
+        ['file' => 'iphone-14-pro-max-portrait.png', 'media' => '(device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)'],
+        ['file' => 'iphone-16-pro-portrait.png', 'media' => '(device-width: 402px) and (device-height: 874px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)'],
+        ['file' => 'iphone-16-pro-max-portrait.png', 'media' => '(device-width: 440px) and (device-height: 956px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)'],
+        ['file' => 'ipad-pro-12-portrait.png', 'media' => '(device-width: 1024px) and (device-height: 1366px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)'],
+    ];
+@endphp
 
-<link
-    rel="apple-touch-startup-image"
-    href="/pwa-splash/iphone-se-portrait.png"
-    media="(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)"
-/>
-<link
-    rel="apple-touch-startup-image"
-    href="/pwa-splash/iphone-14-portrait.png"
-    media="(device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)"
-/>
-<link
-    rel="apple-touch-startup-image"
-    href="/pwa-splash/iphone-15-portrait.png"
-    media="(device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)"
-/>
-<link
-    rel="apple-touch-startup-image"
-    href="/pwa-splash/iphone-14-pro-max-portrait.png"
-    media="(device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)"
-/>
-<link
-    rel="apple-touch-startup-image"
-    href="/pwa-splash/iphone-16-pro-portrait.png"
-    media="(device-width: 402px) and (device-height: 874px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)"
-/>
-<link
-    rel="apple-touch-startup-image"
-    href="/pwa-splash/iphone-16-pro-max-portrait.png"
-    media="(device-width: 440px) and (device-height: 956px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)"
-/>
-<link
-    rel="apple-touch-startup-image"
-    href="/pwa-splash/ipad-pro-12-portrait.png"
-    media="(device-width: 1024px) and (device-height: 1366px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)"
-/>
+{{-- iOS matches startup images by exact device-width/height. Include fallbacks per color scheme. --}}
+@foreach (['' => 'light', '-dark' => 'dark'] as $suffix => $scheme)
+    @foreach ($splashScreens as $screen)
+        @php
+            $file = str_replace('.png', "{$suffix}.png", $screen['file']);
+            $media = filled($screen['media'])
+                ? "{$screen['media']} and (prefers-color-scheme: {$scheme})"
+                : "(prefers-color-scheme: {$scheme})";
+        @endphp
+        <link rel="apple-touch-startup-image" href="/pwa-splash/{{ $file }}" media="{{ $media }}" />
+    @endforeach
+@endforeach

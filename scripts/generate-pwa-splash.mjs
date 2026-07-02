@@ -58,6 +58,19 @@ const splashSizes = [
     },
 ];
 
+const themes = [
+    {
+        suffix: '',
+        background: { r: 255, g: 255, b: 255, alpha: 1 },
+        textColor: '#18181b',
+    },
+    {
+        suffix: '-dark',
+        background: { r: 24, g: 24, b: 27, alpha: 1 },
+        textColor: '#fafafa',
+    },
+];
+
 function escapeXml(value) {
     return value
         .replaceAll('&', '&amp;')
@@ -82,7 +95,7 @@ async function readAppName() {
     return 'Alex.bbq';
 }
 
-function textSvg(width, label) {
+function textSvg(width, label, textColor) {
     const fontSize = Math.max(28, Math.round(width * 0.045));
     const height = Math.round(fontSize * 1.6);
 
@@ -95,48 +108,55 @@ function textSvg(width, label) {
     font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
     font-size="${fontSize}"
     font-weight="600"
-    fill="#18181b"
+    fill="${textColor}"
   >${escapeXml(label)}</text>
 </svg>`);
+}
+
+function themedFileName(file, suffix) {
+    return file.replace(/\.png$/, `${suffix}.png`);
 }
 
 const appName = await readAppName();
 
 await mkdir(outputDir, { recursive: true });
 
-for (const size of splashSizes) {
-    const icon = await sharp(iconPath)
-        .resize(size.icon, size.icon)
-        .png()
-        .toBuffer();
+for (const theme of themes) {
+    for (const size of splashSizes) {
+        const icon = await sharp(iconPath)
+            .resize(size.icon, size.icon)
+            .png()
+            .toBuffer();
 
-    const text = await sharp(textSvg(size.width, appName))
-        .png()
-        .toBuffer();
+        const text = await sharp(textSvg(size.width, appName, theme.textColor))
+            .png()
+            .toBuffer();
 
-    const textMeta = await sharp(text).metadata();
-    const textHeight = textMeta.height ?? 0;
-    const gap = Math.round(size.width * 0.035);
-    const stackHeight = size.icon + gap + textHeight;
-    const top = Math.round((size.height - stackHeight) / 2);
-    const iconLeft = Math.round((size.width - size.icon) / 2);
+        const textMeta = await sharp(text).metadata();
+        const textHeight = textMeta.height ?? 0;
+        const gap = Math.round(size.width * 0.035);
+        const stackHeight = size.icon + gap + textHeight;
+        const top = Math.round((size.height - stackHeight) / 2);
+        const iconLeft = Math.round((size.width - size.icon) / 2);
+        const outputFile = themedFileName(size.file, theme.suffix);
 
-    await sharp({
-        create: {
-            width: size.width,
-            height: size.height,
-            channels: 4,
-            background: { r: 255, g: 255, b: 255, alpha: 1 },
-        },
-    })
-        .composite([
-            { input: icon, top, left: iconLeft },
-            { input: text, top: top + size.icon + gap, left: 0 },
-        ])
-        .png()
-        .toFile(path.join(outputDir, size.file));
+        await sharp({
+            create: {
+                width: size.width,
+                height: size.height,
+                channels: 4,
+                background: theme.background,
+            },
+        })
+            .composite([
+                { input: icon, top, left: iconLeft },
+                { input: text, top: top + size.icon + gap, left: 0 },
+            ])
+            .png()
+            .toFile(path.join(outputDir, outputFile));
 
-    console.log(`Wrote ${size.file}`);
+        console.log(`Wrote ${outputFile}`);
+    }
 }
 
 console.log(`Splash label: ${appName}`);
