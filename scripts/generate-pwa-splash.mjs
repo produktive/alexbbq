@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url';
 import sharp from 'sharp';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const iconPath = path.join(root, 'public/pwa-icon-512.png');
+const iconSvgPath = path.join(root, 'public/pwa-icon.svg');
 const outputDir = path.join(root, 'public/pwa-splash');
 
 const splashSizes = [
@@ -62,11 +62,13 @@ const themes = [
     {
         suffix: '',
         background: { r: 255, g: 255, b: 255, alpha: 1 },
+        iconBackground: '#ffffff',
         textColor: '#18181b',
     },
     {
         suffix: '-dark',
         background: { r: 24, g: 24, b: 27, alpha: 1 },
+        iconBackground: '#171717',
         textColor: '#fafafa',
     },
 ];
@@ -117,16 +119,22 @@ function themedFileName(file, suffix) {
     return file.replace(/\.png$/, `${suffix}.png`);
 }
 
+async function renderIcon(size, iconBackground) {
+    const svg = (await readFile(iconSvgPath, 'utf8')).replace(
+        'fill="#ffffff"',
+        `fill="${iconBackground}"`,
+    );
+
+    return sharp(Buffer.from(svg)).resize(size, size).png().toBuffer();
+}
+
 const appName = await readAppName();
 
 await mkdir(outputDir, { recursive: true });
 
 for (const theme of themes) {
     for (const size of splashSizes) {
-        const icon = await sharp(iconPath)
-            .resize(size.icon, size.icon)
-            .png()
-            .toBuffer();
+        const icon = await renderIcon(size.icon, theme.iconBackground);
 
         const text = await sharp(textSvg(size.width, appName, theme.textColor))
             .png()

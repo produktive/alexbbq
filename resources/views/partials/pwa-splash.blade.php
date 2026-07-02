@@ -24,15 +24,24 @@
     ];
 @endphp
 
-{{-- iOS matches startup images by exact device-width/height. Include fallbacks per color scheme. --}}
-@foreach (['' => 'light', '-dark' => 'dark'] as $suffix => $scheme)
-    @foreach ($splashScreens as $screen)
-        @php
-            $file = str_replace('.png', "{$suffix}.png", $screen['file']);
-            $media = filled($screen['media'])
-                ? "{$screen['media']} and (prefers-color-scheme: {$scheme})"
-                : "(prefers-color-scheme: {$scheme})";
-        @endphp
-        <link rel="apple-touch-startup-image" href="/pwa-splash/{{ $file }}" media="{{ $media }}" />
-    @endforeach
+{{--
+    iOS picks the last matching startup image. Light images use device media only;
+    dark images add prefers-color-scheme: dark and must be listed after light ones.
+--}}
+@foreach ($splashScreens as $screen)
+    @if (filled($screen['media']))
+        <link rel="apple-touch-startup-image" href="/pwa-splash/{{ $screen['file'] }}" media="{{ $screen['media'] }}" />
+    @else
+        <link rel="apple-touch-startup-image" href="/pwa-splash/{{ $screen['file'] }}" />
+    @endif
+@endforeach
+
+@foreach ($splashScreens as $screen)
+    @php
+        $file = str_replace('.png', '-dark.png', $screen['file']);
+        $media = filled($screen['media'])
+            ? "(prefers-color-scheme: dark) and {$screen['media']}"
+            : '(prefers-color-scheme: dark)';
+    @endphp
+    <link rel="apple-touch-startup-image" href="/pwa-splash/{{ $file }}" media="{{ $media }}" />
 @endforeach
