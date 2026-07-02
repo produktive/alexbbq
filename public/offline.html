@@ -6,9 +6,72 @@
     <meta name="color-scheme" content="dark">
     <meta name="theme-color" content="#1f1f1f">
     <title>Offline</title>
+    <script>
+        document.documentElement.classList.add('booting');
+
+        if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone) {
+            document.cookie = 'pwa_mode=1; path=/; max-age=31536000; SameSite=Lax';
+        }
+
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/sw.js').then(function (registration) {
+                if (! (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone)) {
+                    return;
+                }
+
+                function markPwaClientInServiceWorker() {
+                    registration.active?.postMessage({ type: 'mark-pwa-client' });
+                }
+
+                if (registration.active) {
+                    markPwaClientInServiceWorker();
+                }
+
+                navigator.serviceWorker.ready.then(markPwaClientInServiceWorker).catch(function () {});
+            }).catch(function () {});
+        }
+
+        (function () {
+            async function showOfflinePage() {
+                document.documentElement.classList.remove('booting');
+            }
+
+            async function redirectHomeIfOnline() {
+                if (! navigator.onLine) {
+                    await showOfflinePage();
+
+                    return;
+                }
+
+                try {
+                    const response = await fetch('/live/cook-status', {
+                        cache: 'no-store',
+                        credentials: 'same-origin',
+                        headers: { Accept: 'application/json' },
+                    });
+
+                    if (response.ok) {
+                        window.location.replace('/');
+
+                        return;
+                    }
+                } catch {
+                    //
+                }
+
+                await showOfflinePage();
+            }
+
+            redirectHomeIfOnline();
+        })();
+    </script>
     <style>
         :root {
             color-scheme: dark;
+        }
+
+        html.booting body {
+            visibility: hidden;
         }
 
         * {

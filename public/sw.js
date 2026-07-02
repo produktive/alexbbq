@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'v11';
+const CACHE_VERSION = 'v12';
 const SHELL_CACHE = `alexbbq-shell-${CACHE_VERSION}`;
 const ASSET_CACHE = `alexbbq-assets-${CACHE_VERSION}`;
 const COOK_PAGE_CACHE = `alexbbq-cook-pages-${CACHE_VERSION}`;
@@ -203,6 +203,38 @@ function offlineHtmlResponse() {
             'Cache-Control': 'no-store',
         },
     });
+}
+
+async function handleOfflinePageRequest(request) {
+    try {
+        const shellCache = await caches.open(SHELL_CACHE);
+        const cached = await shellCache.match('/offline.html');
+
+        if (cached) {
+            return cached;
+        }
+    } catch {
+        //
+    }
+
+    try {
+        const response = await fetch(request, { credentials: 'same-origin' });
+
+        if (response.ok) {
+            try {
+                const shellCache = await caches.open(SHELL_CACHE);
+                await shellCache.put('/offline.html', response.clone());
+            } catch {
+                //
+            }
+
+            return response;
+        }
+    } catch {
+        //
+    }
+
+    return offlineHtmlResponse();
 }
 
 async function getOfflinePage() {
@@ -468,6 +500,12 @@ self.addEventListener('fetch', (event) => {
     const url = new URL(request.url);
 
     if (url.origin !== self.location.origin) {
+        return;
+    }
+
+    if (url.pathname === '/offline.html') {
+        event.respondWith(handleOfflinePageRequest(request));
+
         return;
     }
 

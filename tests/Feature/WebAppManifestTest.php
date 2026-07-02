@@ -88,7 +88,7 @@ test('web app manifest includes polish metadata', function () {
     $response = $this->get(route('manifest'));
 
     expect($response->json())
-        ->start_url->toBe('/')
+        ->start_url->toBe('/offline.html')
         ->lang->toBe('en')
         ->dir->toBe('ltr')
         ->orientation->toBe('any')
