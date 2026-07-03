@@ -47,13 +47,6 @@ const splashSizes = [
         media: '(device-width: 390px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)',
     },
     {
-        file: 'iphone-15-portrait.png',
-        width: 1179,
-        height: 2556,
-        icon: 280,
-        media: '(device-width: 393px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)',
-    },
-    {
         file: 'iphone-16-portrait.png',
         width: 1179,
         height: 2556,

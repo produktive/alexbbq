@@ -20,22 +20,9 @@
 
 <link rel="manifest" href="{{ route('manifest') }}">
 <meta name="service-worker-url" content="{{ PwaAsset::serviceWorkerUrl() }}">
-<script>
-    if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone) {
-        document.cookie = 'pwa_mode=1; path=/; max-age=31536000; SameSite=Lax';
-    }
-
-    if ('serviceWorker' in navigator) {
-        var serviceWorkerUrl = document.querySelector('meta[name="service-worker-url"]')?.content || '/sw.js';
-
-        navigator.serviceWorker.register(serviceWorkerUrl).catch(function () {});
-    }
-</script>
-<link rel="apple-touch-icon" href="{{ PwaAsset::url('apple-touch-icon.png') }}">
 <link rel="apple-touch-icon" sizes="180x180" href="{{ PwaAsset::url('apple-touch-icon.png') }}">
 <link rel="apple-touch-icon" sizes="192x192" href="{{ PwaAsset::url('pwa-icon-192.png') }}">
 <link rel="apple-touch-icon" sizes="512x512" href="{{ PwaAsset::url('pwa-icon-512.png') }}">
-<link rel="apple-touch-icon-precomposed" sizes="180x180" href="{{ PwaAsset::url('apple-touch-icon.png') }}">
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 

@@ -7,7 +7,6 @@
         ['file' => 'iphone-xr-portrait.png', 'media' => '(device-width: 414px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)'],
         ['file' => 'iphone-xs-max-portrait.png', 'media' => '(device-width: 414px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)'],
         ['file' => 'iphone-14-portrait.png', 'media' => '(device-width: 390px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)'],
-        ['file' => 'iphone-15-portrait.png', 'media' => '(device-width: 393px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)'],
         ['file' => 'iphone-16-portrait.png', 'media' => '(device-width: 393px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)'],
         ['file' => 'iphone-14-plus-portrait.png', 'media' => '(device-width: 428px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)'],
         ['file' => 'iphone-14-pro-max-portrait.png', 'media' => '(device-width: 430px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)'],

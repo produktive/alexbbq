@@ -132,7 +132,7 @@
 
             async function isCooksPageCached() {
                 if (! ('caches' in window)) {
-                    return true;
+                    return false;
                 }
 
                 const cooksRequest = new Request('/cooks', {
