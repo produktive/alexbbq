@@ -21,7 +21,10 @@ function ensureOfflineBanner() {
         banner.hidden = true;
         banner.setAttribute('role', 'status');
         banner.textContent = 'No internet connection. Some features may be unavailable.';
-        document.body.append(banner);
+    }
+
+    if (! banner.isConnected) {
+        document.documentElement.append(banner);
     }
 
     return banner;
@@ -40,5 +43,6 @@ export function listenForOfflineStatus() {
 
     window.addEventListener('online', updateOfflineBanner);
     window.addEventListener('offline', updateOfflineBanner);
+    document.addEventListener('livewire:navigated', updateOfflineBanner);
     updateOfflineBanner();
 }

@@ -329,7 +329,7 @@ p.fi-ta-text-description,
     padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
 }
 
-body:has(.offline-status-banner:not([hidden])) {
+html:has(.offline-status-banner:not([hidden])) body {
     padding-bottom: 3rem;
 }
 
