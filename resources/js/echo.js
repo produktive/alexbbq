@@ -26,12 +26,28 @@ function reverbConfig() {
     };
 }
 
+function whenEchoConnected(callback) {
+    const connection = window.Echo?.connector?.pusher?.connection;
+
+    if (! connection) {
+        return;
+    }
+
+    if (connection.state === 'connected') {
+        callback();
+
+        return;
+    }
+
+    connection.bind('connected', callback);
+}
+
 export function initEcho() {
     if (window.Echo) {
         const state = window.Echo.connector?.pusher?.connection?.state;
 
         if (state === 'connected' || state === 'connecting') {
-            listenForLiveCookBroadcasts();
+            whenEchoConnected(listenForLiveCookBroadcasts);
 
             return window.Echo;
         }
@@ -53,7 +69,7 @@ export function initEcho() {
         ...config,
     });
 
-    listenForLiveCookBroadcasts();
+    whenEchoConnected(listenForLiveCookBroadcasts);
 
     return window.Echo;
 }

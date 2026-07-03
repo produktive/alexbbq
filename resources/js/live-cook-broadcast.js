@@ -34,18 +34,6 @@ function normalizeBroadcastPayload(payload) {
     return payload;
 }
 
-function broadcastCookId(payload) {
-    const normalized = normalizeBroadcastPayload(payload);
-
-    if (normalized == null) {
-        return null;
-    }
-
-    const raw = normalized.cookId ?? normalized.cook_id;
-
-    return raw != null ? Number(raw) : null;
-}
-
 async function dispatchLiveCookUpdate(payload) {
     const normalized = normalizeBroadcastPayload(payload);
 
@@ -54,7 +42,8 @@ async function dispatchLiveCookUpdate(payload) {
     }
 
     const type = normalized.type;
-    const cookId = broadcastCookId(normalized);
+    const rawCookId = normalized.cookId ?? normalized.cook_id;
+    const cookId = rawCookId != null ? Number(rawCookId) : null;
     const beganAt = normalized.beganAt ?? normalized.began_at ?? null;
 
     if (type === 'reading' && cookId) {
