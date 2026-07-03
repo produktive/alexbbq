@@ -188,6 +188,8 @@ This launches four processes concurrently:
 
 Open **http://127.0.0.1:8000** (or `http://localhost:8000` — both origins are allowed in local dev).
 
+If you have Laravel Herd installed but are using `php artisan serve`, keep `APP_URL=http://127.0.0.1:8000` in `.env`. Vite only enables Herd TLS when `APP_URL` uses a `*.test` host.
+
 ### Local development (`php artisan serve`)
 
 If you are not using [Laravel Herd](#local-development-laravel-herd), the defaults in `.env.example` are already set for:
