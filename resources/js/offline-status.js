@@ -20,7 +20,7 @@ function ensureOfflineBanner() {
         banner.className = 'offline-status-banner';
         banner.hidden = true;
         banner.setAttribute('role', 'status');
-        banner.textContent = 'Offline — open Cooks for cached pages. Live temps need a connection.';
+        banner.textContent = 'No internet connection. Some features may be unavailable.';
         document.body.append(banner);
     }
 
