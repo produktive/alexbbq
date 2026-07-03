@@ -1,5 +1,20 @@
 <?php
 
+test('web app manifest is not cacheable at the cdn', function () {
+    $response = $this->get(route('manifest'));
+
+    $response->assertSuccessful();
+
+    $cacheControl = $response->headers->get('Cache-Control');
+
+    expect($cacheControl)
+        ->toContain('no-cache')
+        ->toContain('no-store')
+        ->toContain('must-revalidate');
+
+    $response->assertHeader('CDN-Cache-Control', 'no-store');
+});
+
 test('web app manifest uses the configured application name', function () {
     config(['app.name' => 'Alex.bbq']);
 

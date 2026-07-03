@@ -15,12 +15,14 @@ const csrfToken = () => document.querySelector('meta[name="csrf-token"]')?.conte
 
 const vapidPublicKey = () => document.querySelector('meta[name="vapid-public-key"]')?.content ?? '';
 
+const serviceWorkerUrl = () => document.querySelector('meta[name="service-worker-url"]')?.content ?? '/sw.js';
+
 const registerServiceWorker = async () => {
     if (!('serviceWorker' in navigator)) {
         throw new Error('Service workers are not supported in this browser.');
     }
 
-    return navigator.serviceWorker.register('/sw.js');
+    return navigator.serviceWorker.register(serviceWorkerUrl());
 };
 
 const getServiceWorkerRegistration = async () => {

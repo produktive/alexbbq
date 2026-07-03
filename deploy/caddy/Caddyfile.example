@@ -20,6 +20,8 @@ bbqpi.local {
 	encode gzip zstd
 
 	route {
+		import /var/www/alexbbq/deploy/caddy/snippets/pwa-cache.caddy
+
 		try_files {path} {path}/ /index.php?{query}
 		php_fastcgi unix//run/php/php8.4-fpm.sock
 		file_server
@@ -36,6 +38,7 @@ bbq.fiskkarta.com {
 
 	route {
 		import /var/www/alexbbq/deploy/caddy/snippets/reverb.caddy
+		import /var/www/alexbbq/deploy/caddy/snippets/pwa-cache.caddy
 
 		handle {
 			try_files {path} {path}/ /index.php?{query}

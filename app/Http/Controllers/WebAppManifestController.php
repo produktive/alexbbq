@@ -54,7 +54,13 @@ class WebAppManifestController extends Controller
                 ],
             ],
             'shortcuts' => $this->shortcuts(),
-        ])->header('Content-Type', 'application/manifest+json');
+        ])->withHeaders([
+            'Content-Type' => 'application/manifest+json',
+            'Cache-Control' => 'no-cache, no-store, must-revalidate',
+            'Pragma' => 'no-cache',
+            'Expires' => '0',
+            'CDN-Cache-Control' => 'no-store',
+        ]);
     }
 
     /**

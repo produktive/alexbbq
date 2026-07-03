@@ -19,4 +19,9 @@ class PwaAsset
     {
         return '/'.ltrim($path, '/').'?v='.self::version($path);
     }
+
+    public static function serviceWorkerUrl(): string
+    {
+        return self::url('sw.js');
+    }
 }

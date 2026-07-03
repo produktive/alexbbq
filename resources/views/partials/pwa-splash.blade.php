@@ -1,6 +1,4 @@
 @php
-    use App\Support\PwaAsset;
-
     $splashScreens = [
         ['file' => 'fallback-portrait.png', 'media' => null],
         ['file' => 'iphone-se-portrait.png', 'media' => '(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)'],
@@ -22,10 +20,11 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="{{ config('pwa.status_bar_style') }}" />
 
 {{-- iOS uses the last matching startup image. List the generic fallback first. --}}
+{{-- Stable URLs (no cache-busting query) so iOS keeps startup images after add-to-home-screen. --}}
 @foreach ($splashScreens as $screen)
     @if (filled($screen['media']))
-        <link rel="apple-touch-startup-image" href="{{ PwaAsset::url('pwa-splash/'.$screen['file']) }}" media="{{ $screen['media'] }}" />
+        <link rel="apple-touch-startup-image" href="/pwa-splash/{{ $screen['file'] }}" media="{{ $screen['media'] }}" />
     @else
-        <link rel="apple-touch-startup-image" href="{{ PwaAsset::url('pwa-splash/'.$screen['file']) }}" />
+        <link rel="apple-touch-startup-image" href="/pwa-splash/{{ $screen['file'] }}" />
     @endif
 @endforeach

@@ -1,0 +1,10 @@
+# Never cache PWA bootstrap files at the CDN or browser.
+# Cloudflare was serving stale sw.js for hours (max-age=14400), blocking SW updates.
+# After first deploy with these headers, purge Cloudflare cache once for /sw.js if needed.
+@pwa_critical path /sw.js /offline.html /manifest.webmanifest
+header @pwa_critical {
+	Cache-Control "no-cache, no-store, must-revalidate"
+	Pragma "no-cache"
+	Expires "0"
+	CDN-Cache-Control "no-store"
+}
