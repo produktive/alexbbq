@@ -180,11 +180,38 @@ composer dev
 
 This launches three processes concurrently:
 
-- `php artisan serve` — web server at `http://localhost:8000`
+- `php artisan serve` — web server at `http://127.0.0.1:8000`
 - `php artisan pail` — log tail
 - `npm run dev` — Vite hot reload
 
-Reverb is not included in `composer dev`. Start it in a separate terminal when you want live chart updates (see [Local development (Laravel Herd)](#local-development-laravel-herd) below).
+Reverb is not included in `composer dev`. Start it in a separate terminal when you want live chart updates (see below).
+
+### Local development (`php artisan serve`)
+
+If you are not using [Laravel Herd](#local-development-laravel-herd), the defaults in `.env.example` are already set for:
+
+```bash
+php artisan serve              # http://127.0.0.1:8000
+php artisan reverb:start --port=8080
+```
+
+Ensure your `.env` matches the URL you open in the browser (origin checks use `APP_URL`):
+
+```env
+APP_URL=http://127.0.0.1:8000
+REVERB_HOST=127.0.0.1
+REVERB_PORT=8080
+REVERB_SCHEME=http
+```
+
+If you browse at `http://localhost:8000` instead, set `APP_URL` and optionally `REVERB_ALLOWED_ORIGINS` to include that origin.
+
+**Common symptoms when these do not match:**
+
+- Browser DevTools shows a WebSocket attempt, but Reverb logs no connections (wrong port/scheme or rejected origin).
+- Fake cook readings appear in the database but the chart does not update (Laravel is broadcasting to the wrong host/port — check `storage/logs/laravel.log` for “Live cook broadcast failed”).
+
+Restart `php artisan serve` and `php artisan reverb:start` after changing `.env`.
 
 ### Local development (Laravel Herd)
 
