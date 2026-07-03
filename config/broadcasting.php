@@ -38,7 +38,7 @@ return [
             'options' => [
                 // Server-side HTTP API. Production defaults to local Reverb; Herd local inherits REVERB_*.
                 'host' => env('REVERB_SERVER_HOST') ?: (env('APP_ENV') === 'local' ? env('REVERB_HOST', '127.0.0.1') : '127.0.0.1'),
-                'port' => (int) (env('REVERB_SERVER_PORT') ?: (env('APP_ENV') === 'local' ? env('REVERB_PORT', 8081) : 8081)),
+                'port' => (int) (env('REVERB_SERVER_PORT') ?: (env('APP_ENV') === 'local' ? env('REVERB_PORT', 8080) : 8080)),
                 'scheme' => env('REVERB_SERVER_SCHEME') ?: (env('APP_ENV') === 'local' ? env('REVERB_SCHEME', 'http') : 'http'),
                 'useTLS' => (env('REVERB_SERVER_SCHEME') ?: (env('APP_ENV') === 'local' ? env('REVERB_SCHEME', 'http') : 'http')) === 'https',
             ],

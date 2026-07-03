@@ -2,7 +2,7 @@
 set -euo pipefail
 
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-PORT="${REVERB_SERVER_PORT:-8081}"
+PORT="${REVERB_SERVER_PORT:-8080}"
 
 if [[ -f "$DIR/.env" ]]; then
     while IFS= read -r line || [[ -n "$line" ]]; do
