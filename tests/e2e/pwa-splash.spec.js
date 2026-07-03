@@ -23,7 +23,7 @@ test.describe('PWA splash prerequisites', () => {
 
         await expect(page.locator('meta[name="apple-mobile-web-app-status-bar-style"]')).toHaveAttribute(
             'content',
-            'black-translucent',
+            'default',
         );
     });
 
