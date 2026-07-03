@@ -17,10 +17,6 @@ return [
 
     'start_url' => env('PWA_START_URL', '/'),
 
-    'lang' => env('PWA_LANG'),
-
-    'dir' => env('PWA_DIR', 'ltr'),
-
     'orientation' => env('PWA_ORIENTATION', 'any'),
 
     'prefer_related_applications' => env('PWA_PREFER_RELATED_APPLICATIONS', false),

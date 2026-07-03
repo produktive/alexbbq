@@ -1,4 +1,4 @@
-const OFFLINE_NAVIGABLE_PATH = /^\/cooks(?:\/\d+)?$/;
+const OFFLINE_NAVIGABLE_PATH = /^\/(?:stats|cooks(?:\/\d+)?)$/;
 
 export function isOfflineNavigablePath(pathname) {
     return OFFLINE_NAVIGABLE_PATH.test(pathname);

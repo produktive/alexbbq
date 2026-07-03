@@ -1,5 +1,8 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+
+@include('partials.pwa-splash')
+
 <meta name="color-scheme" content="light dark" />
 <meta name="csrf-token" content="{{ csrf_token() }}" />
 <meta name="theme-color" content="{{ config('pwa.theme_color') }}" />
@@ -34,8 +37,6 @@
 <link rel="apple-touch-icon-precomposed" sizes="180x180" href="{{ PwaAsset::url('apple-touch-icon.png') }}">
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-
-@include('partials.pwa-splash')
 
 @fonts
 

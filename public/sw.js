@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'v16';
+const CACHE_VERSION = 'v17';
 const SHELL_CACHE = `alexbbq-shell-${CACHE_VERSION}`;
 const ASSET_CACHE = `alexbbq-assets-${CACHE_VERSION}`;
 const COOK_PAGE_CACHE = `alexbbq-cook-pages-${CACHE_VERSION}`;
@@ -110,12 +110,16 @@ function isCookListPath(pathname) {
     return pathname === '/cooks';
 }
 
+function isStatsPath(pathname) {
+    return pathname === '/stats';
+}
+
 function isCookChartDataPath(pathname) {
     return /^\/cooks\/\d+\/chart-data$/.test(pathname);
 }
 
 function isOfflineCacheablePagePath(pathname) {
-    return isCookViewPath(pathname) || isCookListPath(pathname);
+    return isCookViewPath(pathname) || isCookListPath(pathname) || isStatsPath(pathname);
 }
 
 function isOfflineCacheableRequest(pathname) {
@@ -230,7 +234,7 @@ async function handleNavigate(request, event) {
 async function warmOfflineCache(path) {
     const cache = await caches.open(COOK_PAGE_CACHE);
 
-    if (isCookViewPath(path) || isCookListPath(path)) {
+    if (isOfflineCacheablePagePath(path)) {
         const pageRequest = pageCacheRequest(path);
 
         try {
