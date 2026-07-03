@@ -11,7 +11,7 @@ return [
 
     'background_color' => env('PWA_BACKGROUND_COLOR', '#1f1f1f'),
 
-    'status_bar_style' => env('PWA_STATUS_BAR_STYLE', 'black-translucent'),
+    'status_bar_style' => env('PWA_STATUS_BAR_STYLE', 'default'),
 
     'short_name' => env('PWA_SHORT_NAME'),
 
