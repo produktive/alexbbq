@@ -225,7 +225,15 @@ Then restart `php artisan serve` and `php artisan reverb:start`.
 
 1. Fake maverick is running — `storage/logs/maverick-fake.log` should log new readings every ~12 seconds after starting a cook.
 2. Laravel is broadcasting — when a reading is logged, Reverb’s terminal should show activity on the `cooks` channel. If not, check `storage/logs/laravel.log` for `Live cook broadcast failed`.
-3. The browser is subscribed — DevTools → Network → WS → Frames should show `LiveCookUpdated` events with `"type":"reading"`. A WS status of `101` only means the socket connected, not that events are flowing.
+3. The browser is subscribed — DevTools → Network → WS → Frames should show `LiveCookUpdated` events with `"type":"reading"`. The `data` field is a JSON **string**; the frontend parses it before refreshing the chart. A WS status of `101` only means the socket connected, not that events are flowing.
+
+If readings appear in `storage/logs/maverick-fake.log` and WS frames show `LiveCookUpdated` but the chart stays frozen, rebuild frontend assets so the broadcast handler includes the JSON parse fix:
+
+```bash
+npm run build
+```
+
+Hard-refresh the browser (or unregister the service worker once) after rebuilding.
 
 ### Local development (Laravel Herd)
 

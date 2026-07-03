@@ -18,6 +18,7 @@ async function fetchLiveCookStatus() {
 }
 
 function normalizeBroadcastPayload(payload) {
+    // Reverb/Pusher deliver custom event payloads as JSON strings, not objects.
     if (payload == null) {
         return null;
     }
