@@ -31,6 +31,6 @@ class PwaAsset
 
     public static function serviceWorkerUrl(): string
     {
-        return self::url('sw.js');
+        return self::stableUrl('sw.js');
     }
 }

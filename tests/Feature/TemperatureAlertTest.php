@@ -6,6 +6,7 @@ use App\Models\Smoker;
 use App\Models\User;
 use App\Models\UserSettings;
 use App\Notifications\TemperatureAlertNotification;
+use App\Services\MaverickService;
 use App\Services\TemperatureAlertService;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Process;
@@ -370,12 +371,12 @@ test('start cook page loads saved alert settings including frequency', function 
 });
 
 test('start cook page saves alert settings when recording starts', function () {
-    Process::fake([
-        'sudo -n * start' => Process::result(),
-        'sudo -n * status' => Process::sequence()
-            ->push(Process::result(exitCode: 1))
-            ->push(Process::result(exitCode: 0)),
-    ]);
+    $this->mock(MaverickService::class, function ($mock): void {
+        $mock->shouldReceive('reconcileOrphanedActiveCook')->andReturn(false);
+        $mock->shouldReceive('isAvailable')->andReturn(true);
+        $mock->shouldReceive('isRunning')->andReturn(false);
+        $mock->shouldReceive('start')->andReturn(true);
+    });
 
     $user = User::factory()->create();
     $smoker = Smoker::query()->create(['name' => 'Backyard']);

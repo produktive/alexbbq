@@ -4,6 +4,7 @@ use App\Models\Cook;
 use App\Models\Reading;
 use App\Models\Smoker;
 use App\Models\User;
+use Illuminate\Support\Facades\Process;
 use Livewire\Livewire;
 
 test('home page shows idle state when no cooks exist', function () {
@@ -175,6 +176,10 @@ test('live cook chart data endpoint returns chart payload', function () {
 });
 
 test('live cook status endpoint returns active cook state', function () {
+    Process::fake([
+        '* status' => Process::result(exitCode: 1),
+    ]);
+
     $smoker = Smoker::query()->create(['name' => 'Backyard']);
 
     $cook = Cook::query()->create([
@@ -195,6 +200,10 @@ test('live cook status endpoint returns active cook state', function () {
 });
 
 test('live cook status endpoint returns began at after first reading', function () {
+    Process::fake([
+        '* status' => Process::result(),
+    ]);
+
     $smoker = Smoker::query()->create(['name' => 'Backyard']);
 
     $cook = Cook::query()->create([

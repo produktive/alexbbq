@@ -42,4 +42,10 @@ return [
 
     'php_binary' => env('MAVERICK_PHP'),
 
+    /*
+    | When the daemon dies outside the app, skip auto-finalizing brand-new cooks
+    | with no readings for this many seconds so start-up is not interrupted.
+    */
+    'orphan_grace_seconds' => (int) env('MAVERICK_ORPHAN_GRACE_SECONDS', 30),
+
 ];

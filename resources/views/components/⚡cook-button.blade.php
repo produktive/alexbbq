@@ -89,7 +89,10 @@ new class extends Component implements HasActions, HasSchemas {
 
     private function syncLiveState(): void
     {
-        $this->live = app(MaverickService::class)->isRunning() || Cook::active() !== null;
+        $maverick = app(MaverickService::class);
+        $maverick->reconcileOrphanedActiveCook();
+
+        $this->live = $maverick->isRunning() || Cook::active() !== null;
     }
 }
 ?>

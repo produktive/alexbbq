@@ -30,7 +30,10 @@ class extends Component implements HasActions, HasForms {
 
     public function mount(): void
     {
-        $this->live = app(MaverickService::class)->isRunning();
+        $maverick = app(MaverickService::class);
+        $maverick->reconcileOrphanedActiveCook();
+
+        $this->live = $maverick->isRunning();
 
         if ($this->live) {
             $this->redirectRoute('home', navigate: true);
@@ -63,6 +66,7 @@ class extends Component implements HasActions, HasForms {
         $settings->save();
 
         $maverick = app(MaverickService::class);
+        $maverick->reconcileOrphanedActiveCook();
 
         if (! $maverick->isAvailable()) {
             Flux::toast(

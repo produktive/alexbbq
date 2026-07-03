@@ -13,6 +13,9 @@ class LiveCookController extends Controller
 {
     public function status(): JsonResponse
     {
+        $maverick = app(MaverickService::class);
+        $maverick->reconcileOrphanedActiveCook();
+
         $cook = Cook::active();
 
         return response()->json([
@@ -20,7 +23,7 @@ class LiveCookController extends Controller
             'beganAt' => $cook?->getBeganAt()?->toIso8601String(),
             'beganAtLabel' => $cook?->getBeganAt()?->format('F j, Y \a\t g:i A'),
             'waitingForReading' => $cook !== null && $cook->isActive() && ! $cook->hasReadings(),
-            'maverickRunning' => app(MaverickService::class)->isRunning(),
+            'maverickRunning' => $maverick->isRunning(),
             'finishedCount' => Cook::finishedCount(),
         ]);
     }

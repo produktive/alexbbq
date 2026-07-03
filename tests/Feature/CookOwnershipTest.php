@@ -10,6 +10,7 @@ use Livewire\Livewire;
 
 test('starting a cook assigns the authenticated user', function () {
     $this->mock(MaverickService::class, function ($mock): void {
+        $mock->shouldReceive('reconcileOrphanedActiveCook')->andReturn(false);
         $mock->shouldReceive('isAvailable')->andReturn(true);
         $mock->shouldReceive('isRunning')->andReturn(false);
         $mock->shouldReceive('start')->andReturn(true);
@@ -36,6 +37,7 @@ test('starting a cook assigns the authenticated user', function () {
 
 test('creating a cook sanitizes the description html', function () {
     $this->mock(MaverickService::class, function ($mock): void {
+        $mock->shouldReceive('reconcileOrphanedActiveCook')->andReturn(false);
         $mock->shouldReceive('isAvailable')->andReturn(true);
         $mock->shouldReceive('isRunning')->andReturn(false);
         $mock->shouldReceive('start')->andReturn(true);

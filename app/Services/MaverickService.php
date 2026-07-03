@@ -24,6 +24,39 @@ class MaverickService
         return self::$runningCache;
     }
 
+    /**
+     * Finalize an active cook when the daemon is no longer running (crash, pkill, etc.).
+     */
+    public function reconcileOrphanedActiveCook(): bool
+    {
+        if ($this->probeRunning()) {
+            self::$runningCache = true;
+
+            return false;
+        }
+
+        self::$runningCache = false;
+
+        $cook = Cook::active();
+
+        if ($cook === null || $this->shouldDeferOrphanReconciliation($cook)) {
+            return false;
+        }
+
+        return $this->finishActiveCook();
+    }
+
+    protected function shouldDeferOrphanReconciliation(Cook $cook): bool
+    {
+        if ($cook->hasReadings()) {
+            return false;
+        }
+
+        $graceSeconds = (int) config('maverick.orphan_grace_seconds', 30);
+
+        return $cook->created_at->greaterThan(now()->subSeconds($graceSeconds));
+    }
+
     public static function forgetRunningCache(): void
     {
         self::$runningCache = null;

@@ -1,5 +1,23 @@
 <?php
 
+$reverbAllowedOrigins = env('REVERB_ALLOWED_ORIGINS');
+
+if (filled($reverbAllowedOrigins)) {
+    $allowedOrigins = array_values(array_filter(array_map('trim', explode(',', $reverbAllowedOrigins))));
+} elseif (filled($appUrl = env('APP_URL'))) {
+    $parsed = parse_url($appUrl);
+    $allowedOrigins = (isset($parsed['scheme'], $parsed['host']))
+        ? [sprintf(
+            '%s://%s%s',
+            $parsed['scheme'],
+            $parsed['host'],
+            isset($parsed['port']) ? ':'.$parsed['port'] : '',
+        )]
+        : ['*'];
+} else {
+    $allowedOrigins = ['*'];
+}
+
 return [
 
     /*
@@ -30,7 +48,7 @@ return [
 
         'reverb' => [
             'host' => env('REVERB_SERVER_HOST', '0.0.0.0'),
-            'port' => env('REVERB_SERVER_PORT', 8080),
+            'port' => env('REVERB_SERVER_PORT', 8081),
             'path' => env('REVERB_SERVER_PATH', ''),
             'hostname' => env('REVERB_HOST'),
             'options' => [
@@ -82,7 +100,7 @@ return [
                     'scheme' => env('REVERB_SCHEME', 'https'),
                     'useTLS' => env('REVERB_SCHEME', 'https') === 'https',
                 ],
-                'allowed_origins' => ['*'],
+                'allowed_origins' => $allowedOrigins,
                 'ping_interval' => env('REVERB_APP_PING_INTERVAL', 60),
                 'activity_timeout' => env('REVERB_APP_ACTIVITY_TIMEOUT', 30),
                 'max_connections' => env('REVERB_APP_MAX_CONNECTIONS'),

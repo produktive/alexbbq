@@ -161,3 +161,92 @@ test('maverick service start returns false when process does not launch', functi
 
     expect(app(MaverickService::class)->start())->toBeFalse();
 });
+
+test('reconcile finalizes an active cook when the daemon is not running', function () {
+    Process::fake([
+        '* status' => Process::result(exitCode: 1),
+    ]);
+
+    $smoker = Smoker::query()->create(['name' => 'Backyard']);
+
+    $cook = Cook::query()->create([
+        'smoker_id' => $smoker->id,
+        'title' => 'Brisket',
+        'ended_at' => null,
+        'created_at' => now()->subMinutes(5),
+    ]);
+
+    Reading::query()->create([
+        'cook_id' => $cook->id,
+        'time' => now()->subMinutes(4),
+        'probe_food' => 165,
+        'probe_bbq' => 225,
+    ]);
+
+    Cook::flushRequestCache();
+
+    expect(app(MaverickService::class)->reconcileOrphanedActiveCook())->toBeTrue();
+
+    $cook->refresh();
+
+    expect($cook->ended_at)->not->toBeNull()
+        ->and(Cook::active())->toBeNull();
+});
+
+test('reconcile defers finalizing a brand-new cook with no readings', function () {
+    Process::fake([
+        '* status' => Process::result(exitCode: 1),
+    ]);
+
+    config(['maverick.orphan_grace_seconds' => 30]);
+
+    $smoker = Smoker::query()->create(['name' => 'Backyard']);
+
+    $cook = Cook::query()->create([
+        'smoker_id' => $smoker->id,
+        'title' => 'Brisket',
+        'ended_at' => null,
+    ]);
+
+    Cook::flushRequestCache();
+
+    expect(app(MaverickService::class)->reconcileOrphanedActiveCook())->toBeFalse();
+
+    $cook->refresh();
+
+    expect($cook->ended_at)->toBeNull()
+        ->and(Cook::active()?->id)->toBe($cook->id);
+});
+
+test('live cook status endpoint finalizes orphaned active cooks', function () {
+    Process::fake([
+        '* status' => Process::result(exitCode: 1),
+    ]);
+
+    $smoker = Smoker::query()->create(['name' => 'Backyard']);
+
+    $cook = Cook::query()->create([
+        'smoker_id' => $smoker->id,
+        'title' => 'Brisket',
+        'ended_at' => null,
+        'created_at' => now()->subMinutes(5),
+    ]);
+
+    Reading::query()->create([
+        'cook_id' => $cook->id,
+        'time' => now()->subMinutes(4),
+        'probe_food' => 165,
+        'probe_bbq' => 225,
+    ]);
+
+    Cook::flushRequestCache();
+
+    $this->getJson(route('live.cook-status'))
+        ->assertOk()
+        ->assertJson([
+            'activeCookId' => null,
+            'maverickRunning' => false,
+        ]);
+
+    expect($cook->fresh()->ended_at)->not->toBeNull();
+});
