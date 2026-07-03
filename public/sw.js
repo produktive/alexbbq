@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'v21';
+const CACHE_VERSION = 'v23';
 const SHELL_CACHE = `alexbbq-shell-${CACHE_VERSION}`;
 const ASSET_CACHE = `alexbbq-assets-${CACHE_VERSION}`;
 const COOK_PAGE_CACHE = `alexbbq-cook-pages-${CACHE_VERSION}`;
@@ -27,35 +27,6 @@ const PRECACHE_URLS = [
     '/favicon.ico',
     '/favicon.svg',
 ];
-
-const OFFLINE_FALLBACK_HTML = `<!DOCTYPE html>
-<html lang="en" class="dark">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="color-scheme" content="dark">
-<meta name="theme-color" content="#1f1f1f">
-<title>Offline</title>
-<style>
-:root{color-scheme:dark}*{box-sizing:border-box}body{margin:0;min-height:100dvh;display:grid;place-items:center;padding:1.5rem;font-family:ui-sans-serif,system-ui,sans-serif;background:#1f1f1f;color:#f5f5f5}main{width:min(100%,24rem);text-align:center}img{width:5rem;height:5rem;margin:0 auto 1.5rem;border-radius:1rem}h1{margin:0 0 .75rem;font-size:1.5rem;font-weight:600}p{margin:0 0 1.5rem;line-height:1.5;color:#a3a3a3}#retry-status{min-height:1.25rem;margin:0 0 1rem;font-size:.875rem;color:#fbbf24}.actions{display:flex;flex-direction:column;gap:.75rem;align-items:center}button,.button-link{display:inline-flex;align-items:center;justify-content:center;border:0;border-radius:9999px;padding:.75rem 1.25rem;font:inherit;font-weight:600;text-decoration:none;cursor:pointer}button{color:#171717;background:#f5f5f5}.button-link{color:#f5f5f5;background:transparent;border:1px solid #525252}#cached-cooks-link[hidden]{display:none}button:disabled{opacity:.6;cursor:wait}
-</style>
-</head>
-<body>
-<main>
-<img src="/pwa-icon-512.png" alt="" width="80" height="80">
-<h1>You are offline</h1>
-<p>The live dashboard needs a network connection. Finished cook pages you opened while online can still be viewed from the Cooks list.</p>
-<p id="retry-status" aria-live="polite"></p>
-<div class="actions">
-<a id="cached-cooks-link" class="button-link" href="/cooks" hidden>View cached cooks</a>
-<button id="retry-button" type="button">Try again</button>
-</div>
-</main>
-<script>
-(function(){const b=document.getElementById("retry-button"),s=document.getElementById("retry-status"),l=document.getElementById("cached-cooks-link");async function c(){if(!("caches"in window))return!0;const r=new Request("/cooks",{method:"GET",credentials:"same-origin"});for(const n of await caches.keys()){if(!n.includes("cook-pages"))continue;const t=await caches.open(n);if(await t.match(r)||await t.match("/cooks"))return!0}return!1}(async function(){if(await c())l.hidden=!1})();async function o(){try{const r=await fetch("/live/cook-status",{cache:"no-store",credentials:"same-origin",headers:{Accept:"application/json"}});return r.ok}catch{return!1}}b.addEventListener("click",async function(){b.disabled=!0;s.textContent="Checking connection…";if(!await o()){b.disabled=!1;s.textContent="Still offline. Check your connection and try again.";return}window.location.replace("/?_retry="+Date.now())});window.addEventListener("online",function(){s.textContent="Connection restored. Tap try again."})})();
-</script>
-</body>
-</html>`;
 
 async function setAppBadge(count = 1) {
     if (! ('setAppBadge' in self.navigator)) {
@@ -183,34 +154,27 @@ function isNavigationRequest(request) {
     return request.mode === 'navigate';
 }
 
-function offlineHtmlResponse() {
-    return new Response(OFFLINE_FALLBACK_HTML, {
-        headers: {
-            'Content-Type': 'text/html; charset=utf-8',
-            'Cache-Control': 'no-store',
-        },
-    });
-}
-
 async function getOfflinePage() {
-    try {
-        const shellCache = await caches.open(SHELL_CACHE);
-        const cached = await shellCache.match(OFFLINE_URL);
-
-        if (cached) {
-            return cached;
-        }
-    } catch {
-        //
-    }
-
     const cached = await caches.match(OFFLINE_URL);
 
     if (cached) {
         return cached;
     }
 
-    return offlineHtmlResponse();
+    try {
+        const response = await fetch(OFFLINE_URL);
+
+        if (response.ok) {
+            return response;
+        }
+    } catch {
+        //
+    }
+
+    return new Response('You are offline.', {
+        status: 503,
+        headers: { 'Content-Type': 'text/plain; charset=utf-8' },
+    });
 }
 
 async function handleNavigate(request, event) {
@@ -389,28 +353,40 @@ self.addEventListener('notificationclick', (event) => {
     ]));
 });
 
+async function precacheUrl(cache, url) {
+    try {
+        await cache.add(url);
+
+        return true;
+    } catch {
+        try {
+            const response = await fetch(url, { cache: 'no-store' });
+
+            if (response.ok) {
+                await cache.put(url, response);
+
+                return true;
+            }
+        } catch {
+            //
+        }
+    }
+
+    return false;
+}
+
 self.addEventListener('install', (event) => {
     event.waitUntil(
         (async () => {
             const cache = await caches.open(SHELL_CACHE);
 
-            await Promise.all(PRECACHE_URLS.map(async (url) => {
-                try {
-                    await cache.add(url);
-                } catch {
-                    try {
-                        const response = await fetch(url);
+            await precacheUrl(cache, OFFLINE_URL);
 
-                        if (response.ok) {
-                            await cache.put(url, response);
-                        }
-                    } catch {
-                        if (url === OFFLINE_URL) {
-                            await cache.put(OFFLINE_URL, offlineHtmlResponse());
-                        }
-                    }
-                }
-            }));
+            await Promise.all(
+                PRECACHE_URLS
+                    .filter((url) => url !== OFFLINE_URL)
+                    .map((url) => precacheUrl(cache, url)),
+            );
 
             await self.skipWaiting();
         })(),
