@@ -1,17 +1,17 @@
-const CACHE_VERSION = 'v19';
+const CACHE_VERSION = 'v21';
 const SHELL_CACHE = `alexbbq-shell-${CACHE_VERSION}`;
 const ASSET_CACHE = `alexbbq-assets-${CACHE_VERSION}`;
 const COOK_PAGE_CACHE = `alexbbq-cook-pages-${CACHE_VERSION}`;
 const OFFLINE_URL = '/offline.html';
 
 const SPLASH_PRECACHE_URLS = [
-    '/pwa-splash/fallback-portrait.png',
     '/pwa-splash/iphone-se-portrait.png',
     '/pwa-splash/iphone-x-portrait.png',
     '/pwa-splash/iphone-xr-portrait.png',
     '/pwa-splash/iphone-xs-max-portrait.png',
     '/pwa-splash/iphone-14-portrait.png',
     '/pwa-splash/iphone-15-portrait.png',
+    '/pwa-splash/iphone-16-portrait.png',
     '/pwa-splash/iphone-14-plus-portrait.png',
     '/pwa-splash/iphone-14-pro-max-portrait.png',
     '/pwa-splash/iphone-16-pro-portrait.png',
