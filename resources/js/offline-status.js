@@ -20,7 +20,7 @@ function ensureOfflineBanner() {
         banner.className = 'offline-status-banner';
         banner.hidden = true;
         banner.setAttribute('role', 'status');
-        banner.textContent = 'No internet connection. Some features may be unavailable.';
+        banner.textContent = 'No internet connection available.';
     }
 
     if (! banner.isConnected) {
