@@ -17,7 +17,10 @@
         data-began-at="{{ $beganAt }}"
     @endif
     @if ($showInTitleArea)
-        x-show="! connecting"
+        x-show="online && ! connecting"
+        x-cloak
+    @else
+        x-show="online"
         x-cloak
     @endif
     {{ $attributes->class([

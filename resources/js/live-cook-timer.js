@@ -30,11 +30,20 @@ export default function liveCookTimer(beganAtIso = null) {
     return {
         elapsed: elapsedFromIso(beganAtIso),
         connecting: ! beganAtIso,
+        online: navigator.onLine,
         timer: null,
 
         init() {
             this.sync();
             this.timer = setInterval(() => this.sync(), 1000);
+
+            window.addEventListener('online', () => {
+                this.online = true;
+            });
+
+            window.addEventListener('offline', () => {
+                this.online = false;
+            });
         },
 
         destroy() {

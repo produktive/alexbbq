@@ -24,10 +24,16 @@ new class extends Component {
 }
 ?>
 <div
-    x-data="{ cookId: @js($cookId), beganAt: @js($beganAt) }"
+    x-data="{
+        cookId: @js($cookId),
+        beganAt: @js($beganAt),
+        online: navigator.onLine,
+    }"
     x-on:live-cook-status.window="cookId = $event.detail.activeCookId; beganAt = $event.detail.beganAt"
+    x-on:online.window="online = true"
+    x-on:offline.window="online = false"
 >
-    <template x-if="cookId">
+    <template x-if="cookId && online">
         <a href="{{ route('home') }}" wire:navigate>
             <x-live-cook-timer :began-at="$beganAt" x-bind:data-began-at="beganAt" />
         </a>

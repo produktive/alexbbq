@@ -1,11 +1,27 @@
-const CACHE_VERSION = 'v14';
+const CACHE_VERSION = 'v15';
 const SHELL_CACHE = `alexbbq-shell-${CACHE_VERSION}`;
 const ASSET_CACHE = `alexbbq-assets-${CACHE_VERSION}`;
 const COOK_PAGE_CACHE = `alexbbq-cook-pages-${CACHE_VERSION}`;
 const OFFLINE_URL = '/offline.html';
 
+const SPLASH_PRECACHE_URLS = [
+    '/pwa-splash/fallback-portrait.png',
+    '/pwa-splash/iphone-se-portrait.png',
+    '/pwa-splash/iphone-x-portrait.png',
+    '/pwa-splash/iphone-xr-portrait.png',
+    '/pwa-splash/iphone-xs-max-portrait.png',
+    '/pwa-splash/iphone-14-portrait.png',
+    '/pwa-splash/iphone-15-portrait.png',
+    '/pwa-splash/iphone-14-plus-portrait.png',
+    '/pwa-splash/iphone-14-pro-max-portrait.png',
+    '/pwa-splash/iphone-16-pro-portrait.png',
+    '/pwa-splash/iphone-16-pro-max-portrait.png',
+    '/pwa-splash/ipad-pro-12-portrait.png',
+];
+
 const PRECACHE_URLS = [
     OFFLINE_URL,
+    ...SPLASH_PRECACHE_URLS,
     '/pwa-icon-512.png',
     '/apple-touch-icon.png',
     '/favicon.ico',
@@ -149,13 +165,13 @@ function shouldBypassCache(pathname) {
     }
 
     return pathname.startsWith('/live/')
-        || pathname.startsWith('/pwa-splash/')
         || pathname.startsWith('/push-subscriptions')
         || pathname.startsWith('/broadcasting/');
 }
 
 function shouldCacheAsset(pathname) {
     return pathname.startsWith('/build/')
+        || pathname.startsWith('/pwa-splash/')
         || /\.(?:css|js|png|jpe?g|gif|webp|svg|ico|woff2?|ttf|eot)$/i.test(pathname);
 }
 
