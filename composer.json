@@ -57,14 +57,14 @@
             "composer install",
             "@php -r \"file_exists('.env') || copy('.env.example', '.env');\"",
             "@php artisan key:generate",
-            "@php artisan reverb:configure",
+            "@php artisan reverb:configure --local",
             "@php artisan migrate --force",
             "npm install",
             "npm run build"
         ],
         "dev": [
             "Composer\\Config::disableProcessTimeout",
-            "npx concurrently -c \"#93c5fd,#c4b5fd,#fdba74\" \"php artisan serve --host=localhost\" \"php artisan pail --timeout=0\" \"npm run dev\" --names=server,logs,vite --kill-others"
+            "npx concurrently -c \"#93c5fd,#c4b5fd,#fdba74\" \"php artisan serve --host=127.0.0.1\" \"php artisan pail --timeout=0\" \"npm run dev\" --names=server,logs,vite --kill-others"
         ],
         "lint": [
             "pint --parallel"

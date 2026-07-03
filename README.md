@@ -213,6 +213,20 @@ If you browse at `http://localhost:8000` instead, set `APP_URL` and optionally `
 
 Restart `php artisan serve` and `php artisan reverb:start` after changing `.env`.
 
+If you already ran `composer setup` with an older `.env.example`, repair local defaults without rotating credentials:
+
+```bash
+php artisan reverb:configure --local
+```
+
+Then restart `php artisan serve` and `php artisan reverb:start`.
+
+**Verify the full pipeline:**
+
+1. Fake maverick is running — `storage/logs/maverick-fake.log` should log new readings every ~12 seconds after starting a cook.
+2. Laravel is broadcasting — when a reading is logged, Reverb’s terminal should show activity on the `cooks` channel. If not, check `storage/logs/laravel.log` for `Live cook broadcast failed`.
+3. The browser is subscribed — DevTools → Network → WS → Frames should show `LiveCookUpdated` events with `"type":"reading"`. A WS status of `101` only means the socket connected, not that events are flowing.
+
 ### Local development (Laravel Herd)
 
 1. Clone the repository into your Herd sites directory (e.g. `~/Herd/alexbbq`).

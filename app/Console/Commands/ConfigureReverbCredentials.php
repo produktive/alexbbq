@@ -8,10 +8,36 @@ use Illuminate\Console\Command;
 use Illuminate\Support\Env;
 use Illuminate\Support\Str;
 
-#[Signature('reverb:configure {--show : Display the credentials instead of modifying .env} {--force : Regenerate credentials even when already set}')]
+#[Signature('reverb:configure {--show : Display the credentials instead of modifying .env} {--force : Regenerate credentials even when already set} {--local : Apply php artisan serve Reverb defaults for empty or legacy .env values}')]
 #[Description('Generate Reverb application credentials in .env when missing or empty')]
 class ConfigureReverbCredentials extends Command
 {
+    /**
+     * Defaults for local development with `php artisan serve` and `php artisan reverb:start`.
+     *
+     * @var array<string, string>
+     */
+    private const LOCAL_DEFAULTS = [
+        'APP_URL' => 'http://127.0.0.1:8000',
+        'BROADCAST_CONNECTION' => 'reverb',
+        'REVERB_HOST' => '127.0.0.1',
+        'REVERB_PORT' => '8080',
+        'REVERB_SCHEME' => 'http',
+    ];
+
+    /**
+     * Values copied from older .env.example files that break local broadcasting.
+     *
+     * @var array<string, list<string>>
+     */
+    private const LEGACY_LOCAL_VALUES = [
+        'APP_URL' => ['http://localhost', 'http://localhost:8000'],
+        'BROADCAST_CONNECTION' => ['null'],
+        'REVERB_HOST' => ['localhost'],
+        'REVERB_PORT' => ['8081', '443'],
+        'REVERB_SCHEME' => ['https'],
+    ];
+
     public function handle(): int
     {
         $credentials = [
@@ -23,6 +49,12 @@ class ConfigureReverbCredentials extends Command
         if ($this->option('show')) {
             foreach ($credentials as $key => $value) {
                 $this->line("<comment>{$key}={$value}</comment>");
+            }
+
+            if ($this->option('local')) {
+                foreach (self::LOCAL_DEFAULTS as $key => $value) {
+                    $this->line("<comment>{$key}={$value}</comment>");
+                }
             }
 
             return self::SUCCESS;
@@ -47,15 +79,31 @@ class ConfigureReverbCredentials extends Command
             $toWrite[$key] = $value;
         }
 
+        if ($this->option('local')) {
+            foreach (self::LOCAL_DEFAULTS as $key => $value) {
+                if ($this->shouldSkipLocalKey($contents, $key)) {
+                    continue;
+                }
+
+                $toWrite[$key] = $value;
+            }
+        }
+
         if ($toWrite === []) {
-            $this->components->info('Reverb credentials already configured.');
+            $this->components->info('Reverb configuration already up to date.');
 
             return self::SUCCESS;
         }
 
         Env::writeVariables($toWrite, $envPath, overwrite: $this->option('force'));
 
-        $this->components->info('Reverb credentials configured in .env.');
+        if (array_intersect_key($toWrite, $credentials) !== []) {
+            $this->components->info('Reverb credentials configured in .env.');
+        }
+
+        if ($this->option('local') && array_intersect_key($toWrite, self::LOCAL_DEFAULTS) !== []) {
+            $this->components->info('Local Reverb connection defaults applied for php artisan serve.');
+        }
 
         return self::SUCCESS;
     }
@@ -71,5 +119,20 @@ class ConfigureReverbCredentials extends Command
         }
 
         return trim($matches[1], " \t\"'") !== '';
+    }
+
+    protected function shouldSkipLocalKey(string $contents, string $key): bool
+    {
+        if (! preg_match('/^'.preg_quote($key, '/').'=(.*)$/m', $contents, $matches)) {
+            return false;
+        }
+
+        $current = trim($matches[1], " \t\"'");
+
+        if ($current === '') {
+            return false;
+        }
+
+        return ! in_array($current, self::LEGACY_LOCAL_VALUES[$key] ?? [], true);
     }
 }

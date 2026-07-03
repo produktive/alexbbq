@@ -17,10 +17,44 @@ async function fetchLiveCookStatus() {
     return response.json();
 }
 
+function normalizeBroadcastPayload(payload) {
+    if (payload == null) {
+        return null;
+    }
+
+    if (typeof payload === 'string') {
+        try {
+            return JSON.parse(payload);
+        } catch {
+            return null;
+        }
+    }
+
+    return payload;
+}
+
+function broadcastCookId(payload) {
+    const normalized = normalizeBroadcastPayload(payload);
+
+    if (normalized == null) {
+        return null;
+    }
+
+    const raw = normalized.cookId ?? normalized.cook_id;
+
+    return raw != null ? Number(raw) : null;
+}
+
 async function dispatchLiveCookUpdate(payload) {
-    const type = payload?.type;
-    const cookId = payload?.cookId != null ? Number(payload.cookId) : null;
-    const beganAt = payload?.beganAt ?? null;
+    const normalized = normalizeBroadcastPayload(payload);
+
+    if (normalized == null) {
+        return;
+    }
+
+    const type = normalized.type;
+    const cookId = broadcastCookId(normalized);
+    const beganAt = normalized.beganAt ?? normalized.began_at ?? null;
 
     if (type === 'reading' && cookId) {
         window.dispatchEvent(new CustomEvent('cook-chart-refresh', { detail: { cookId } }));
