@@ -33,6 +33,10 @@ class LiveCookBroadcast
                 'cook_id' => $event->cookId,
                 'message' => $e->getMessage(),
             ]);
+
+            if (app()->environment('local')) {
+                report($e);
+            }
         }
     }
 }

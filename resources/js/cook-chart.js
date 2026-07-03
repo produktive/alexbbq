@@ -216,11 +216,12 @@ const DATASET_POINT_STYLE = {
     },
 };
 
-async function fetchChartData(cookId, { editor = false } = {}) {
+async function fetchChartData(cookId, { editor = false, live = false } = {}) {
     const query = editor ? '?editor=1' : '';
     const response = await fetch(`/cooks/${cookId}/chart-data${query}`, {
         headers: { Accept: 'application/json' },
         credentials: 'same-origin',
+        cache: live ? 'no-store' : 'default',
     });
 
     if (! response.ok) {
@@ -301,13 +302,11 @@ export default function cookChart(initialData, canModify = false, live = false, 
         },
 
         init() {
-            if (live) {
-                chartRefreshListener = (event) => {
-                    this.handleChartRefresh(Number(event.detail?.cookId));
-                };
+            chartRefreshListener = (event) => {
+                this.handleChartRefresh(Number(event.detail?.cookId));
+            };
 
-                window.addEventListener('cook-chart-refresh', chartRefreshListener);
-            }
+            window.addEventListener('cook-chart-refresh', chartRefreshListener);
 
             if (canModify) {
                 chartUpdateListener = this.$wire.on('cook-chart-updated', async () => {
@@ -997,7 +996,7 @@ export default function cookChart(initialData, canModify = false, live = false, 
                 return;
             }
 
-            this.refreshChart(await fetchChartData(cookId, { editor: canModify }));
+            this.refreshChart(await fetchChartData(cookId, { editor: canModify, live: true }));
         },
 
         mountPointAction(name) {

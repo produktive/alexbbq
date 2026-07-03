@@ -12,9 +12,9 @@ new class extends Component {
         $this->syncDisplayCook();
     }
 
-    private function syncDisplayCook(): void
+    public function syncFromLiveStatus(?int $activeCookId = null): void
     {
-        $preferredId = Cook::active()?->id ?? Cook::mostRecent()?->id;
+        $preferredId = $activeCookId ?? Cook::active()?->id ?? Cook::mostRecent()?->id;
 
         if ($this->displayCookId === $preferredId) {
             return;
@@ -22,6 +22,11 @@ new class extends Component {
 
         $this->displayCookId = $preferredId;
         unset($this->displayCook, $this->isLive);
+    }
+
+    private function syncDisplayCook(): void
+    {
+        $this->syncFromLiveStatus();
     }
 
     #[Computed]
@@ -70,3 +75,17 @@ new class extends Component {
         </div>
     @endif
 </flux:container>
+
+@script
+<script>
+    window.addEventListener('live-cook-status', (event) => {
+        $wire.syncFromLiveStatus(event.detail.activeCookId ?? null);
+    });
+
+    document.addEventListener('livewire:navigated', () => {
+        if (window.location.pathname === '/' || window.location.pathname === '') {
+            $wire.syncFromLiveStatus();
+        }
+    });
+</script>
+@endscript
