@@ -7,9 +7,7 @@
         "dev": "vite",
         "pwa:icons": "node scripts/generate-pwa-icons.mjs",
         "pwa:splash": "node scripts/generate-pwa-splash.mjs",
-        "pwa:assets": "npm run pwa:icons && npm run pwa:splash",
-        "test:e2e": "playwright test",
-        "test:e2e:ui": "playwright test --ui"
+        "pwa:assets": "npm run pwa:icons && npm run pwa:splash"
     },
     "dependencies": {
         "@jsquash/webp": "^1.5.0",
@@ -31,7 +29,6 @@
         "lightningcss-linux-x64-gnu": "^1.29.1"
     },
     "devDependencies": {
-        "@playwright/test": "^1.61.1",
         "sharp": "^0.35.3"
     }
 }

@@ -23,7 +23,5 @@ yarn-error.log
 /.vscode
 /.zed
 /maverick
-/playwright-report
-/test-results
 /storage/maverick-fake.pid
 /storage/logs/maverick-fake.log
