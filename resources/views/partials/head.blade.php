@@ -1,5 +1,8 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+
+@include('partials.pwa-splash')
+
 <meta name="color-scheme" content="light dark" />
 <meta name="csrf-token" content="{{ csrf_token() }}" />
 <meta name="theme-color" content="{{ config('pwa.theme_color') }}" />
@@ -28,9 +31,6 @@
         navigator.serviceWorker.register(serviceWorkerUrl).catch(function () {});
     }
 </script>
-<meta name="apple-mobile-web-app-capable" content="yes" />
-<meta name="apple-mobile-web-app-title" content="{{ config('app.name') }}" />
-<meta name="apple-mobile-web-app-status-bar-style" content="{{ config('pwa.status_bar_style') }}" />
 <link rel="apple-touch-icon" href="{{ PwaAsset::url('apple-touch-icon.png') }}">
 <link rel="apple-touch-icon" sizes="180x180" href="{{ PwaAsset::url('apple-touch-icon.png') }}">
 <link rel="apple-touch-icon" sizes="192x192" href="{{ PwaAsset::url('pwa-icon-192.png') }}">

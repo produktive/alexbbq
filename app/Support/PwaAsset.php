@@ -20,6 +20,15 @@ class PwaAsset
         return '/'.ltrim($path, '/').'?v='.self::version($path);
     }
 
+    /**
+     * Stable public path for iOS startup images. Do not append cache-busting query
+     * strings — iOS snapshots these URLs at add-to-home-screen time.
+     */
+    public static function stableUrl(string $path): string
+    {
+        return '/'.ltrim($path, '/');
+    }
+
     public static function serviceWorkerUrl(): string
     {
         return self::url('sw.js');
