@@ -1,6 +1,5 @@
 @php
     $splashScreens = [
-        ['file' => 'fallback-portrait.png', 'media' => null],
         ['file' => 'iphone-se-portrait.png', 'media' => '(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)'],
         ['file' => 'iphone-x-portrait.png', 'media' => '(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)'],
         ['file' => 'iphone-xr-portrait.png', 'media' => '(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)'],
@@ -12,6 +11,7 @@
         ['file' => 'iphone-16-pro-portrait.png', 'media' => '(device-width: 402px) and (device-height: 874px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)'],
         ['file' => 'iphone-16-pro-max-portrait.png', 'media' => '(device-width: 440px) and (device-height: 956px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)'],
         ['file' => 'ipad-pro-12-portrait.png', 'media' => '(device-width: 1024px) and (device-height: 1366px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)'],
+        ['file' => 'fallback-portrait.png', 'media' => null],
     ];
 @endphp
 
@@ -19,7 +19,7 @@
 <meta name="apple-mobile-web-app-title" content="{{ config('app.name') }}" />
 <meta name="apple-mobile-web-app-status-bar-style" content="{{ config('pwa.status_bar_style') }}" />
 
-{{-- iOS uses the last matching startup image. List the generic fallback first. --}}
+{{-- iOS uses the last matching startup image. Device-specific first, generic fallback last. --}}
 {{-- Stable URLs (no cache-busting query) so iOS keeps startup images after add-to-home-screen. --}}
 @foreach ($splashScreens as $screen)
     @if (filled($screen['media']))
