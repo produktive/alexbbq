@@ -95,7 +95,12 @@ class ConfigureReverbCredentials extends Command
             return self::SUCCESS;
         }
 
-        Env::writeVariables($toWrite, $envPath, overwrite: $this->option('force'));
+        Env::writeVariables(
+            $toWrite,
+            $envPath,
+            overwrite: $this->option('force')
+                || ($this->option('local') && array_intersect_key($toWrite, self::LOCAL_DEFAULTS) !== []),
+        );
 
         if (array_intersect_key($toWrite, $credentials) !== []) {
             $this->components->info('Reverb credentials configured in .env.');

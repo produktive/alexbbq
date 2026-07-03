@@ -72,10 +72,20 @@ async function dispatchLiveCookUpdate(payload) {
         return;
     }
 
+    if (! window.Livewire?.navigate) {
+        return;
+    }
+
     const onHome = window.location.pathname === '/' || window.location.pathname === '';
 
-    if (onHome && window.Livewire?.navigate) {
+    if (onHome) {
         window.Livewire.navigate(window.location.href);
+
+        return;
+    }
+
+    if (type === 'started') {
+        window.Livewire.navigate('/');
     }
 }
 

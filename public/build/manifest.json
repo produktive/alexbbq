@@ -82,7 +82,7 @@
     "src": "node_modules/@jsquash/webp/codec/enc/webp_enc_simd.wasm"
   },
   "node_modules/@jsquash/webp/index.js": {
-    "file": "assets/webp-B2hctFYs.js",
+    "file": "assets/webp-K8l5rg6j.js",
     "name": "webp",
     "src": "node_modules/@jsquash/webp/index.js",
     "isDynamicEntry": true,
@@ -104,7 +104,7 @@
     "isEntry": true
   },
   "resources/js/app.js": {
-    "file": "assets/app-CAN5A6n4.js",
+    "file": "assets/app-eEvoQWkJ.js",
     "name": "app",
     "src": "resources/js/app.js",
     "isEntry": true,

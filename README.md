@@ -158,13 +158,14 @@ This runs, in order:
 
 1. `composer install`
 2. Copies `.env.example` → `.env` (if missing)
-3. `php artisan key:generate`
-4. `php artisan reverb:configure` — generates `REVERB_APP_ID`, `REVERB_APP_KEY`, and `REVERB_APP_SECRET` when empty
-5. `php artisan migrate --force`
-6. `npm install`
-7. `npm run build`
+3. Creates `database/database.sqlite` (if missing)
+4. `php artisan key:generate`
+5. `php artisan reverb:configure --local` — generates `REVERB_APP_*` credentials and confirms local WebSocket defaults
+6. `php artisan migrate --force`
+7. `npm install`
+8. `npm run build`
 
-Reverb application credentials are created automatically during setup via `php artisan reverb:configure`. This project already ships with Reverb installed and configured; Laravel’s `install:broadcasting` command is intended for new apps and skips credential generation when Reverb is already present. You still need to set client connection values such as `REVERB_HOST` for your environment (see [Local development (Laravel Herd)](#local-development-laravel-herd) below).
+The defaults in `.env.example` target `php artisan serve` at `http://127.0.0.1:8000` with Reverb on port `8080`. No Herd or other hosting is required.
 
 Seed the default admin account (optional but recommended for first login):
 
@@ -178,13 +179,14 @@ Then start the development environment:
 composer dev
 ```
 
-This launches three processes concurrently:
+This launches four processes concurrently:
 
 - `php artisan serve` — web server at `http://127.0.0.1:8000`
+- `php artisan reverb:start` — WebSocket server for live chart updates
 - `php artisan pail` — log tail
 - `npm run dev` — Vite hot reload
 
-Reverb is not included in `composer dev`. Start it in a separate terminal when you want live chart updates (see below).
+Open **http://127.0.0.1:8000** (or `http://localhost:8000` — both origins are allowed in local dev).
 
 ### Local development (`php artisan serve`)
 
@@ -204,7 +206,7 @@ REVERB_PORT=8080
 REVERB_SCHEME=http
 ```
 
-If you browse at `http://localhost:8000` instead, set `APP_URL` and optionally `REVERB_ALLOWED_ORIGINS` to include that origin.
+Browsing at `http://localhost:8000` while `APP_URL` uses `127.0.0.1` works out of the box in local dev; Reverb allows both origins automatically.
 
 **Common symptoms when these do not match:**
 
@@ -320,7 +322,9 @@ Key environment variables (see `.env.example` for the full list):
 
 ### Fake Maverick simulator
 
-In local development, probe readings are generated automatically when a cook is active:
+When `APP_ENV=local`, starting a cook automatically launches the fake maverick daemon (`maverick-fake.sh`). You do not need to run the simulator manually during normal development.
+
+For debugging only:
 
 ```bash
 php artisan maverick:simulate

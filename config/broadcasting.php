@@ -42,11 +42,11 @@ return [
                 'scheme' => env('REVERB_SERVER_SCHEME') ?: (env('APP_ENV') === 'local' ? env('REVERB_SCHEME', 'http') : 'http'),
                 'useTLS' => (env('REVERB_SERVER_SCHEME') ?: (env('APP_ENV') === 'local' ? env('REVERB_SCHEME', 'http') : 'http')) === 'https',
             ],
-            // Browser client (Echo) — baked into config:cache; read via config() in Blade.
+            // Browser client (Echo) — injected at runtime in Blade (see partials/head.blade.php).
             'client' => [
-                'host' => env('REVERB_HOST'),
-                'port' => (int) env('REVERB_PORT', 443),
-                'scheme' => env('REVERB_SCHEME', 'https'),
+                'host' => env('REVERB_HOST') ?: (env('APP_ENV') === 'local' ? '127.0.0.1' : null),
+                'port' => (int) (env('REVERB_PORT') ?: (env('APP_ENV') === 'local' ? 8080 : 443)),
+                'scheme' => env('REVERB_SCHEME') ?: (env('APP_ENV') === 'local' ? 'http' : 'https'),
             ],
             'client_options' => [
                 // Herd uses a self-signed cert; PHP CLI cannot verify it unless REVERB_VERIFY_SSL=true.

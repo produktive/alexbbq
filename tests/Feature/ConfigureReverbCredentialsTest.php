@@ -50,10 +50,10 @@ test('reverb configure local flag replaces legacy serve defaults', function () {
     $contents = file_get_contents($envPath);
 
     expect($contents)
-        ->toContain('APP_URL=http://127.0.0.1:8000')
-        ->toContain('REVERB_HOST=127.0.0.1')
-        ->toContain('REVERB_PORT=8080')
-        ->toContain('REVERB_SCHEME=http')
+        ->toMatch('/^APP_URL=["\']?http:\/\/127\.0\.0\.1:8000["\']?$/m')
+        ->toMatch('/^REVERB_HOST=["\']?127\.0\.0\.1["\']?$/m')
+        ->toMatch('/^REVERB_PORT=8080$/m')
+        ->toMatch('/^REVERB_SCHEME=http$/m')
         ->toContain('REVERB_APP_ID=123456');
 });
 

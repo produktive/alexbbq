@@ -69,6 +69,14 @@ export function initEcho() {
         ...config,
     });
 
+    const connection = window.Echo.connector?.pusher?.connection;
+
+    if (connection) {
+        connection.bind('error', (error) => {
+            console.warn('[Echo] WebSocket error — live cook updates will not arrive.', error);
+        });
+    }
+
     whenEchoConnected(listenForLiveCookBroadcasts);
 
     return window.Echo;

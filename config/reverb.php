@@ -14,6 +14,18 @@ if (filled($reverbAllowedOrigins)) {
             isset($parsed['port']) ? ':'.$parsed['port'] : '',
         )]
         : ['*'];
+
+    // php artisan serve is often opened as localhost even when APP_URL uses 127.0.0.1.
+    if (env('APP_ENV') === 'local' && isset($parsed['scheme'], $parsed['host'])) {
+        $portSuffix = isset($parsed['port']) ? ':'.$parsed['port'] : '';
+        $aliases = match ($parsed['host']) {
+            '127.0.0.1' => [sprintf('%s://localhost%s', $parsed['scheme'], $portSuffix)],
+            'localhost' => [sprintf('%s://127.0.0.1%s', $parsed['scheme'], $portSuffix)],
+            default => [],
+        };
+
+        $allowedOrigins = array_values(array_unique([...$allowedOrigins, ...$aliases]));
+    }
 } else {
     $allowedOrigins = ['*'];
 }
