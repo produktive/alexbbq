@@ -55,5 +55,5 @@ test('composer setup flow produces working local reverb configuration', function
         ->and(config('broadcasting.connections.reverb.client.scheme'))->toBe('http')
         ->and(config('broadcasting.connections.reverb.key'))->toMatch('/^[a-z0-9]{20}$/')
         ->and(config('reverb.apps.apps.0.allowed_origins'))
-        ->toContain('http://127.0.0.1:8000', 'http://localhost:8000');
+        ->toContain('127.0.0.1', 'localhost');
 });

@@ -14,5 +14,16 @@ test('local reverb origins include localhost alias for 127.0.0.1 app url', funct
     config()->set('reverb', require config_path('reverb.php'));
 
     expect(config('reverb.apps.apps.0.allowed_origins'))
-        ->toContain('http://127.0.0.1:8000', 'http://localhost:8000');
+        ->toContain('127.0.0.1', 'localhost');
+});
+
+test('reverb allowed origins normalize full urls to hostnames', function () {
+    $_ENV['REVERB_ALLOWED_ORIGINS'] = 'http://127.0.0.1:8000,http://localhost:8000';
+    $_SERVER['REVERB_ALLOWED_ORIGINS'] = 'http://127.0.0.1:8000,http://localhost:8000';
+    putenv('REVERB_ALLOWED_ORIGINS=http://127.0.0.1:8000,http://localhost:8000');
+
+    config()->set('reverb', require config_path('reverb.php'));
+
+    expect(config('reverb.apps.apps.0.allowed_origins'))
+        ->toBe(['127.0.0.1', 'localhost']);
 });

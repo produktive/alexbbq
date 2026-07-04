@@ -306,7 +306,7 @@ Key environment variables (see `.env.example` for the full list):
 | `BROADCAST_CONNECTION` | Set to `reverb` for live updates |
 | `REVERB_APP_*` | Reverb application ID, key, and secret (required for live updates) |
 | `REVERB_HOST`, `REVERB_PORT`, `REVERB_SCHEME` | Browser WebSocket connection (public URL; port `443` on Pi behind Caddy) |
-| `REVERB_ALLOWED_ORIGINS` | Comma-separated browser origins for WebSocket connections (defaults to `APP_URL`) |
+| `REVERB_ALLOWED_ORIGINS` | Comma-separated hostnames for WebSocket Origin checks (defaults to `APP_URL` host; full URLs are normalized) |
 | `REVERB_SERVER_*` | Server-side Reverb process (default `127.0.0.1:8080` over HTTP; Pi sets `8081` for Caddy) |
 | `VAPID_*` | Web push notification keys |
 | `MAVERICK_SCRIPT` | Override path to start/stop script |

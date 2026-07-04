@@ -1,26 +1,36 @@
 <?php
 
+// Reverb compares Origin headers by host only (see Server::verifyOrigin).
+$normalizeReverbOrigin = static function (string $value): ?string {
+    $value = trim($value);
+
+    if ($value === '') {
+        return null;
+    }
+
+    if (str_contains($value, '://')) {
+        return parse_url($value, PHP_URL_HOST) ?: null;
+    }
+
+    return $value;
+};
+
 $reverbAllowedOrigins = env('REVERB_ALLOWED_ORIGINS');
 
 if (filled($reverbAllowedOrigins)) {
-    $allowedOrigins = array_values(array_filter(array_map('trim', explode(',', $reverbAllowedOrigins))));
+    $allowedOrigins = array_values(array_filter(array_map(
+        $normalizeReverbOrigin,
+        explode(',', $reverbAllowedOrigins),
+    )));
 } elseif (filled($appUrl = env('APP_URL'))) {
     $parsed = parse_url($appUrl);
-    $allowedOrigins = (isset($parsed['scheme'], $parsed['host']))
-        ? [sprintf(
-            '%s://%s%s',
-            $parsed['scheme'],
-            $parsed['host'],
-            isset($parsed['port']) ? ':'.$parsed['port'] : '',
-        )]
-        : ['*'];
+    $allowedOrigins = isset($parsed['host']) ? [$parsed['host']] : ['*'];
 
     // php artisan serve is often opened as localhost even when APP_URL uses 127.0.0.1.
-    if (env('APP_ENV') === 'local' && isset($parsed['scheme'], $parsed['host'])) {
-        $portSuffix = isset($parsed['port']) ? ':'.$parsed['port'] : '';
+    if (env('APP_ENV') === 'local' && isset($parsed['host'])) {
         $aliases = match ($parsed['host']) {
-            '127.0.0.1' => [sprintf('%s://localhost%s', $parsed['scheme'], $portSuffix)],
-            'localhost' => [sprintf('%s://127.0.0.1%s', $parsed['scheme'], $portSuffix)],
+            '127.0.0.1' => ['localhost'],
+            'localhost' => ['127.0.0.1'],
             default => [],
         };
 
