@@ -16,11 +16,8 @@
     @if ($canEdit) x-ref="root" @endif
     {{ $attributes }}
 >
-    <div
-        class="cook-chart-panel-header"
-        @if (! $canEdit) x-show="isZoomed" x-cloak @endif
-    >
-        @if ($canEdit)
+    @if ($canEdit)
+        <div class="cook-chart-panel-header">
             <div class="flex min-w-0 flex-1 flex-col gap-2">
                 <label class="inline-flex cursor-pointer items-center gap-2">
                     <flux:switch x-model="editMode" />
@@ -37,17 +34,50 @@
                     <span x-show="! touchEditing">Ctrl+scroll to zoom, drag to pan</span>
                 </flux:text>
             </div>
-        @endif
+        </div>
+    @endif
 
-        <div
-            x-show="isZoomed"
-            x-cloak
-            class="ms-auto flex shrink-0 items-center gap-1"
-        >
-            <flux:button size="sm" variant="ghost" @click="resetZoom()">
-                Reset view
+    <div class="cook-chart-legend-bar">
+        <div class="cook-chart-legend-bar__series" role="group" aria-label="Chart series">
+            <button
+                type="button"
+                class="cook-chart-legend-item cook-chart-legend-item--food"
+                x-bind:class="{ 'is-hidden': ! legendVisible.food }"
+                x-bind:aria-pressed="legendVisible.food"
+                @click="toggleDataset(0)"
+            >
+                <span class="cook-chart-legend-swatch" aria-hidden="true"></span>
+                Food
+            </button>
+            <button
+                type="button"
+                class="cook-chart-legend-item cook-chart-legend-item--bbq"
+                x-bind:class="{ 'is-hidden': ! legendVisible.bbq }"
+                x-bind:aria-pressed="legendVisible.bbq"
+                @click="toggleDataset(1)"
+            >
+                <span class="cook-chart-legend-swatch" aria-hidden="true"></span>
+                BBQ
+            </button>
+        </div>
+
+        <div class="cook-chart-legend-bar__center">
+            <flux:button
+                size="sm"
+                variant="ghost"
+                class="shrink-0 transition-opacity duration-150"
+                x-bind:class="isZoomed ? 'opacity-100' : 'pointer-events-none opacity-0'"
+                @click="resetZoom()"
+            >
+                Reset Zoom
             </flux:button>
         </div>
+
+        @isset($toolbar)
+            <div class="cook-chart-legend-bar__end">
+                {{ $toolbar }}
+            </div>
+        @endisset
     </div>
 
     <div class="cook-chart">

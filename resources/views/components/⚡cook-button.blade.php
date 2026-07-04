@@ -67,7 +67,24 @@ new class extends Component implements HasActions, HasSchemas {
                 }
 
                 $this->syncLiveState();
+                $this->dispatchLiveCookStatus();
             });
+    }
+
+    public function dispatchLiveCookStatus(): void
+    {
+        $maverick = app(MaverickService::class);
+        $maverick->reconcileOrphanedActiveCook();
+
+        $cook = Cook::active();
+
+        $this->dispatch(
+            'live-cook-status',
+            activeCookId: $cook?->id,
+            beganAt: $cook?->getBeganAt()?->toIso8601String(),
+            maverickRunning: $maverick->isRunning(),
+            finishedCount: Cook::finishedCount(),
+        );
     }
 
     public function startCook(): void

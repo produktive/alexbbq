@@ -254,6 +254,22 @@ test('live cook indicator shows active cook on mount', function () {
         ->assertSet('cookId', $cook->id);
 });
 
+test('live cook indicator clears when cook stops', function () {
+    $smoker = Smoker::query()->create(['name' => 'Backyard']);
+
+    $cook = Cook::query()->create([
+        'smoker_id' => $smoker->id,
+        'title' => 'Brisket',
+        'ended_at' => null,
+    ]);
+
+    Livewire::test('live-cook-indicator')
+        ->assertSet('cookId', $cook->id)
+        ->call('syncFromStatus', null, null)
+        ->assertSet('cookId', null)
+        ->assertSet('beganAt', null);
+});
+
 test('cooks nav item updates count from status sync', function () {
     $smoker = Smoker::query()->create(['name' => 'Backyard']);
 

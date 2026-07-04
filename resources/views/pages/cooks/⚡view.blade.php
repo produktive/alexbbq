@@ -205,11 +205,11 @@ new class extends Component implements HasActions, HasSchemas {
 <flux:container>
     <x-cook-showcase :cook="$this->cook" editable-chart>
         @if ($this->cook->isOwnedBy(auth()->id()))
-            <x-slot:actions>
-                <flux:button href="{{ route('cooks.edit', $this->cook) }}" wire:navigate size="sm">
+            <x-slot:chartToolbar>
+                <flux:button href="{{ route('cooks.edit', $this->cook) }}" wire:navigate size="sm" variant="ghost">
                     Edit Details
                 </flux:button>
-            </x-slot:actions>
+            </x-slot:chartToolbar>
         @endif
     </x-cook-showcase>
 

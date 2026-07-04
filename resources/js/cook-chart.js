@@ -175,21 +175,6 @@ function lineDataset(label, points, colors) {
     };
 }
 
-const SERIES_SWATCH = {
-    legend: {
-        labels: {
-            generateLabels(chart) {
-                return Chart.defaults.plugins.legend.labels.generateLabels(chart).map((label) => ({
-                    ...label,
-                    fillStyle: chart.data.datasets[label.datasetIndex].borderColor,
-                    strokeStyle: chart.data.datasets[label.datasetIndex].borderColor,
-                    lineWidth: 0,
-                }));
-            },
-        },
-    },
-};
-
 const DATASET_POINT_STYLE = {
     pointRadius: (context) => {
         if (pointIsHighlighted(context)) {
@@ -276,6 +261,11 @@ export default function cookChart(initialData, canModify = false, live = false, 
         editMode: false,
         isZoomed: false,
         activePointerId: null,
+
+        legendVisible: {
+            food: true,
+            bbq: true,
+        },
 
         loading: shouldLazyLoad,
         loadError: false,
@@ -401,7 +391,9 @@ export default function cookChart(initialData, canModify = false, live = false, 
                     },
 
                     plugins: {
-                        ...SERIES_SWATCH,
+                        legend: {
+                            display: false,
+                        },
                         zoom: {
                             limits: {
                                 x: {
@@ -465,6 +457,7 @@ export default function cookChart(initialData, canModify = false, live = false, 
 
             this.bindCanvasEvents();
             this.syncZoomState();
+            this.syncLegendVisibility();
             this.applyCanvasTouchAction();
 
             if (chart.isZoomedOrPanned()) {
@@ -538,6 +531,25 @@ export default function cookChart(initialData, canModify = false, live = false, 
 
             chart.resetZoom();
             this.syncZoomPanState();
+        },
+
+        toggleDataset(datasetIndex) {
+            if (! chart) {
+                return;
+            }
+
+            chart.setDatasetVisibility(datasetIndex, ! chart.isDatasetVisible(datasetIndex));
+            this.syncLegendVisibility();
+            chart.update();
+        },
+
+        syncLegendVisibility() {
+            if (! chart) {
+                return;
+            }
+
+            this.legendVisible.food = chart.isDatasetVisible(0);
+            this.legendVisible.bbq = chart.isDatasetVisible(1);
         },
 
         closeMenu() {
@@ -968,9 +980,14 @@ export default function cookChart(initialData, canModify = false, live = false, 
             const xBounds = preserveZoom && this.isValidZoomRange(chart.scales.x.min, chart.scales.x.max)
                 ? { min: chart.scales.x.min, max: chart.scales.x.max }
                 : null;
+            const visibility = chart.data.datasets.map((_, index) => chart.isDatasetVisible(index));
 
             chart.data.datasets[0].data = fresh.food;
             chart.data.datasets[1].data = fresh.bbq;
+
+            visibility.forEach((visible, index) => {
+                chart.setDatasetVisibility(index, visible);
+            });
 
             if (xBounds) {
                 chart.options.scales.x.min = xBounds.min;
@@ -982,6 +999,7 @@ export default function cookChart(initialData, canModify = false, live = false, 
 
             chart.update();
             this.syncZoomPanState();
+            this.syncLegendVisibility();
 
             if (live) {
                 dispatchProbeUpdate(cookId, fresh);

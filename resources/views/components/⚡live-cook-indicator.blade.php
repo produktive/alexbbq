@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Cook;
+use Livewire\Attributes\On;
 use Livewire\Component;
 
 new class extends Component {
@@ -14,6 +15,13 @@ new class extends Component {
         $this->syncFromActiveCook();
     }
 
+    #[On('live-cook-status')]
+    public function syncFromStatus(?int $activeCookId = null, ?string $beganAt = null): void
+    {
+        $this->cookId = $activeCookId;
+        $this->beganAt = $beganAt;
+    }
+
     private function syncFromActiveCook(): void
     {
         $cook = Cook::active();
@@ -24,18 +32,24 @@ new class extends Component {
 }
 ?>
 <div
-    x-data="{
-        cookId: @js($cookId),
-        beganAt: @js($beganAt),
-        online: navigator.onLine,
-    }"
-    x-on:live-cook-status.window="cookId = $event.detail.activeCookId; beganAt = $event.detail.beganAt"
+    x-data="{ online: navigator.onLine }"
     x-on:online.window="online = true"
     x-on:offline.window="online = false"
 >
-    <template x-if="cookId && online">
-        <a href="{{ route('home') }}" wire:navigate>
-            <x-live-cook-timer :began-at="$beganAt" x-bind:data-began-at="beganAt" />
+    @if ($cookId)
+        <a href="{{ route('home') }}" wire:navigate x-show="online" x-cloak>
+            <x-live-cook-timer :began-at="$beganAt" />
         </a>
-    </template>
+    @endif
 </div>
+
+@script
+<script>
+    window.addEventListener('live-cook-status', (event) => {
+        $wire.syncFromStatus(
+            event.detail.activeCookId ?? null,
+            event.detail.beganAt ?? null,
+        );
+    });
+</script>
+@endscript
