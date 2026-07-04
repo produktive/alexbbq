@@ -24,11 +24,7 @@
             :editable="$editableChart"
             :live="$isLive"
             :wire-key="$chartWireKey"
-        >
-            @isset($chartToolbar)
-                <x-slot:toolbar>{{ $chartToolbar }}</x-slot:toolbar>
-            @endisset
-        </x-cook-chart>
+        />
 
         @if (filled($cook->getRawOriginal('description')))
             <div class="cook-card-notes">
@@ -36,4 +32,10 @@
             </div>
         @endif
     </div>
+
+    @isset($chartToolbar)
+        <div class="cook-chart-card-actions">
+            {{ $chartToolbar }}
+        </div>
+    @endisset
 </div>

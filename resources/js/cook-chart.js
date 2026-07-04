@@ -103,6 +103,13 @@ function cssChartAreaBox(chart) {
     };
 }
 
+function menuAnchorFromEvent(e) {
+    return {
+        clientX: e.clientX,
+        clientY: e.clientY,
+    };
+}
+
 function selectionBounds(chart, startX, endX) {
     return {
         lo: Math.max(chart.scales.x.min, Math.min(startX, endX)),
@@ -789,11 +796,12 @@ export default function cookChart(initialData, canModify = false, live = false, 
             return x >= lo && x <= hi;
         },
 
-        nearestPointByX(e) {
+        nearestPointHit(e) {
             if (! chart?.scales?.x || ! chart.chartArea?.width) {
                 return null;
             }
 
+            const { y: clickY } = chartPointFromEvent(e, chart);
             const dataX = this.dataXFromEvent(e);
             const scale = chart.scales.x;
             const range = scale.max - scale.min;
@@ -820,20 +828,46 @@ export default function cookChart(initialData, canModify = false, live = false, 
                 return null;
             }
 
+            let datasetIndex = 0;
+            let bestYDist = Infinity;
+
+            for (let i = 0; i < chart.data.datasets.length; i++) {
+                if (! chart.isDatasetVisible(i)) {
+                    continue;
+                }
+
+                const point = chart.data.datasets[i].data[bestIndex];
+                const element = chart.getDatasetMeta(i)?.data[bestIndex];
+
+                if (! element || point?.y == null) {
+                    continue;
+                }
+
+                const yDist = Math.abs(element.y - clickY);
+
+                if (yDist < bestYDist) {
+                    bestYDist = yDist;
+                    datasetIndex = i;
+                }
+            }
+
+            const point = chart.data.datasets[datasetIndex].data[bestIndex];
+
             return {
-                point: points[bestIndex],
+                point,
                 index: bestIndex,
+                datasetIndex,
             };
         },
 
         openPointMenu(e) {
-            const hit = this.nearestPointByX(e);
+            const hit = this.nearestPointHit(e);
 
             if (! hit) {
                 return;
             }
 
-            const { point, index } = hit;
+            const { point, index, datasetIndex } = hit;
             const seriesLength = chart.data.datasets[0].data.length;
 
             this.clearSelection();
@@ -843,7 +877,7 @@ export default function cookChart(initialData, canModify = false, live = false, 
             this.menu.canDeleteBefore = index > 0;
             this.menu.canDeleteAfter = index < seriesLength - 1;
             this.menu.useSheet = this.touchEditing;
-            this.scheduleMenuOpen(e);
+            this.scheduleMenuOpen(e, { index, datasetIndex });
         },
 
         openSelectionMenu(e) {
@@ -884,7 +918,9 @@ export default function cookChart(initialData, canModify = false, live = false, 
             this.openPointMenu(e);
         },
 
-        scheduleMenuOpen(e) {
+        scheduleMenuOpen(e, hit = null) {
+            const anchor = menuAnchorFromEvent(e);
+
             this.menu.open = true;
 
             if (this.menu.useSheet) {
@@ -896,7 +932,11 @@ export default function cookChart(initialData, canModify = false, live = false, 
             this.menu.positioned = false;
 
             this.$nextTick(() => {
-                this.positionContextMenu(e);
+                if (hit != null) {
+                    this.positionMenuAtPoint(hit.index, hit.datasetIndex, anchor);
+                } else {
+                    this.positionContextMenu(anchor);
+                }
 
                 if (this.$refs.menu?.offsetWidth > 0) {
                     this.menu.positioned = true;
@@ -905,45 +945,89 @@ export default function cookChart(initialData, canModify = false, live = false, 
                 }
 
                 requestAnimationFrame(() => {
-                    this.positionContextMenu(e);
+                    if (hit != null) {
+                        this.positionMenuAtPoint(hit.index, hit.datasetIndex, anchor);
+                    } else {
+                        this.positionContextMenu(anchor);
+                    }
+
                     this.menu.positioned = true;
                 });
             });
         },
 
-        positionContextMenu(e) {
-            const root = this.$refs.root;
+        menuPositionContainer() {
+            const canvas = this.$refs.canvas;
+
+            return canvas?.parentElement ?? null;
+        },
+
+        applyMenuPosition(left, top) {
+            const container = this.menuPositionContainer();
             const menuEl = this.$refs.menu;
 
-            if (!root || !menuEl) {
+            if (! container || ! menuEl) {
                 return;
             }
 
-            const rootRect = root.getBoundingClientRect();
-            const relX = e.clientX - rootRect.left;
-            const relY = e.clientY - rootRect.top;
+            const bounds = container.getBoundingClientRect();
             const menuW = menuEl.offsetWidth || menuEl.scrollWidth || MENU_MIN_WIDTH;
             const menuH = menuEl.offsetHeight || menuEl.scrollHeight || 0;
             const pad = 4;
 
-            let left = relX;
-
-            if (left + menuW > rootRect.width - pad) {
-                left = relX - menuW;
+            if (left + menuW > bounds.width - pad) {
+                left -= menuW;
             }
 
-            left = Math.max(pad, Math.min(left, rootRect.width - menuW - pad));
+            left = Math.max(pad, Math.min(left, bounds.width - menuW - pad));
 
-            let top = relY;
-
-            if (top + menuH > rootRect.height - pad) {
-                top = rootRect.height - menuH - pad;
+            if (top + menuH > bounds.height - pad) {
+                top = bounds.height - menuH - pad;
             }
 
             top = Math.max(pad, top);
 
             this.menu.x = left;
             this.menu.y = top;
+        },
+
+        positionMenuAtPoint(pointIndex, datasetIndex, anchor) {
+            if (! chart) {
+                this.positionContextMenu(anchor);
+
+                return;
+            }
+
+            const element = chart.getDatasetMeta(datasetIndex)?.data[pointIndex];
+
+            if (! element) {
+                this.positionContextMenu(anchor);
+
+                return;
+            }
+
+            const { x: scaleX, y: scaleY } = cssScale(chart);
+
+            this.applyMenuPosition(
+                (element.x * scaleX) + 8,
+                (element.y * scaleY) + 8,
+            );
+        },
+
+        positionContextMenu(anchor) {
+            const container = this.menuPositionContainer();
+            const menuEl = this.$refs.menu;
+
+            if (! container || ! menuEl) {
+                return;
+            }
+
+            const containerRect = container.getBoundingClientRect();
+
+            this.applyMenuPosition(
+                anchor.clientX - containerRect.left,
+                anchor.clientY - containerRect.top,
+            );
         },
 
         onKeyDown(e) {

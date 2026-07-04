@@ -13,13 +13,12 @@
     @if (filled($wireKey)) wire:key="{{ $wireKey }}" @endif
     wire:ignore
     x-data="window.cookChart(null, @js($canEdit), @js($live), @js($cook->id))"
-    @if ($canEdit) x-ref="root" @endif
     {{ $attributes }}
 >
     @if ($canEdit)
         <div class="cook-chart-panel-header">
-            <div class="flex min-w-0 flex-1 flex-col gap-2">
-                <label class="inline-flex cursor-pointer items-center gap-2">
+            <div class="flex min-w-0 flex-col items-start gap-2">
+                <label class="inline-flex w-fit cursor-pointer items-center gap-2">
                     <flux:switch x-model="editMode" />
                     <flux:text size="sm">Edit chart</flux:text>
                 </label>
@@ -61,23 +60,15 @@
             </button>
         </div>
 
-        <div class="cook-chart-legend-bar__center">
-            <flux:button
-                size="sm"
-                variant="ghost"
-                class="shrink-0 transition-opacity duration-150"
-                x-bind:class="isZoomed ? 'opacity-100' : 'pointer-events-none opacity-0'"
-                @click="resetZoom()"
-            >
-                Reset Zoom
-            </flux:button>
-        </div>
-
-        @isset($toolbar)
-            <div class="cook-chart-legend-bar__end">
-                {{ $toolbar }}
-            </div>
-        @endisset
+        <flux:button
+            size="sm"
+            variant="ghost"
+            class="shrink-0 transition-opacity duration-150"
+            x-bind:class="isZoomed ? 'opacity-100' : 'pointer-events-none opacity-0'"
+            @click="resetZoom()"
+        >
+            Reset Zoom
+        </flux:button>
     </div>
 
     <div class="cook-chart">
@@ -91,6 +82,18 @@
                     class="pointer-events-none absolute border-x border-blue-500 bg-blue-500/15"
                     x-cloak
                 ></div>
+
+                <div
+                    x-ref="menu"
+                    x-show="menu.open && ! menu.useSheet"
+                    @click.outside="closeMenu()"
+                    class="absolute z-50 min-w-56 rounded border border-zinc-200 bg-white py-1 text-zinc-900 shadow dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
+                    :class="{ invisible: ! menu.positioned }"
+                    :style="`left:${menu.x}px;top:${menu.y}px`"
+                    x-cloak
+                >
+                    @include('partials.cook-chart-point-menu')
+                </div>
             @endif
         </div>
 
@@ -116,39 +119,25 @@
         </div>
 
         @if ($canEdit)
-            <div
-                x-ref="menu"
-                x-show="menu.open && ! menu.useSheet"
-                @click.outside="closeMenu()"
-                class="absolute z-50 min-w-56 rounded border border-zinc-200 bg-white py-1 text-zinc-900 shadow dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
-                :class="{ invisible: ! menu.positioned }"
-                :style="`left:${menu.x}px;top:${menu.y}px`"
-                x-cloak
-            >
-                @include('partials.cook-chart-point-menu')
-            </div>
+            <template x-teleport="body">
+                <div
+                    x-show="menu.open && menu.useSheet"
+                    x-cloak
+                    class="fixed inset-0 z-50 flex items-end"
+                    @keydown.escape.window="closeMenu()"
+                >
+                    <button
+                        type="button"
+                        class="absolute inset-0 bg-black/40"
+                        aria-label="Close"
+                        @click="closeMenu()"
+                    ></button>
+
+                    <div class="relative w-full rounded-t-xl border border-zinc-200 bg-white py-2 text-zinc-900 shadow-lg dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100">
+                        @include('partials.cook-chart-point-menu')
+                    </div>
+                </div>
+            </template>
         @endif
     </div>
-
-    @if ($canEdit)
-        <template x-teleport="body">
-            <div
-                x-show="menu.open && menu.useSheet"
-                x-cloak
-                class="fixed inset-0 z-50 flex items-end"
-                @keydown.escape.window="closeMenu()"
-            >
-                <button
-                    type="button"
-                    class="absolute inset-0 bg-black/40"
-                    aria-label="Close"
-                    @click="closeMenu()"
-                ></button>
-
-                <div class="relative w-full rounded-t-xl border border-zinc-200 bg-white py-2 text-zinc-900 shadow-lg dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100">
-                    @include('partials.cook-chart-point-menu')
-                </div>
-            </div>
-        </template>
-    @endif
 </div>
