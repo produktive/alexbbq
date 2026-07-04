@@ -59,6 +59,7 @@
             "@php -r \"file_exists('database/database.sqlite') || touch('database/database.sqlite');\"",
             "@php artisan key:generate",
             "@php artisan reverb:configure --local",
+            "@php artisan webpush:configure",
             "@php artisan migrate --force",
             "npm install",
             "npm run build"

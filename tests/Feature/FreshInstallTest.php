@@ -14,6 +14,7 @@ test('composer setup flow produces working local reverb configuration', function
     app()->useEnvironmentPath($directory);
 
     Artisan::call('reverb:configure', ['--local' => true]);
+    Artisan::call('webpush:configure');
 
     $contents = file_get_contents($envPath);
 
@@ -25,7 +26,9 @@ test('composer setup flow produces working local reverb configuration', function
         ->toMatch('/^REVERB_SCHEME=http$/m')
         ->toMatch('/^REVERB_APP_ID=\d{6,}$/m')
         ->toMatch('/^REVERB_APP_KEY=[a-z0-9]{20}$/m')
-        ->toMatch('/^REVERB_APP_SECRET=[a-z0-9]{20}$/m');
+        ->toMatch('/^REVERB_APP_SECRET=[a-z0-9]{20}$/m')
+        ->toMatch('/^VAPID_PUBLIC_KEY=["\']?[A-Za-z0-9_-]+["\']?$/m')
+        ->toMatch('/^VAPID_PRIVATE_KEY=["\']?[A-Za-z0-9_-]+["\']?$/m');
 
     $_ENV['APP_ENV'] = 'local';
     $_SERVER['APP_ENV'] = 'local';
