@@ -141,6 +141,11 @@ p.fi-ta-text-description,
 
 .cook-description-gallery {
     @apply mt-4 grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-5;
+
+    /* fi-prose adds margin-top between siblings; reset inside the grid. */
+    > * + * {
+        margin-top: 0;
+    }
 }
 
 .cook-description-thumb {

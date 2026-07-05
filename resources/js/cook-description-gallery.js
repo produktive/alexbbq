@@ -72,7 +72,7 @@ export default function cookDescriptionGallery() {
             }
 
             const gallery = document.createElement('div');
-            gallery.className = 'cook-description-gallery';
+            gallery.className = 'cook-description-gallery fi-not-prose';
 
             imgs.forEach((img, index) => {
                 const src = img.getAttribute('src');
