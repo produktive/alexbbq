@@ -129,38 +129,57 @@ function pointIsHighlighted(context) {
     return id != null && highlightedPointId !== null && Number(id) === highlightedPointId;
 }
 
-const NOTE_POINT_COLOR = '#ff1493';
-const HIGHLIGHT_POINT_COLOR = '#2563eb';
+function readThemeColor(cssVar) {
+    const probe = document.createElement('span');
+    probe.style.color = `var(${cssVar})`;
+    probe.hidden = true;
+    document.documentElement.appendChild(probe);
 
-const CHART_COLORS = {
-    food: {
-        light: { border: 'rgb(45, 212, 191)', area: '45, 212, 191' },
-        dark: { border: 'rgb(94, 234, 212)', area: '94, 234, 212' },
-    },
-    bbq: {
-        light: { border: 'rgb(217, 119, 6)', area: '217, 119, 6' },
-        dark: { border: 'rgb(245, 158, 11)', area: '245, 158, 11' },
-    },
-};
+    const color = getComputedStyle(probe).color;
+
+    probe.remove();
+
+    return color;
+}
+
+function rgbComponentsFromColor(color) {
+    const match = color.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
+
+    if (! match) {
+        return '45, 212, 191';
+    }
+
+    return `${match[1]}, ${match[2]}, ${match[3]}`;
+}
 
 function chartPalette() {
-    const mode = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
+    const foodBorder = readThemeColor('--color-chart-food');
+    const bbqBorder = readThemeColor('--color-chart-bbq');
+    const note = readThemeColor('--color-chart-note');
 
     return {
-        food: CHART_COLORS.food[mode],
-        bbq: CHART_COLORS.bbq[mode],
+        food: {
+            border: foodBorder,
+            area: rgbComponentsFromColor(foodBorder),
+        },
+        bbq: {
+            border: bbqBorder,
+            area: rgbComponentsFromColor(bbqBorder),
+        },
+        note,
     };
 }
 
-function seriesAreaFill(context, rgb) {
+function seriesAreaFill(context, seriesKey) {
     const { chart } = context;
     const { ctx, chartArea } = chart;
 
-    if (!chartArea) {
-        return `rgba(${rgb}, 0.12)`;
+    if (! chartArea) {
+        return `rgba(${chartPalette()[seriesKey].area}, 0.12)`;
     }
 
     const dark = document.documentElement.classList.contains('dark');
+    const rgb = chartPalette()[seriesKey].area;
     const gradient = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
 
     gradient.addColorStop(0, `rgba(${rgb}, ${dark ? 0.22 : 0.16})`);
@@ -169,12 +188,14 @@ function seriesAreaFill(context, rgb) {
     return gradient;
 }
 
-function lineDataset(label, points, colors) {
+function lineDataset(label, points, seriesKey) {
+    const colors = chartPalette();
+
     return {
         label,
         data: points,
-        borderColor: colors.border,
-        backgroundColor: (context) => seriesAreaFill(context, colors.area),
+        borderColor: colors[seriesKey].border,
+        backgroundColor: (context) => seriesAreaFill(context, seriesKey),
         fill: 'start',
         borderWidth: 2,
         pointHitRadius: 4,
@@ -198,13 +219,19 @@ const DATASET_POINT_STYLE = {
 
         return pointHasNote(context) ? 2 : 1;
     },
-    pointBackgroundColor: (context) => (pointHasNote(context) ? NOTE_POINT_COLOR : context.dataset.borderColor),
-    pointBorderColor: (context) => {
-        if (pointIsHighlighted(context)) {
-            return HIGHLIGHT_POINT_COLOR;
+    pointBackgroundColor: (context) => {
+        if (pointHasNote(context)) {
+            return chartPalette().note;
         }
 
-        return pointHasNote(context) ? NOTE_POINT_COLOR : context.dataset.borderColor;
+        return context.dataset.borderColor;
+    },
+    pointBorderColor: (context) => {
+        if (pointHasNote(context)) {
+            return chartPalette().note;
+        }
+
+        return context.dataset.borderColor;
     },
 };
 
@@ -259,6 +286,7 @@ export default function cookChart(initialData, canModify = false, live = false, 
     let handlers = {};
     let chartUpdateListener = null;
     let chartRefreshListener = null;
+    let themeObserver = null;
     const shouldLazyLoad = initialData === null && cookId !== null;
     const touchEditing = window.matchMedia('(pointer: coarse)').matches;
 
@@ -325,6 +353,30 @@ export default function cookChart(initialData, canModify = false, live = false, 
             }
 
             this.$nextTick(() => this.bootstrapChart());
+            this.bindThemeListener();
+        },
+
+        bindThemeListener() {
+            themeObserver = new MutationObserver(() => {
+                this.applyTheme();
+            });
+
+            themeObserver.observe(document.documentElement, {
+                attributes: true,
+                attributeFilter: ['class'],
+            });
+        },
+
+        applyTheme() {
+            if (! chart) {
+                return;
+            }
+
+            const colors = chartPalette();
+
+            chart.data.datasets[0].borderColor = colors.food.border;
+            chart.data.datasets[1].borderColor = colors.bbq.border;
+            chart.update('none');
         },
 
         async bootstrapChart() {
@@ -362,7 +414,6 @@ export default function cookChart(initialData, canModify = false, live = false, 
 
             patchHammerForPageScroll();
 
-            const colors = chartPalette();
             const explore = this.exploreActive();
             const panEnabled = explore && (! this.touchEditing || this.isZoomed);
 
@@ -371,8 +422,8 @@ export default function cookChart(initialData, canModify = false, live = false, 
 
                 data: {
                     datasets: [
-                        lineDataset('Food', data.food, colors.food),
-                        lineDataset('BBQ', data.bbq, colors.bbq),
+                        lineDataset('Food', data.food, 'food'),
+                        lineDataset('BBQ', data.bbq, 'bbq'),
                     ],
                 },
 
@@ -629,6 +680,11 @@ export default function cookChart(initialData, canModify = false, live = false, 
             if (chartRefreshListener) {
                 window.removeEventListener('cook-chart-refresh', chartRefreshListener);
                 chartRefreshListener = null;
+            }
+
+            if (themeObserver) {
+                themeObserver.disconnect();
+                themeObserver = null;
             }
 
             if (chart) {

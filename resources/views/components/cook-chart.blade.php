@@ -28,7 +28,7 @@
                     <span x-show="! touchEditing">Right-click a point or drag to select a range</span>
                 </flux:text>
 
-                <flux:text x-show="! editMode" size="sm" class="text-zinc-500 dark:text-zinc-400">
+                <flux:text x-show="! editMode" size="md" class="text-zinc-500 dark:text-zinc-400">
                     <span x-show="touchEditing">Pinch to zoom<span x-show="isZoomed">, drag to pan</span></span>
                     <span x-show="! touchEditing">Ctrl+scroll to zoom, drag to pan</span>
                 </flux:text>
@@ -58,17 +58,34 @@
                 <span class="cook-chart-legend-swatch" aria-hidden="true"></span>
                 BBQ
             </button>
+            <span class="cook-chart-legend-note-hint" aria-hidden="true">
+                <span class="cook-chart-legend-note-hint__marker" aria-hidden="true"></span>
+                Note
+            </span>
         </div>
 
-        <flux:button
-            size="sm"
-            variant="ghost"
-            class="shrink-0 transition-opacity duration-150"
-            x-bind:class="isZoomed ? 'opacity-100' : 'pointer-events-none opacity-0'"
-            @click="resetZoom()"
-        >
-            Reset Zoom
-        </flux:button>
+        <div class="cook-chart-legend-bar__zoom">
+            <flux:text
+                x-show="! isZoomed && exploreActive()"
+                x-cloak
+                size="md"
+                class="cook-chart-legend-zoom-hint"
+            >
+                <span x-show="touchEditing">Pinch to zoom</span>
+                <span x-show="! touchEditing">Ctrl+scroll to zoom</span>
+            </flux:text>
+
+            <flux:button
+                size="sm"
+                variant="ghost"
+                class="shrink-0"
+                x-show="isZoomed"
+                x-cloak
+                @click="resetZoom()"
+            >
+                Reset Zoom
+            </flux:button>
+        </div>
     </div>
 
     <div class="cook-chart">
@@ -79,7 +96,7 @@
                 <div
                     x-show="selection.dragging || selection.active"
                     x-bind:style="selection.overlayStyle"
-                    class="pointer-events-none absolute border-x border-blue-500 bg-blue-500/15"
+                    class="cook-chart-selection-overlay"
                     x-cloak
                 ></div>
 

@@ -43,6 +43,13 @@
     --color-accent: var(--color-neutral-800);
     --color-accent-content: var(--color-neutral-800);
     --color-accent-foreground: var(--color-white);
+
+    /* Chart series — shared by probe cards, alert sliders, legend, and Chart.js. */
+    --color-chart-food: var(--color-teal-400);
+    --color-chart-bbq: var(--color-amber-600);
+    --color-chart-note: var(--color-rose-500);
+    --color-chart-food-label: var(--color-teal-800);
+    --color-chart-bbq-label: var(--color-amber-900);
 }
 
 @layer theme {
@@ -50,6 +57,12 @@
         --color-accent: var(--color-white);
         --color-accent-content: var(--color-white);
         --color-accent-foreground: var(--color-neutral-800);
+
+        --color-chart-food: var(--color-teal-300);
+        --color-chart-bbq: var(--color-amber-500);
+        --color-chart-note: var(--color-rose-400);
+        --color-chart-food-label: var(--color-teal-300);
+        --color-chart-bbq-label: var(--color-amber-300);
     }
 }
 
@@ -98,7 +111,7 @@ p.fi-ta-text-description,
  */
 
 #cook-description a {
-    color: deeppink;
+    color: var(--color-chart-note);
     text-decoration: underline;
 }
 
@@ -138,12 +151,12 @@ p.fi-ta-text-description,
     @apply absolute inset-x-0 bottom-0 rounded-b-lg bg-gradient-to-t from-black/85 via-black/55 to-transparent px-4 pt-10 pb-4 text-center text-sm text-white;
 }
 
-.bbq-slider .noUi-connect {
-    @apply bg-teal-400 dark:bg-teal-300;
+.food-slider .noUi-connect {
+    background-color: var(--color-chart-food);
 }
 
-.food-slider .noUi-connect {
-    @apply bg-amber-600 dark:bg-amber-500;
+.bbq-slider .noUi-connect {
+    background-color: var(--color-chart-bbq);
 }
 
 [data-flux-main] {
@@ -177,11 +190,11 @@ p.fi-ta-text-description,
 }
 
 .cook-probe-card--food {
-    @apply border-teal-500/25 bg-teal-500/10;
+    @apply border-chart-food/25 bg-chart-food/10;
 }
 
 .cook-probe-card--bbq {
-    @apply border-amber-600/25 bg-amber-600/10 dark:border-amber-500/25 dark:bg-amber-500/10;
+    @apply border-chart-bbq/25 bg-chart-bbq/10;
 }
 
 .cook-probe-card-label {
@@ -189,11 +202,11 @@ p.fi-ta-text-description,
 }
 
 .cook-probe-card--food .cook-probe-card-label {
-    @apply text-teal-800 dark:text-teal-300;
+    color: var(--color-chart-food-label);
 }
 
 .cook-probe-card--bbq .cook-probe-card-label {
-    @apply text-amber-900 dark:text-amber-300;
+    color: var(--color-chart-bbq-label);
 }
 
 .cook-probe-card-value {
@@ -304,6 +317,14 @@ p.fi-ta-text-description,
     @apply flex justify-end;
 }
 
+.cook-chart-legend-bar__zoom {
+    @apply flex shrink-0 items-center justify-end lg:min-w-36;
+}
+
+.cook-chart-legend-zoom-hint {
+    @apply hidden text-right text-zinc-500 lg:block dark:text-zinc-400;
+}
+
 .cook-chart-legend-item {
     @apply inline-flex cursor-pointer items-center gap-1.5 border-0 bg-transparent p-0 font-medium;
 }
@@ -325,19 +346,32 @@ p.fi-ta-text-description,
 }
 
 .cook-chart-legend-item--food .cook-chart-legend-swatch {
-    @apply bg-teal-400 dark:bg-teal-300;
+    @apply bg-chart-food;
 }
 
 .cook-chart-legend-item--food {
-    @apply text-teal-800 dark:text-teal-300;
+    color: var(--color-chart-food-label);
 }
 
 .cook-chart-legend-item--bbq .cook-chart-legend-swatch {
-    @apply bg-amber-600 dark:bg-amber-500;
+    @apply bg-chart-bbq;
 }
 
 .cook-chart-legend-item--bbq {
-    @apply text-amber-900 dark:text-amber-300;
+    color: var(--color-chart-bbq-label);
+}
+
+.cook-chart-legend-note-hint {
+    @apply inline-flex items-center gap-1.5 text-sm font-medium text-zinc-500 dark:text-zinc-400;
+}
+
+.cook-chart-legend-note-hint__marker {
+    @apply size-2.5 shrink-0 rotate-45 rounded-sm;
+    background-color: var(--color-chart-note);
+}
+
+.cook-chart-selection-overlay {
+    @apply pointer-events-none absolute border-x border-zinc-400/50 bg-zinc-400/20 dark:border-zinc-500/50 dark:bg-zinc-500/20;
 }
 
 .cook-card-notes {
