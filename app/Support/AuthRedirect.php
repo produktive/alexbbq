@@ -11,35 +11,75 @@ class AuthRedirect
      */
     private const AUTH_PATHS = [
         '/login',
+        '/login/intended',
         '/forgot-password',
         '/reset-password',
     ];
 
     public static function storeIntendedUrl(?string $redirect, Request $request): void
     {
-        if (! is_string($redirect) || $redirect === '') {
+        $redirect = self::validatedRedirect($redirect);
+
+        if ($redirect === null) {
             return;
         }
+
+        $request->session()->put('url.intended', $redirect);
+    }
+
+    public static function pullRedirect(Request $request, string $default = '/'): string
+    {
+        $redirect = self::validatedRedirect(
+            $request->input('redirect') ?? $request->query('redirect'),
+        );
+
+        if ($redirect !== null) {
+            $request->session()->forget('url.intended');
+
+            return $redirect;
+        }
+
+        return $request->session()->pull('url.intended', $default);
+    }
+
+    public static function pathFromReferer(Request $request): ?string
+    {
+        $referer = $request->headers->get('referer');
+
+        if (! is_string($referer) || $referer === '') {
+            return null;
+        }
+
+        if (! str_starts_with($referer, url('/'))) {
+            return null;
+        }
+
+        return self::validatedRedirect(self::normalize($referer));
+    }
+
+    public static function validatedRedirect(?string $redirect): ?string
+    {
+        if (! is_string($redirect) || $redirect === '') {
+            return null;
+        }
+
+        $redirect = self::normalize($redirect);
 
         if (! self::isValid($redirect) || self::isAuthPage($redirect)) {
-            return;
+            return null;
         }
 
-        $request->session()->put('url.intended', self::normalize($redirect));
+        return $redirect;
     }
 
-    public static function isValid(string $url): bool
+    public static function isValid(string $path): bool
     {
-        if (str_starts_with($url, '/') && ! str_starts_with($url, '//')) {
-            return true;
-        }
-
-        return str_starts_with($url, url('/'));
+        return str_starts_with($path, '/') && ! str_starts_with($path, '//');
     }
 
-    public static function isAuthPage(string $url): bool
+    public static function isAuthPage(string $path): bool
     {
-        $path = parse_url($url, PHP_URL_PATH) ?? $url;
+        $path = parse_url($path, PHP_URL_PATH) ?? $path;
 
         foreach (self::AUTH_PATHS as $authPath) {
             if ($path === $authPath || str_starts_with($path, $authPath.'/')) {
@@ -50,15 +90,19 @@ class AuthRedirect
         return false;
     }
 
-    public static function normalize(string $url): string
+    public static function normalize(string $path): string
     {
-        if (str_starts_with($url, '/') && ! str_starts_with($url, '//')) {
-            return $url;
+        if (self::isValid($path)) {
+            return $path;
         }
 
-        $path = parse_url($url, PHP_URL_PATH) ?: '/';
-        $query = parse_url($url, PHP_URL_QUERY);
+        if (str_starts_with($path, url('/'))) {
+            $pathOnly = parse_url($path, PHP_URL_PATH) ?: '/';
+            $query = parse_url($path, PHP_URL_QUERY);
 
-        return $query ? "{$path}?{$query}" : $path;
+            return $query ? "{$pathOnly}?{$query}" : $pathOnly;
+        }
+
+        return $path;
     }
 }

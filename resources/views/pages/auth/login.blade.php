@@ -10,6 +10,10 @@
         <form method="POST" action="{{ route('login.store') }}" class="flex flex-col gap-6">
             @csrf
 
+            @if (filled($redirect = request('redirect')))
+                <input type="hidden" name="redirect" value="{{ $redirect }}">
+            @endif
+
             <!-- Email Address -->
             <flux:input
                 name="email"

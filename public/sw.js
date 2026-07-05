@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'v24';
+const CACHE_VERSION = 'v25';
 const SHELL_CACHE = `alexbbq-shell-${CACHE_VERSION}`;
 const ASSET_CACHE = `alexbbq-assets-${CACHE_VERSION}`;
 const COOK_PAGE_CACHE = `alexbbq-cook-pages-${CACHE_VERSION}`;
@@ -10,6 +10,8 @@ const PRECACHE_URLS = [
     '/apple-touch-icon.png',
     '/favicon.ico',
     '/favicon.svg',
+    '/favicon-light.svg',
+    '/favicon-dark.svg',
 ];
 
 async function setAppBadge(count = 1) {

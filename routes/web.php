@@ -28,10 +28,18 @@ Route::middleware(['auth'])->group(function () {
 
 Route::livewire('/cooks/{cook}', 'pages::cooks.view')->whereNumber('cook')->name('cooks.view');
 
-Route::middleware('guest')->post('/login/intended', function (Request $request) {
-    AuthRedirect::storeIntendedUrl($request->input('redirect'), $request);
+Route::middleware('guest')->get('/login/intended', function (Request $request) {
+    $redirect = $request->query('redirect');
 
-    return redirect()->route('login');
+    if (! is_string($redirect) || $redirect === '') {
+        $redirect = AuthRedirect::pathFromReferer($request);
+    }
+
+    AuthRedirect::storeIntendedUrl($redirect, $request);
+
+    $intended = $request->session()->get('url.intended');
+
+    return redirect()->route('login', $intended ? ['redirect' => $intended] : []);
 })->name('login.intended');
 
 require __DIR__.'/settings.php';

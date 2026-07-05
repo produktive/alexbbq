@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Http\Responses\PasskeyLoginResponse;
 use App\Models\Cook;
 use App\Observers\CookObserver;
 use App\Support\Theme;
@@ -25,7 +26,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->singleton(
+            \Laravel\Passkeys\Contracts\PasskeyLoginResponse::class,
+            PasskeyLoginResponse::class,
+        );
     }
 
     /**

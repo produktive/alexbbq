@@ -6,6 +6,7 @@
         "build": "vite build",
         "dev": "vite",
         "pwa:icons": "node scripts/generate-pwa-icons.mjs",
+        "logo:generate": "node scripts/generate-logo-assets.mjs",
         "pwa:splash": "node scripts/generate-pwa-splash.mjs",
         "pwa:assets": "npm run pwa:icons && npm run pwa:splash"
     },

@@ -1,13 +1,11 @@
 @guest
     <form
-        method="POST"
+        method="GET"
         action="{{ route('login.intended') }}"
         class="contents"
-        x-data
-        @submit="$refs.redirect.value = window.location.href"
+        onsubmit="this.redirect.value = window.location.pathname + window.location.search"
     >
-        @csrf
-        <input type="hidden" name="redirect" x-ref="redirect" value="{{ url()->current() }}">
+        <input type="hidden" name="redirect" value="">
         <flux:button type="submit">
             {{ __('Log in') }}
         </flux:button>

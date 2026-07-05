@@ -8,7 +8,7 @@
 <img
     src="{{ $darkIconUrl }}"
     alt=""
-    {{ $attributes->class(['rounded-md object-cover']) }}
+    {{ $attributes->class(['object-cover']) }}
     x-bind:src="($flux.appearance === 'dark' || ($flux.appearance === 'system' && $flux.dark))
         ? @js($darkIconUrl)
         : @js($lightIconUrl)"

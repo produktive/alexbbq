@@ -24,6 +24,8 @@
 <link rel="apple-touch-icon" sizes="192x192" href="{{ PwaAsset::url('pwa-icon-192.png') }}">
 <link rel="apple-touch-icon" sizes="512x512" href="{{ PwaAsset::url('pwa-icon-512.png') }}">
 <link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" href="/favicon-light.svg" type="image/svg+xml" media="(prefers-color-scheme: light)">
+<link rel="icon" href="/favicon-dark.svg" type="image/svg+xml" media="(prefers-color-scheme: dark)">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 
 @fonts

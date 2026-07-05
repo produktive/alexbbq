@@ -110,13 +110,12 @@ p.fi-ta-text-description,
     Custom-added
  */
 
-#cook-description a {
-    color: var(--color-chart-note);
-    text-decoration: underline;
-}
-
 #cook-description.fi-prose {
     @apply text-base leading-relaxed;
+}
+
+#cook-description a {
+    color: var(--color-chart-note);
 }
 
 #cook-description ul {
