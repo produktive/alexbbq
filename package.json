@@ -8,7 +8,7 @@
         "pwa:icons": "node scripts/generate-pwa-icons.mjs",
         "logo:generate": "node scripts/generate-logo-assets.mjs",
         "pwa:splash": "node scripts/generate-pwa-splash.mjs",
-        "pwa:assets": "npm run pwa:icons && npm run pwa:splash"
+        "pwa:assets": "npm run logo:generate && npm run pwa:splash"
     },
     "dependencies": {
         "@jsquash/webp": "^1.5.0",
@@ -30,6 +30,7 @@
         "lightningcss-linux-x64-gnu": "^1.29.1"
     },
     "devDependencies": {
+        "pwa-asset-generator": "^8.1.5",
         "sharp": "^0.35.3"
     }
 }
