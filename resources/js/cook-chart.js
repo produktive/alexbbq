@@ -280,6 +280,12 @@ function dispatchProbeUpdate(cookId, fresh) {
     }));
 }
 
+function dataHasNotedReadings(chartData) {
+    const points = chartData?.food ?? [];
+
+    return points.some((point) => Boolean(point?.note));
+}
+
 export default function cookChart(initialData, canModify = false, live = false, cookId = null) {
     let data = initialData;
     let chart = null;
@@ -301,6 +307,8 @@ export default function cookChart(initialData, canModify = false, live = false, 
             food: true,
             bbq: true,
         },
+
+        hasNotedReadings: false,
 
         loading: shouldLazyLoad,
         loadError: false,
@@ -516,6 +524,7 @@ export default function cookChart(initialData, canModify = false, live = false, 
             this.bindCanvasEvents();
             this.syncZoomState();
             this.syncLegendVisibility();
+            this.syncNotedReadings();
             this.applyCanvasTouchAction();
 
             if (chart.isZoomedOrPanned()) {
@@ -608,6 +617,10 @@ export default function cookChart(initialData, canModify = false, live = false, 
 
             this.legendVisible.food = chart.isDatasetVisible(0);
             this.legendVisible.bbq = chart.isDatasetVisible(1);
+        },
+
+        syncNotedReadings() {
+            this.hasNotedReadings = dataHasNotedReadings(data);
         },
 
         closeMenu() {
@@ -1140,6 +1153,7 @@ export default function cookChart(initialData, canModify = false, live = false, 
             chart.update();
             this.syncZoomPanState();
             this.syncLegendVisibility();
+            this.syncNotedReadings();
 
             if (live) {
                 dispatchProbeUpdate(cookId, fresh);

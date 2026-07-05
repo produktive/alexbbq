@@ -20,10 +20,10 @@
             <div class="flex min-w-0 flex-col items-start gap-2">
                 <label class="inline-flex w-fit cursor-pointer items-center gap-2">
                     <flux:switch x-model="editMode" />
-                    <flux:text size="sm">Edit chart</flux:text>
+                    <flux:text size="md">Edit chart</flux:text>
                 </label>
 
-                <flux:text x-show="editMode" size="sm" class="text-zinc-500 dark:text-zinc-400">
+                <flux:text x-show="editMode" size="md" class="text-zinc-500 dark:text-zinc-400">
                     <span x-show="touchEditing">Tap a point or drag to select a range</span>
                     <span x-show="! touchEditing">Right-click a point or drag to select a range</span>
                 </flux:text>
@@ -58,15 +58,19 @@
                 <span class="cook-chart-legend-swatch" aria-hidden="true"></span>
                 BBQ
             </button>
-            <span class="cook-chart-legend-note-hint" aria-hidden="true">
+            <span x-show="hasNotedReadings" x-cloak class="cook-chart-legend-note-hint" aria-hidden="true">
                 <span class="cook-chart-legend-note-hint__marker" aria-hidden="true"></span>
                 Note
             </span>
         </div>
 
-        <div class="cook-chart-legend-bar__zoom">
+        <div
+            class="cook-chart-legend-bar__zoom"
+            x-show="isZoomed || (! canModify && exploreActive())"
+            x-cloak
+        >
             <flux:text
-                x-show="! isZoomed && exploreActive()"
+                x-show="! isZoomed && ! canModify"
                 x-cloak
                 size="md"
                 class="cook-chart-legend-zoom-hint"

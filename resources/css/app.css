@@ -115,6 +115,10 @@ p.fi-ta-text-description,
     text-decoration: underline;
 }
 
+#cook-description.fi-prose {
+    @apply text-base leading-relaxed;
+}
+
 #cook-description ul {
     @apply list-disc ps-6;
 }

@@ -4,7 +4,7 @@
     <article
         id="cook-description"
         x-ref="content"
-        class="cook-description"
+        class="cook-description fi-prose"
         :class="{ 'is-processed': processed }"
     >
         {!! $html !!}
