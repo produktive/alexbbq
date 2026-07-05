@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'v25';
+const CACHE_VERSION = 'v26';
 const SHELL_CACHE = `alexbbq-shell-${CACHE_VERSION}`;
 const ASSET_CACHE = `alexbbq-assets-${CACHE_VERSION}`;
 const COOK_PAGE_CACHE = `alexbbq-cook-pages-${CACHE_VERSION}`;
@@ -131,8 +131,11 @@ function shouldBypassCache(pathname) {
 }
 
 function shouldCacheAsset(pathname) {
+    if (pathname.startsWith('/pwa-splash/')) {
+        return false;
+    }
+
     return pathname.startsWith('/build/')
-        || pathname.startsWith('/pwa-splash/')
         || /\.(?:css|js|png|jpe?g|gif|webp|svg|ico|woff2?|ttf|eot)$/i.test(pathname);
 }
 
