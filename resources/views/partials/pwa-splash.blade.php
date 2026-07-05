@@ -13,5 +13,5 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="{{ config('pwa.status_bar_style') }}" />
 
 @foreach ($splashScreens as $screen)
-    <link rel="apple-touch-startup-image" href="{{ PwaAsset::stableUrl('pwa-splash/'.$screen['file']) }}" media="{{ $screen['media'] }}" />
+    <link rel="apple-touch-startup-image" href="{{ PwaAsset::stableUrl('pwa-splash/v2/'.$screen['file']) }}" media="{{ $screen['media'] }}" />
 @endforeach
