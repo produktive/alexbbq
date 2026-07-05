@@ -173,6 +173,49 @@ test('users with two factor enabled are redirected to two factor challenge', fun
     $this->assertGuest();
 });
 
+test('login screen exposes intended redirect for passkey sign in', function () {
+    $this->get('/cooks/new')
+        ->assertRedirect(route('login'));
+
+    $this->get(route('login'))
+        ->assertOk()
+        ->assertSee('data-auth-redirect', false)
+        ->assertSee('value="/cooks/new"', false);
+});
+
+test('passkey login response honors posted redirect', function () {
+    $request = \Illuminate\Http\Request::create('/passkeys/login', 'POST', [
+        'redirect' => '/cooks/7',
+    ]);
+    $request->headers->set('Accept', 'application/json');
+    $request->setLaravelSession(app('session.store'));
+
+    $response = (new \App\Http\Responses\PasskeyLoginResponse)->toResponse($request);
+
+    expect($response->getData(true))
+        ->redirect->toBe('/cooks/7');
+});
+
+test('passkey login response honors persistent redirect session key', function () {
+    $request = \Illuminate\Http\Request::create('/passkeys/login', 'POST');
+    $request->headers->set('Accept', 'application/json');
+    $request->setLaravelSession(app('session.store'));
+    $request->session()->put(\App\Support\AuthRedirect::PERSISTENT_SESSION_KEY, '/cooks/8');
+
+    $response = (new \App\Http\Responses\PasskeyLoginResponse)->toResponse($request);
+
+    expect($response->getData(true))
+        ->redirect->toBe('/cooks/8');
+});
+
+test('passkey options request persists redirect from query string', function () {
+    $this->get(route('passkey.login-options', ['redirect' => '/cooks/9']))
+        ->assertSuccessful()
+        ->assertJsonStructure(['options']);
+
+    expect(session(\App\Support\AuthRedirect::PERSISTENT_SESSION_KEY))->toBe('/cooks/9');
+});
+
 test('users can logout', function () {
     $user = User::factory()->create();
 

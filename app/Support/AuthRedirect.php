@@ -6,6 +6,8 @@ use Illuminate\Http\Request;
 
 class AuthRedirect
 {
+    public const PERSISTENT_SESSION_KEY = 'auth.login.redirect';
+
     /**
      * @var list<string>
      */
@@ -25,21 +27,33 @@ class AuthRedirect
         }
 
         $request->session()->put('url.intended', $redirect);
+        $request->session()->put(self::PERSISTENT_SESSION_KEY, $redirect);
     }
 
     public static function pullRedirect(Request $request, string $default = '/'): string
     {
-        $redirect = self::validatedRedirect(
-            $request->input('redirect') ?? $request->query('redirect'),
-        );
+        $redirect = self::resolveRedirect($request, $default);
 
-        if ($redirect !== null) {
-            $request->session()->forget('url.intended');
+        self::clearRedirect($request);
 
-            return $redirect;
-        }
+        return $redirect;
+    }
 
-        return $request->session()->pull('url.intended', $default);
+    public static function resolveRedirect(Request $request, string $default = '/'): string
+    {
+        return self::validatedRedirect($request->input('redirect'))
+            ?? self::validatedRedirect($request->query('redirect'))
+            ?? self::validatedRedirect($request->session()->get(self::PERSISTENT_SESSION_KEY))
+            ?? self::validatedRedirect($request->session()->get('url.intended'))
+            ?? $default;
+    }
+
+    public static function clearRedirect(Request $request): void
+    {
+        $request->session()->forget([
+            self::PERSISTENT_SESSION_KEY,
+            'url.intended',
+        ]);
     }
 
     public static function pathFromReferer(Request $request): ?string

@@ -1,17 +1,26 @@
 <x-layouts::auth :title="__('Log in')">
+    @php
+        $authRedirect = \App\Support\AuthRedirect::validatedRedirect(request('redirect'))
+            ?? \App\Support\AuthRedirect::validatedRedirect(session('url.intended'));
+    @endphp
+
     <div class="flex flex-col gap-6">
         <x-auth-header :title="__('Log in to your account')" :description="__('Enter your email and password below to log in')" />
 
         <!-- Session Status -->
         <x-auth-session-status class="text-center" :status="session('status')" />
 
+        @if (filled($authRedirect))
+            <input type="hidden" data-auth-redirect value="{{ $authRedirect }}">
+        @endif
+
         <x-passkey-verify />
 
         <form method="POST" action="{{ route('login.store') }}" class="flex flex-col gap-6">
             @csrf
 
-            @if (filled($redirect = request('redirect')))
-                <input type="hidden" name="redirect" value="{{ $redirect }}">
+            @if (filled($authRedirect))
+                <input type="hidden" name="redirect" value="{{ $authRedirect }}">
             @endif
 
             <!-- Email Address -->
