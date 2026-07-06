@@ -20,6 +20,8 @@ new class extends Component implements HasActions, HasSchemas {
 
     public function mount(): void
     {
+        abort_unless(auth()->check(), 403);
+
         $this->syncLiveState();
     }
 
@@ -51,6 +53,8 @@ new class extends Component implements HasActions, HasSchemas {
             ->modalDescription(__('This will stop temperature recording for the current cook.'))
             ->modalSubmitActionLabel(__('Stop Cook'))
             ->action(function (): void {
+                abort_unless(auth()->check(), 403);
+
                 $maverick = app(MaverickService::class);
 
                 if (! $maverick->stop()) {
@@ -89,6 +93,8 @@ new class extends Component implements HasActions, HasSchemas {
 
     public function startCook(): void
     {
+        abort_unless(auth()->check(), 403);
+
         if (! Smoker::query()->exists()) {
             Flux::toast(
                 text: __('Create a smoker to start a cook.'),

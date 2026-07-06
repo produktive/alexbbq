@@ -30,6 +30,8 @@ class extends Component implements HasActions, HasForms {
 
     public function mount(): void
     {
+        abort_unless(auth()->check(), 403);
+
         $maverick = app(MaverickService::class);
         $maverick->reconcileOrphanedActiveCook();
 
@@ -59,6 +61,8 @@ class extends Component implements HasActions, HasForms {
 
     public function save(): void
     {
+        abort_unless(auth()->check(), 403);
+
         $state = $this->form->getState();
 
         $settings = UserSettings::forUser(Auth::user());

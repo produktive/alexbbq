@@ -28,6 +28,11 @@ new
 class extends Component implements HasActions, HasForms, HasTable {
     use InteractsWithActions, InteractsWithForms, InteractsWithTable;
 
+    public function mount(): void
+    {
+        abort_unless(auth()->check(), 403);
+    }
+
     public function addSmokerAction(): CreateAction
     {
         return CreateAction::make('addSmoker')
