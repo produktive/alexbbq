@@ -231,7 +231,7 @@ p.fi-ta-text-description,
 
 .cook-chart-overlay {
     @apply absolute inset-0 flex items-center justify-center rounded-lg;
-    background-color: var(--color-surface);
+    background-color: var(--color-surface-opaque);
 }
 
 .cook-card {
