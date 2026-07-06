@@ -3,10 +3,9 @@
     <head>
         @include('partials.head')
     </head>
-    <body class="min-h-screen bg-white antialiased dark:bg-linear-to-b dark:from-neutral-950 dark:to-neutral-900">
+    <body class="min-h-screen bg-white antialiased dark:bg-zinc-800">
         <div class="relative grid h-dvh flex-col items-center justify-center px-8 sm:px-0 lg:max-w-none lg:grid-cols-2 lg:px-0">
-            <div class="bg-muted relative hidden h-full flex-col p-10 text-white lg:flex dark:border-e dark:border-neutral-800">
-                <div class="absolute inset-0 bg-neutral-900"></div>
+            <div class="relative hidden h-full flex-col border-e border-zinc-200 bg-zinc-50 p-10 text-zinc-900 lg:flex dark:border-zinc-700 dark:bg-zinc-900 dark:text-white">
                 <a href="{{ route('home') }}" class="relative z-20 flex items-center gap-2 text-lg font-medium" wire:navigate>
                     <span class="flex size-10 shrink-0 items-center justify-center overflow-hidden">
                         <x-app-logo-icon class="size-10" />

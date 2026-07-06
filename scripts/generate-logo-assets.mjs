@@ -148,30 +148,37 @@ async function composeIcon(flameBuffer, background) {
         .toBuffer();
 }
 
-async function writeThemeSvg(flameBuffer, targetPath, backgroundHex) {
+async function composeTransparentIcon(flameBuffer) {
+    return sharp({
+        create: {
+            width: 512,
+            height: 512,
+            channels: 4,
+            background: { r: 0, g: 0, b: 0, alpha: 0 },
+        },
+    })
+        .composite([{ input: flameBuffer, gravity: 'center' }])
+        .png()
+        .toBuffer();
+}
+
+async function writeTransparentFaviconSvg(flameBuffer, targetPath) {
     const flameBase64 = flameBuffer.toString('base64');
 
     const svg = `<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Alex.bbq">
-  <rect width="512" height="512" fill="${backgroundHex}"/>
   <image href="data:image/png;base64,${flameBase64}" x="40" y="40" width="432" height="432"/>
 </svg>`;
 
     fs.writeFileSync(targetPath, svg);
 }
 
-async function writeAdaptiveFaviconSvg(flameBuffer, targetPath) {
+async function writeThemeSvg(flameBuffer, targetPath, backgroundHex) {
     const flameBase64 = flameBuffer.toString('base64');
 
     const svg = `<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Alex.bbq">
-  <style>
-    .icon-bg { fill: ${backgrounds.light.hex}; }
-    @media (prefers-color-scheme: dark) {
-      .icon-bg { fill: ${backgrounds.dark.hex}; }
-    }
-  </style>
-  <rect class="icon-bg" width="512" height="512"/>
+  <rect width="512" height="512" fill="${backgroundHex}"/>
   <image href="data:image/png;base64,${flameBase64}" x="40" y="40" width="432" height="432"/>
 </svg>`;
 
@@ -251,14 +258,16 @@ await sharp({
     .png()
     .toFile(path.join(root, 'public/pwa-icon-512-maskable.png'));
 
-await writeAdaptiveFaviconSvg(flame, path.join(root, 'public/favicon.svg'));
-await writeThemeSvg(flame, path.join(root, 'public/favicon-light.svg'), backgrounds.light.hex);
-await writeThemeSvg(flame, path.join(root, 'public/favicon-dark.svg'), backgrounds.dark.hex);
+await writeTransparentFaviconSvg(flame, path.join(root, 'public/favicon.svg'));
+await writeTransparentFaviconSvg(flame, path.join(root, 'public/favicon-light.svg'));
+await writeTransparentFaviconSvg(flame, path.join(root, 'public/favicon-dark.svg'));
 await writeThemeSvg(flame, path.join(root, 'public/pwa-icon.svg'), backgrounds.dark.hex);
 await writeThemeSvg(flame, path.join(root, 'resources/svg/logo-icon.svg'), backgrounds.dark.hex);
 await writeThemeSvg(flame, path.join(root, 'resources/svg/flame-mark.svg'), backgrounds.dark.hex);
 
-fs.writeFileSync(path.join(root, 'public/favicon.ico'), await writeFaviconIco(darkIcon));
+const favicon = await composeTransparentIcon(flame);
+
+fs.writeFileSync(path.join(root, 'public/favicon.ico'), await writeFaviconIco(favicon));
 
 console.log(`Generated logo assets from ${source}`);
 console.log(`  dark background: ${backgrounds.dark.hex}`);

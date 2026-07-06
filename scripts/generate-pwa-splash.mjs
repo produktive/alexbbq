@@ -6,13 +6,13 @@ import { generateImages } from 'pwa-asset-generator/dist/main.js';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const iconPath = path.join(root, 'public/pwa-icon-512.png');
-const outputDir = path.join(root, 'public/pwa-splash/v2');
+const outputDir = path.join(root, 'public/pwa-splash');
 const manifestPath = path.join(root, 'resources/data/pwa-splash-screens.json');
 
 // Keep aligned with config/pwa.php background_color and logo assets.
 const background = '#1d293d';
 const textColor = '#fafafa';
-const pathOverride = '/pwa-splash/v2';
+const pathOverride = '/pwa-splash';
 
 function escapeXml(value) {
     return value
@@ -83,10 +83,9 @@ async function addTitleToSplash(imagePath, appName) {
 await mkdir(outputDir, { recursive: true });
 await mkdir(path.dirname(manifestPath), { recursive: true });
 
-const legacyDir = path.join(root, 'public/pwa-splash');
-for (const file of await readdir(legacyDir)) {
+for (const file of await readdir(outputDir)) {
     if (file.endsWith('.png') && ! file.startsWith('.')) {
-        await unlink(path.join(legacyDir, file));
+        await unlink(path.join(outputDir, file));
     }
 }
 
