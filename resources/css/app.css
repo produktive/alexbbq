@@ -47,12 +47,13 @@
     /* Chart series — shared by probe cards, alert sliders, legend, and Chart.js. */
     --color-chart-food: var(--color-teal-400);
     --color-chart-bbq: var(--color-amber-600);
-    --color-chart-note: var(--color-rose-500);
+    --color-chart-note: var(--color-accent-content);
     --color-chart-food-label: var(--color-teal-800);
     --color-chart-bbq-label: var(--color-amber-900);
 
     /* Shared card surface — used by .cook-card, Filament sections/tables, push notifications. */
     --color-surface: color-mix(in oklab, var(--color-neutral-50) 50%, transparent);
+    --color-surface-scrim: color-mix(in oklab, var(--color-neutral-50) 70%, transparent);
     --color-surface-border: var(--color-neutral-200);
 }
 
@@ -64,11 +65,12 @@
 
         --color-chart-food: var(--color-teal-300);
         --color-chart-bbq: var(--color-amber-500);
-        --color-chart-note: var(--color-rose-400);
+        --color-chart-note: var(--color-accent-content);
         --color-chart-food-label: var(--color-teal-300);
         --color-chart-bbq-label: var(--color-amber-300);
 
         --color-surface: color-mix(in oklab, var(--color-neutral-900) 50%, transparent);
+        --color-surface-scrim: color-mix(in oklab, var(--color-neutral-900) 70%, transparent);
         --color-surface-border: var(--color-neutral-700);
     }
 }
@@ -204,7 +206,7 @@ p.fi-ta-text-description,
 
 .cook-chart-overlay {
     @apply absolute inset-0 flex items-center justify-center rounded-lg;
-    background-color: var(--color-surface);
+    background-color: var(--color-surface-scrim);
 }
 
 .cook-card {
