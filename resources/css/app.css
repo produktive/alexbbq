@@ -55,7 +55,6 @@
     --color-surface: color-mix(in oklab, var(--color-neutral-50) 50%, transparent);
     /* Solid equivalent of --color-surface over the Flux page background (body: white). */
     --color-surface-opaque: color-mix(in oklab, var(--color-neutral-50) 50%, var(--color-white));
-    --color-surface-scrim: color-mix(in oklab, var(--color-neutral-50) 65%, transparent);
     --color-surface-border: var(--color-neutral-200);
 }
 
@@ -74,7 +73,6 @@
         --color-surface: color-mix(in oklab, var(--color-neutral-900) 50%, transparent);
         /* Solid equivalent of --color-surface over the Flux page background (body: zinc-800). */
         --color-surface-opaque: color-mix(in oklab, var(--color-neutral-900) 50%, var(--color-zinc-800));
-        --color-surface-scrim: color-mix(in oklab, var(--color-neutral-900) 65%, transparent);
         --color-surface-border: var(--color-neutral-700);
     }
 }
@@ -233,7 +231,7 @@ p.fi-ta-text-description,
 
 .cook-chart-overlay {
     @apply absolute inset-0 flex items-center justify-center rounded-lg;
-    background-color: var(--color-surface-scrim);
+    background-color: var(--color-surface);
 }
 
 .cook-card {
