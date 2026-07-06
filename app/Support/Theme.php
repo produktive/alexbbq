@@ -31,7 +31,7 @@ class Theme
     public static function filamentPrimary(): array
     {
         return self::PRIMARY_HEX === null
-            ? Color::Zinc
+            ? Color::Pink
             : Color::hex(self::PRIMARY_HEX);
     }
 }

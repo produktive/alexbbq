@@ -9,7 +9,7 @@ const defaultSource = path.join(root, 'resources/logo/logo-source.png');
 const source = sourceArg ? path.resolve(sourceArg) : defaultSource;
 
 const backgrounds = {
-    dark: { r: 18, g: 8, b: 28, hex: '#12081c' },
+    dark: { r: 29, g: 41, b: 61, hex: '#1d293d' },
     light: { r: 255, g: 255, b: 255, hex: '#ffffff' },
 };
 

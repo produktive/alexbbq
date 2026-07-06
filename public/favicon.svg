@@ -3,7 +3,7 @@
   <style>
     .icon-bg { fill: #ffffff; }
     @media (prefers-color-scheme: dark) {
-      .icon-bg { fill: #12081c; }
+      .icon-bg { fill: #1d293d; }
     }
   </style>
   <rect class="icon-bg" width="512" height="512"/>

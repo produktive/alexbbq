@@ -10,7 +10,7 @@ const outputDir = path.join(root, 'public/pwa-splash/v2');
 const manifestPath = path.join(root, 'resources/data/pwa-splash-screens.json');
 
 // Keep aligned with config/pwa.php background_color and logo assets.
-const background = '#12081c';
+const background = '#1d293d';
 const textColor = '#fafafa';
 const pathOverride = '/pwa-splash/v2';
 
