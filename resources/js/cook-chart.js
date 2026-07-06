@@ -45,6 +45,16 @@ function formatClock(startSecondsOfDay, elapsedSeconds, { includeSeconds = true 
 
 const MIN_DRAG_PX = 6;
 const MIN_ZOOM_RANGE_SECONDS = 300;
+
+function xAxisIsZoomed(chart, originalXBounds) {
+    if (! chart?.scales?.x || ! originalXBounds) {
+        return false;
+    }
+
+    const xScale = chart.scales.x;
+
+    return xScale.min !== originalXBounds.min || xScale.max !== originalXBounds.max;
+}
 const MENU_MIN_WIDTH = 224; // matches min-w-56
 const TAP_TOLERANCE_PX = 14; // x-axis only — precise even when points are dense
 
@@ -289,6 +299,7 @@ function dataHasNotedReadings(chartData) {
 export default function cookChart(initialData, canModify = false, live = false, cookId = null) {
     let data = initialData;
     let chart = null;
+    let originalXBounds = null;
     let handlers = {};
     let chartUpdateListener = null;
     let chartRefreshListener = null;
@@ -471,7 +482,10 @@ export default function cookChart(initialData, canModify = false, live = false, 
                             pan: {
                                 enabled: panEnabled,
                                 mode: 'x',
-                                onPanComplete: () => this.syncZoomPanState(),
+                                onPanComplete: () => {
+                                    this.syncZoomState();
+                                    this.deferredSyncZoomPanState();
+                                },
                             },
                             zoom: {
                                 mode: 'x',
@@ -482,7 +496,8 @@ export default function cookChart(initialData, canModify = false, live = false, 
                                 pinch: {
                                     enabled: explore,
                                 },
-                                onZoomComplete: () => this.syncZoomPanState(),
+                                onZoom: () => this.syncZoomState(),
+                                onZoomComplete: () => this.deferredSyncZoomPanState(),
                             },
                         },
                         tooltip: {
@@ -522,12 +537,13 @@ export default function cookChart(initialData, canModify = false, live = false, 
             });
 
             this.bindCanvasEvents();
+            this.captureOriginalXBounds();
             this.syncZoomState();
             this.syncLegendVisibility();
             this.syncNotedReadings();
             this.applyCanvasTouchAction();
 
-            if (chart.isZoomedOrPanned()) {
+            if (this.chartXIsZoomed()) {
                 chart.resetZoom();
                 this.syncZoomState();
             }
@@ -549,8 +565,33 @@ export default function cookChart(initialData, canModify = false, live = false, 
             return canModify && this.editMode;
         },
 
+        captureOriginalXBounds() {
+            if (! chart?.scales?.x) {
+                originalXBounds = null;
+
+                return;
+            }
+
+            originalXBounds = {
+                min: chart.scales.x.min,
+                max: chart.scales.x.max,
+            };
+        },
+
+        chartXIsZoomed() {
+            return xAxisIsZoomed(chart, originalXBounds);
+        },
+
         syncZoomState() {
-            this.isZoomed = chart?.isZoomedOrPanned() ?? false;
+            this.isZoomed = this.chartXIsZoomed();
+        },
+
+        deferredSyncZoomPanState() {
+            requestAnimationFrame(() => {
+                if (chart) {
+                    this.syncZoomPanState();
+                }
+            });
         },
 
         applyCanvasTouchAction() {
@@ -572,7 +613,7 @@ export default function cookChart(initialData, canModify = false, live = false, 
 
             const explore = this.exploreActive();
             const zoomOptions = chart.options.plugins.zoom;
-            const isZoomed = chart.isZoomedOrPanned();
+            const isZoomed = this.chartXIsZoomed();
             const panEnabled = explore && (! this.touchEditing || isZoomed);
             const zoomEnabled = explore;
             const changed = zoomOptions.pan.enabled !== panEnabled
@@ -592,7 +633,7 @@ export default function cookChart(initialData, canModify = false, live = false, 
         },
 
         resetZoom() {
-            if (! chart?.isZoomedOrPanned()) {
+            if (! this.chartXIsZoomed()) {
                 return;
             }
 
@@ -705,6 +746,7 @@ export default function cookChart(initialData, canModify = false, live = false, 
                 chart = null;
             }
 
+            originalXBounds = null;
             highlightedPointId = null;
         },
 
@@ -734,7 +776,7 @@ export default function cookChart(initialData, canModify = false, live = false, 
         },
 
         onDoubleClick(e) {
-            if (! this.exploreActive() || ! chart?.isZoomedOrPanned()) {
+            if (! this.exploreActive() || ! this.chartXIsZoomed()) {
                 return;
             }
 
@@ -1129,7 +1171,7 @@ export default function cookChart(initialData, canModify = false, live = false, 
                 return;
             }
 
-            const preserveZoom = chart.isZoomedOrPanned();
+            const preserveZoom = this.chartXIsZoomed();
             const xBounds = preserveZoom && this.isValidZoomRange(chart.scales.x.min, chart.scales.x.max)
                 ? { min: chart.scales.x.min, max: chart.scales.x.max }
                 : null;
@@ -1151,6 +1193,11 @@ export default function cookChart(initialData, canModify = false, live = false, 
             }
 
             chart.update();
+
+            if (! xBounds) {
+                this.captureOriginalXBounds();
+            }
+
             this.syncZoomPanState();
             this.syncLegendVisibility();
             this.syncNotedReadings();
