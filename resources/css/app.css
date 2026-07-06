@@ -97,7 +97,7 @@
 input:focus[data-flux-control],
 textarea:focus[data-flux-control],
 select:focus[data-flux-control] {
-    @apply outline-hidden ring-2 ring-accent ring-offset-2 ring-offset-accent-foreground;
+    @apply outline-hidden ring-2 ring-accent ring-offset-2 ring-offset-accent-foreground dark:ring-offset-0;
 }
 
 /* \[:where(&)\]:size-4 {
@@ -368,7 +368,7 @@ p.fi-ta-text-description,
 }
 
 .cook-chart-legend-item:focus-visible {
-    @apply rounded-sm outline-hidden ring-2 ring-accent ring-offset-2 ring-offset-accent-foreground;
+    @apply rounded-sm outline-hidden ring-2 ring-accent ring-offset-2 ring-offset-accent-foreground dark:ring-offset-0;
 }
 
 .cook-chart-legend-swatch {
