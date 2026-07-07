@@ -54,14 +54,11 @@ new class extends Component {
             :chart-wire-key="'home-chart-'.$this->displayCook->id.'-'.($this->isLive ? 'live' : 'static')"
         >
             @unless ($this->isLive)
-                <x-slot:chartToolbar>
-                    <flux:button href="{{ route('cooks.view', $this->displayCook) }}"
-                         size="sm"
-                         wire:navigate
-                    >
+                <x-slot:chartMenu>
+                    <flux:menu.item :href="route('cooks.view', $this->displayCook)" wire:navigate>
                         View Cook Page
-                    </flux:button>
-                </x-slot:chartToolbar>
+                    </flux:menu.item>
+                </x-slot:chartMenu>
             @endunless
         </x-cook-showcase>
     @else

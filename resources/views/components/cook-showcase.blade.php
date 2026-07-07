@@ -27,7 +27,13 @@
             :cook="$cook"
             :editable="$editableChart"
             :live="$isLive"
-        />
+        >
+            @isset($chartMenu)
+                <x-slot:menu>
+                    {{ $chartMenu }}
+                </x-slot:menu>
+            @endisset
+        </x-cook-chart>
     </div>
 
     @if (filled($cook->getRawOriginal('description')))
@@ -35,10 +41,4 @@
             <x-cook-description :html="$cook->renderRichContent('description')" />
         </div>
     @endif
-
-    @isset($chartToolbar)
-        <div class="cook-chart-card-actions">
-            {{ $chartToolbar }}
-        </div>
-    @endisset
 </div>
