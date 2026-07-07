@@ -13,10 +13,28 @@
     <div
         wire:ignore
         x-data="window.cookChart(null, @js($canEdit), @js($live), @js($cook->id))"
+        @class(['cook-chart-shell' => isset($menu)])
         {{ $attributes }}
     >
+    @isset($menu)
+        <div class="cook-chart-menu">
+            <flux:dropdown position="bottom" align="end">
+                <flux:button
+                    variant="ghost"
+                    size="sm"
+                    icon="ellipsis-vertical"
+                    aria-label="Cook chart options"
+                />
+
+                <flux:menu>
+                    {{ $menu }}
+                </flux:menu>
+            </flux:dropdown>
+        </div>
+    @endisset
+
     @if ($canEdit)
-        <div class="cook-chart-panel-header">
+        <div @class(['cook-chart-panel-header', 'pe-10' => isset($menu)])>
             <div class="flex min-w-0 flex-col items-start gap-2">
                 <label class="inline-flex w-fit cursor-pointer items-center gap-2">
                     <flux:switch x-model="editMode" />
@@ -64,50 +82,31 @@
             </span>
         </div>
 
-        <div class="cook-chart-legend-bar__controls">
-            <div
-                class="cook-chart-legend-bar__zoom"
-                x-show="isZoomed || (! canModify && exploreActive())"
+        <div
+            class="cook-chart-legend-bar__zoom"
+            x-show="isZoomed || (! canModify && exploreActive())"
+            x-cloak
+        >
+            <flux:text
+                x-show="! isZoomed && ! canModify"
                 x-cloak
+                size="md"
+                class="cook-chart-legend-zoom-hint"
             >
-                <flux:text
-                    x-show="! isZoomed && ! canModify"
-                    x-cloak
-                    size="md"
-                    class="cook-chart-legend-zoom-hint"
-                >
-                    <span x-show="touchEditing">Pinch to zoom</span>
-                    <span x-show="! touchEditing">Ctrl+scroll to zoom</span>
-                </flux:text>
+                <span x-show="touchEditing">Pinch to zoom</span>
+                <span x-show="! touchEditing">Ctrl+scroll to zoom</span>
+            </flux:text>
 
-                <flux:button
-                    size="sm"
-                    variant="ghost"
-                    class="shrink-0"
-                    x-show="isZoomed"
-                    x-cloak
-                    @click="resetZoom()"
-                >
-                    Reset Zoom
-                </flux:button>
-            </div>
-
-            @isset($menu)
-                <div class="cook-chart-legend-bar__menu">
-                    <flux:dropdown position="bottom" align="end">
-                        <flux:button
-                            variant="ghost"
-                            size="sm"
-                            icon="ellipsis-vertical"
-                            aria-label="Cook chart options"
-                        />
-
-                        <flux:menu>
-                            {{ $menu }}
-                        </flux:menu>
-                    </flux:dropdown>
-                </div>
-            @endisset
+            <flux:button
+                size="sm"
+                variant="ghost"
+                class="shrink-0"
+                x-show="isZoomed"
+                x-cloak
+                @click="resetZoom()"
+            >
+                Reset Zoom
+            </flux:button>
         </div>
     </div>
 
