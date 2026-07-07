@@ -28,13 +28,13 @@
             :editable="$editableChart"
             :live="$isLive"
         />
-
-        @if (filled($cook->getRawOriginal('description')))
-            <div class="cook-card-notes">
-                <x-cook-description :html="$cook->renderRichContent('description')" />
-            </div>
-        @endif
     </div>
+
+    @if (filled($cook->getRawOriginal('description')))
+        <div class="cook-showcase-notes">
+            <x-cook-description :html="$cook->renderRichContent('description')" />
+        </div>
+    @endif
 
     @isset($chartToolbar)
         <div class="cook-chart-card-actions">

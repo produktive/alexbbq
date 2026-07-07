@@ -57,7 +57,6 @@ new class extends Component {
                 <x-slot:chartToolbar>
                     <flux:button href="{{ route('cooks.view', $this->displayCook) }}"
                          size="sm"
-                         variant="ghost"
                          wire:navigate
                     >
                         View Cook Page

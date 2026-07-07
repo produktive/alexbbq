@@ -433,8 +433,8 @@ p.fi-ta-text-description,
     @apply pointer-events-none absolute border-x border-zinc-400/50 bg-zinc-400/20 dark:border-zinc-500/50 dark:bg-zinc-500/20;
 }
 
-.cook-card-notes {
-    @apply mt-6;
+.cook-showcase-notes {
+    @apply px-1 sm:px-2;
 }
 
 @media (orientation: landscape) and (max-height: 500px) and (max-width: 896px) {
@@ -459,8 +459,8 @@ p.fi-ta-text-description,
         @apply mb-2;
     }
 
-    .cook-chart-viewport .cook-card-notes {
-        @apply mt-5;
+    .cook-chart-viewport .cook-showcase-notes {
+        @apply px-0;
     }
 
     .cook-chart-viewport .cook-chart {

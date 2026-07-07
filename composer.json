@@ -23,7 +23,7 @@
         "laravel-notification-channels/webpush": "^11.0",
         "laravel/chisel": "^0.1.1",
         "laravel/fortify": "^1.37.2",
-        "laravel/framework": "^13.18.1",
+        "laravel/framework": "^13.19.0",
         "laravel/reverb": "^1.10.2",
         "laravel/tinker": "^3.0.2",
         "livewire/flux": "^2.15.0",
@@ -37,7 +37,7 @@
         "laravel/sail": "^1.63",
         "mockery/mockery": "^1.6.12",
         "nunomaduro/collision": "^8.9.4",
-        "pestphp/pest": "^4.7.4",
+        "pestphp/pest": "^4.7.5",
         "pestphp/pest-plugin-laravel": "^4.1"
     },
     "autoload": {
