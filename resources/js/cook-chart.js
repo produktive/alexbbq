@@ -295,6 +295,7 @@ export default function cookChart(initialData, canModify = false, live = false, 
     let chartUpdateListener = null;
     let chartRefreshListener = null;
     let themeObserver = null;
+    let resettingZoomWithAnimation = false;
     const shouldLazyLoad = initialData === null && cookId !== null;
     const touchEditing = window.matchMedia('(pointer: coarse)').matches;
 
@@ -490,7 +491,13 @@ export default function cookChart(initialData, canModify = false, live = false, 
                                     enabled: explore,
                                 },
                                 onZoom: () => this.syncZoomState(),
-                                onZoomComplete: () => this.syncZoomState(),
+                                onZoomComplete: () => {
+                                    if (resettingZoomWithAnimation) {
+                                        return;
+                                    }
+
+                                    this.syncZoomState();
+                                },
                             },
                         },
                         tooltip: {
@@ -615,14 +622,46 @@ export default function cookChart(initialData, canModify = false, live = false, 
             this.syncZoomState();
         },
 
+        zoomAnimationDurationMs() {
+            if (! chart || chart.options.animation === false || chart._animationsDisabled) {
+                return 0;
+            }
+
+            const animation = chart.options.animation;
+
+            if (typeof animation === 'object' && animation.duration != null) {
+                return animation.duration;
+            }
+
+            return 1000;
+        },
+
+        scheduleZoomStateSyncAfterAnimation() {
+            const duration = this.zoomAnimationDurationMs();
+
+            if (duration <= 0) {
+                this.syncZoomState();
+                this.syncZoomPanState();
+
+                return;
+            }
+
+            resettingZoomWithAnimation = true;
+
+            window.setTimeout(() => {
+                resettingZoomWithAnimation = false;
+                this.syncZoomState();
+                this.syncZoomPanState();
+            }, duration);
+        },
+
         resetZoom() {
             if (! this.chartXIsZoomed()) {
                 return;
             }
 
-            chart.resetZoom('none');
-            this.syncZoomState();
-            this.syncZoomPanState();
+            chart.resetZoom();
+            this.scheduleZoomStateSyncAfterAnimation();
         },
 
         toggleDataset(datasetIndex) {
