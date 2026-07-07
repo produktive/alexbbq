@@ -12,10 +12,6 @@ window.cookChart = cookChart;
 window.cookDescriptionGallery = cookDescriptionGallery;
 window.liveCookTimer = liveCookTimer;
 
-if (window.Alpine) {
-    registerLiveCookTimer(window.Alpine);
-}
-
 document.addEventListener('alpine:init', () => {
     registerLiveCookTimer(window.Alpine);
 });
@@ -31,6 +27,8 @@ function initFilamentAlpineComponents() {
 }
 
 document.addEventListener('livewire:navigated', () => {
+    syncAppBadgeFromServer();
+
     requestAnimationFrame(() => {
         initFilamentAlpineComponents();
         initLiveCookTimers();
@@ -46,7 +44,3 @@ listenForAppBadgeSync();
 syncAppBadgeFromServer();
 listenForOfflineStatus();
 warmOfflineCacheForCurrentPage();
-
-document.addEventListener('livewire:navigated', () => {
-    syncAppBadgeFromServer();
-});

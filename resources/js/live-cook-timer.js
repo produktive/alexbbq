@@ -32,23 +32,39 @@ export default function liveCookTimer(beganAtIso = null) {
         connecting: ! beganAtIso,
         online: navigator.onLine,
         timer: null,
+        onlineHandler: null,
+        offlineHandler: null,
 
         init() {
             this.sync();
             this.timer = setInterval(() => this.sync(), 1000);
 
-            window.addEventListener('online', () => {
+            this.onlineHandler = () => {
                 this.online = true;
-            });
+            };
 
-            window.addEventListener('offline', () => {
+            this.offlineHandler = () => {
                 this.online = false;
-            });
+            };
+
+            window.addEventListener('online', this.onlineHandler);
+            window.addEventListener('offline', this.offlineHandler);
         },
 
         destroy() {
             if (this.timer) {
                 clearInterval(this.timer);
+                this.timer = null;
+            }
+
+            if (this.onlineHandler) {
+                window.removeEventListener('online', this.onlineHandler);
+                this.onlineHandler = null;
+            }
+
+            if (this.offlineHandler) {
+                window.removeEventListener('offline', this.offlineHandler);
+                this.offlineHandler = null;
             }
         },
 

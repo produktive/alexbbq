@@ -487,7 +487,6 @@ export default function cookChart(initialData, canModify = false, live = false, 
                                         return false;
                                     }
                                 },
-                                onPanComplete: () => this.syncZoomState(),
                             },
                             zoom: {
                                 mode: 'x',
@@ -499,7 +498,6 @@ export default function cookChart(initialData, canModify = false, live = false, 
                                     enabled: explore,
                                 },
                                 onZoom: () => this.syncZoomState(),
-                                onZoomComplete: () => this.syncZoomState(),
                             },
                         },
                         tooltip: {
@@ -543,7 +541,6 @@ export default function cookChart(initialData, canModify = false, live = false, 
             this.syncZoomState();
             this.syncLegendVisibility();
             this.syncNotedReadings();
-            this.applyCanvasTouchAction();
 
             if (this.chartXIsZoomed()) {
                 chart.resetZoom();
@@ -597,7 +594,7 @@ export default function cookChart(initialData, canModify = false, live = false, 
             const canvas = this.$refs.canvas;
 
             if (canvas) {
-                canvas.style.touchAction = this.isZoomed ? 'none' : COARSE_TOUCH_ACTION;
+                canvas.classList.toggle('cook-chart-canvas--zoomed', this.isZoomed);
             }
         },
 

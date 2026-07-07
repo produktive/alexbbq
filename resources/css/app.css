@@ -227,6 +227,10 @@ p.fi-ta-text-description,
     .cook-chart canvas {
         touch-action: pan-y;
     }
+
+    .cook-chart canvas.cook-chart-canvas--zoomed {
+        touch-action: none;
+    }
 }
 
 .cook-chart-overlay {
@@ -485,7 +489,6 @@ html:has(.offline-status-banner:not([hidden])) body {
  *   - BrowserKit/Sources/Common/Theming/FxColors.swift (Violet50, Pink40, Orange50, Yellow20)
  */
 :root {
-    --livewire-progress-bar-color: #ff7139;
     --firefox-progress-violet-50: #9059ff;
     --firefox-progress-pink-40: #ff4aa2;
     --firefox-progress-orange-50: #ff7139;
@@ -510,8 +513,4 @@ html:has(.offline-status-banner:not([hidden])) body {
     opacity: 0.95 !important;
     transform: none !important;
     width: 72px !important;
-}
-
-#nprogress .spinner {
-    display: none !important;
 }
