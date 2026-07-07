@@ -1,6 +1,7 @@
 import Chart from 'chart.js/auto';
 import zoomPlugin from 'chartjs-plugin-zoom';
 import Hammer from 'hammerjs';
+import { xAxisIsZoomed } from './cook-chart-zoom.js';
 
 const COARSE_TOUCH_ACTION = 'pan-y';
 
@@ -45,16 +46,6 @@ function formatClock(startSecondsOfDay, elapsedSeconds, { includeSeconds = true 
 
 const MIN_DRAG_PX = 6;
 const MIN_ZOOM_RANGE_SECONDS = 300;
-
-function xAxisIsZoomed(chart, originalXBounds) {
-    if (! chart?.scales?.x || ! originalXBounds) {
-        return false;
-    }
-
-    const xScale = chart.scales.x;
-
-    return xScale.min !== originalXBounds.min || xScale.max !== originalXBounds.max;
-}
 const MENU_MIN_WIDTH = 224; // matches min-w-56
 const TAP_TOLERANCE_PX = 14; // x-axis only — precise even when points are dense
 
@@ -1175,16 +1166,14 @@ export default function cookChart(initialData, canModify = false, live = false, 
             });
 
             if (xBounds) {
-                chart.options.scales.x.min = xBounds.min;
-                chart.options.scales.x.max = xBounds.max;
+                chart.zoomScale('x', xBounds, 'none');
+            } else if (preserveZoom) {
+                chart.resetZoom('none');
+                this.captureOriginalXBounds();
             } else {
                 delete chart.options.scales.x.min;
                 delete chart.options.scales.x.max;
-            }
-
-            chart.update();
-
-            if (! xBounds) {
+                chart.update();
                 this.captureOriginalXBounds();
             }
 

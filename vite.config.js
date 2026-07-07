@@ -2,6 +2,7 @@ import {
     defineConfig,
     loadEnv,
 } from 'vite';
+import { configDefaults } from 'vitest/config';
 import laravel from 'laravel-vite-plugin';
 import { bunny } from 'laravel-vite-plugin/fonts';
 import tailwindcss from "@tailwindcss/vite";
@@ -21,6 +22,11 @@ export default defineConfig(({ mode }) => {
     const useHerdTls = hostname.endsWith('.test');
 
     return {
+        test: {
+            environment: 'node',
+            include: ['resources/js/**/*.test.js'],
+            exclude: [...configDefaults.exclude],
+        },
         plugins: [
             laravel({
                 input: [
