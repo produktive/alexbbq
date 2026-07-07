@@ -477,3 +477,41 @@ html:has(.offline-status-banner:not([hidden])) body {
 .offline-status-banner[hidden] {
     display: none;
 }
+
+/*
+ * Livewire navigate progress bar — Firefox iOS GradientProgressBar colors.
+ * Source: mozilla-mobile/firefox-ios
+ *   - focus-ios/.../Colors.xcassets/GradientFirst|Second|Third.colorset
+ *   - BrowserKit/Sources/Common/Theming/FxColors.swift (Violet50, Pink40, Orange50, Yellow20)
+ */
+:root {
+    --livewire-progress-bar-color: #ff7139;
+    --firefox-progress-violet-50: #9059ff;
+    --firefox-progress-pink-40: #ff4aa2;
+    --firefox-progress-orange-50: #ff7139;
+    --firefox-progress-yellow-20: #ffea80;
+}
+
+#nprogress .bar {
+    background: linear-gradient(
+        90deg,
+        var(--firefox-progress-violet-50) 0%,
+        var(--firefox-progress-pink-40) 33%,
+        var(--firefox-progress-orange-50) 66%,
+        var(--firefox-progress-yellow-20) 100%
+    ) !important;
+    height: 3px !important;
+}
+
+#nprogress .peg {
+    box-shadow:
+        0 0 10px 1px color-mix(in srgb, var(--firefox-progress-yellow-20) 80%, transparent),
+        0 0 4px 0 color-mix(in srgb, var(--firefox-progress-orange-50) 75%, white) !important;
+    opacity: 0.95 !important;
+    transform: none !important;
+    width: 72px !important;
+}
+
+#nprogress .spinner {
+    display: none !important;
+}

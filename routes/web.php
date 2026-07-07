@@ -16,7 +16,7 @@ Route::get('/stats', fn () => view('stats', ['stats' => CookStats::summarize()])
 Route::get('/live/cook-status', [LiveCookController::class, 'status'])->name('live.cook-status');
 Route::get('/cooks/{cook}/chart-data', [LiveCookController::class, 'chartData'])->whereNumber('cook')->name('cooks.chart-data');
 
-Route::middleware(['auth'])->group(function () {
+Route::middleware('auth')->group(function () {
     Route::livewire('/cooks/new', 'pages::cooks.new')->name('cooks.new');
     Route::livewire('/cooks/{cook}/edit', 'pages::cooks.edit')->whereNumber('cook')->name('cooks.edit');
     Route::livewire('alerts', 'pages::alerts')->name('alerts');
