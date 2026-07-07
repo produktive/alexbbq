@@ -9,12 +9,12 @@
     $canEdit = $editable && $cook->isOwnedBy(auth()->id());
 @endphp
 
-<div
-    @if (filled($wireKey)) wire:key="{{ $wireKey }}" @endif
-    wire:ignore
-    x-data="window.cookChart(null, @js($canEdit), @js($live), @js($cook->id))"
-    {{ $attributes }}
->
+<div @if (filled($wireKey)) wire:key="{{ $wireKey }}" @endif>
+    <div
+        wire:ignore
+        x-data="window.cookChart(null, @js($canEdit), @js($live), @js($cook->id))"
+        {{ $attributes }}
+    >
     @if ($canEdit)
         <div class="cook-chart-panel-header">
             <div class="flex min-w-0 flex-col items-start gap-2">
@@ -160,5 +160,6 @@
                 </div>
             </template>
         @endif
+    </div>
     </div>
 </div>

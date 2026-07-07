@@ -6,6 +6,7 @@
     ['food' => $foodTemp, 'bbq' => $bbqTemp] = $cook->latestProbeTemps();
 @endphp
 
+<div wire:key="cook-probe-cards-{{ $cook->id }}">
 <div
     {{ $attributes->class('grid grid-cols-2 gap-3') }}
     wire:ignore
@@ -37,4 +38,5 @@
             {{ $bbqTemp === null ? '—' : "{$bbqTemp}°" }}
         </p>
     </div>
+</div>
 </div>

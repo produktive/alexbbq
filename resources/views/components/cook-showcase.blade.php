@@ -5,7 +5,11 @@
     'chartWireKey' => null,
 ])
 
-<div {{ $attributes->class('cook-chart-viewport flex flex-col gap-4') }}>
+@php
+    $showcaseKey = $chartWireKey ?? 'cook-showcase-'.$cook->id.'-'.($isLive ? 'live' : 'static');
+@endphp
+
+<div wire:key="{{ $showcaseKey }}" {{ $attributes->class('cook-chart-viewport flex flex-col gap-4') }}>
     <x-cook-header :cook="$cook" :is-live="$isLive">
         @isset($actions)
             <x-slot:actions>
@@ -23,7 +27,6 @@
             :cook="$cook"
             :editable="$editableChart"
             :live="$isLive"
-            :wire-key="$chartWireKey"
         />
 
         @if (filled($cook->getRawOriginal('description')))

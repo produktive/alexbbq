@@ -32,6 +32,7 @@ new class extends Component {
 }
 ?>
 <div
+    wire:key="live-cook-indicator-{{ $cookId ?? 'idle' }}"
     x-data="{ online: navigator.onLine }"
     x-on:online.window="online = true"
     x-on:offline.window="online = false"
