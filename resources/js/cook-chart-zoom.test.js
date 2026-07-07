@@ -14,6 +14,13 @@ describe('xAxisIsZoomed', () => {
         expect(xAxisIsZoomed(chart, bounds)).toBe(false);
     });
 
+    it('returns false when scale matches original bounds within tolerance', () => {
+        const bounds = { min: 0, max: 600 };
+
+        expect(xAxisIsZoomed({ scales: { x: { min: 0.4, max: 600 } } }, bounds)).toBe(false);
+        expect(xAxisIsZoomed({ scales: { x: { min: 0, max: 599.6 } } }, bounds)).toBe(false);
+    });
+
     it('returns true when min or max differs from original bounds', () => {
         const bounds = { min: 0, max: 600 };
 
