@@ -434,7 +434,7 @@ export default function cookChart(initialData, canModify = false, live = false, 
             patchHammerForPageScroll();
 
             const explore = this.exploreActive();
-            const panEnabled = explore && (! this.touchEditing || this.isZoomed);
+            const panEnabled = explore;
 
             chart = new Chart(this.$refs.canvas, {
                 type: 'line',
@@ -482,10 +482,12 @@ export default function cookChart(initialData, canModify = false, live = false, 
                             pan: {
                                 enabled: panEnabled,
                                 mode: 'x',
-                                onPanComplete: () => {
-                                    this.syncZoomState();
-                                    this.deferredSyncZoomPanState();
+                                onPanStart: () => {
+                                    if (this.touchEditing && ! this.chartXIsZoomed()) {
+                                        return false;
+                                    }
                                 },
+                                onPanComplete: () => this.syncZoomState(),
                             },
                             zoom: {
                                 mode: 'x',
@@ -497,7 +499,7 @@ export default function cookChart(initialData, canModify = false, live = false, 
                                     enabled: explore,
                                 },
                                 onZoom: () => this.syncZoomState(),
-                                onZoomComplete: () => this.deferredSyncZoomPanState(),
+                                onZoomComplete: () => this.syncZoomState(),
                             },
                         },
                         tooltip: {
@@ -584,14 +586,7 @@ export default function cookChart(initialData, canModify = false, live = false, 
 
         syncZoomState() {
             this.isZoomed = this.chartXIsZoomed();
-        },
-
-        deferredSyncZoomPanState() {
-            requestAnimationFrame(() => {
-                if (chart) {
-                    this.syncZoomPanState();
-                }
-            });
+            this.applyCanvasTouchAction();
         },
 
         applyCanvasTouchAction() {
@@ -602,7 +597,7 @@ export default function cookChart(initialData, canModify = false, live = false, 
             const canvas = this.$refs.canvas;
 
             if (canvas) {
-                canvas.style.touchAction = COARSE_TOUCH_ACTION;
+                canvas.style.touchAction = this.isZoomed ? 'none' : COARSE_TOUCH_ACTION;
             }
         },
 
@@ -613,8 +608,7 @@ export default function cookChart(initialData, canModify = false, live = false, 
 
             const explore = this.exploreActive();
             const zoomOptions = chart.options.plugins.zoom;
-            const isZoomed = this.chartXIsZoomed();
-            const panEnabled = explore && (! this.touchEditing || isZoomed);
+            const panEnabled = explore;
             const zoomEnabled = explore;
             const changed = zoomOptions.pan.enabled !== panEnabled
                 || zoomOptions.zoom.wheel.enabled !== zoomEnabled
@@ -629,7 +623,6 @@ export default function cookChart(initialData, canModify = false, live = false, 
             }
 
             this.syncZoomState();
-            this.applyCanvasTouchAction();
         },
 
         resetZoom() {
