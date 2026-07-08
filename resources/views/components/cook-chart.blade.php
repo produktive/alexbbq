@@ -54,7 +54,7 @@
         </div>
     @endif
 
-    <div @class(['cook-chart-legend-bar', 'pe-10' => isset($menu)])>
+    <div @class(['cook-chart-legend-bar', 'pe-10' => isset($menu) && ! $canEdit])>
         <div class="cook-chart-legend-bar__series" role="group" aria-label="Chart series">
             <button
                 type="button"
