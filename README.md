@@ -9,6 +9,7 @@ Built with **Laravel 13**, **Livewire 4**, **Filament 5**, and **Livewire Flux**
 ## Table of contents
 
 - [Overview](#overview)
+- [Screenshots](#screenshots)
 - [Features](#features)
 - [Architecture](#architecture)
 - [Requirements](#requirements)
@@ -34,6 +35,68 @@ cook (or the most recent finished cook) with an interactive temperature chart. A
 
 ---
 
+## Screenshots
+
+Captured from a local install with seeded data (`admin@admin.com` / `password`). Regenerate with `npm run screenshots` (requires [Playwright](https://playwright.dev/) Chromium; set `APP_URL` if not using Laravel Herd).
+
+### Dashboard
+
+The home page shows the active cook when one is running; otherwise it displays the most recent finished cook with chart, legend, and cook notes below the chart card.
+
+| Desktop | Mobile |
+|---------|--------|
+| ![Dashboard on desktop](docs/screenshots/home-desktop.png) | ![Dashboard on mobile](docs/screenshots/home-mobile.png) |
+
+### Login
+
+Email/password and passkey sign-in.
+
+| Desktop | Mobile |
+|---------|--------|
+| ![Login on desktop](docs/screenshots/login-desktop.png) | ![Login on mobile](docs/screenshots/login-mobile.png) |
+
+### Cook history
+
+Browse finished cooks with date, duration, and description preview.
+
+| Desktop | Mobile |
+|---------|--------|
+| ![Cook history on desktop](docs/screenshots/cooks-desktop.png) | ![Cook history on mobile](docs/screenshots/cooks-mobile.png) |
+
+### Cook page
+
+Full chart for a finished cook. Owners can edit readings and notes from the chart (⋮ menu → **Edit Details**).
+
+| Desktop | Mobile |
+|---------|--------|
+| ![Cook page on desktop](docs/screenshots/cook-view-desktop.png) | ![Cook page on mobile](docs/screenshots/cook-view-mobile.png) |
+
+### Statistics
+
+Aggregate cook count, total cook time, and reading totals.
+
+| Desktop | Mobile |
+|---------|--------|
+| ![Statistics on desktop](docs/screenshots/stats-desktop.png) | ![Statistics on mobile](docs/screenshots/stats-mobile.png) |
+
+### Alerts
+
+Configure food and BBQ probe temperature thresholds and notification cooldown.
+
+| Desktop | Mobile |
+|---------|--------|
+| ![Alerts on desktop](docs/screenshots/alerts-desktop.png) | ![Alerts on mobile](docs/screenshots/alerts-mobile.png) |
+
+### Smokers
+
+Manage smoker names used when starting cooks.
+
+| Desktop | Mobile |
+|---------|--------|
+| ![Smokers on desktop](docs/screenshots/smokers-desktop.png) | ![Smokers on mobile](docs/screenshots/smokers-mobile.png) |
+
+---
+
 ## Features
 
 ### Live monitoring
@@ -48,11 +111,12 @@ cook (or the most recent finished cook) with an interactive temperature chart. A
 
 - **Cook history** — Browse finished cooks with date, title, and description preview.
 - **Cook descriptions** — Write detailed notes with stylized text, lists, links, and image gallery attached to each cook.
-- **Individual cook pages** — Share the full chart, duration, and description for any finished cook.
+- **Individual cook pages** — Share the full chart, duration, and description (with image gallery) for any finished cook.
 - **Smoker tracking** — Associate cooks with named smokers; archive or restore smokers as needed.
 
 ### Interactive charts
 
+- **Pinch / scroll zoom** — Explore finished cooks on mobile (pinch) or desktop (Ctrl+scroll); reset zoom returns to the full timeline.
 - **Finished cook editing** — Delete individual readings, ranges of points, or add notes to specific timestamps (owner only).
 - **Desktop & mobile accessible** — Edit chart points on any device.
 - **Touch-friendly selection** — Drag to select a range of points on mobile.
@@ -357,6 +421,17 @@ npm run dev    # development with HMR
 npm run build  # production build
 ```
 
+### README screenshots
+
+Requires a running app with seeded data and Playwright Chromium:
+
+```bash
+npx playwright install chromium   # first time only
+APP_URL=https://alexbbq.test npm run screenshots
+```
+
+Optional env vars: `SCREENSHOT_EMAIL`, `SCREENSHOT_PASSWORD`, `SCREENSHOT_COOK_ID` (defaults: `admin@admin.com`, `password`, and a finished cook id from your database).
+
 ---
 
 ## Production (Raspberry Pi)
@@ -482,10 +557,11 @@ Add a cron job to keep your Cloudflare DNS record updated (the script reads `CLO
 ## Testing
 
 ```bash
-composer test
+composer test   # Pint check + Pest feature tests
+npm test        # Vitest unit tests (chart zoom helpers)
 ```
 
-This clears config cache, runs Pint in check mode, and executes the Pest test suite.
+`composer test` clears config cache, runs Pint in check mode, and executes the Pest test suite.
 
 CI runs lint and test workflows on push (see `.github/workflows/`).
 
