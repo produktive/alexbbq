@@ -1,7 +1,7 @@
 {
-  "_fonts-DkuEHybc.css": {
-    "file": "assets/fonts-DkuEHybc.css",
-    "src": "_fonts-DkuEHybc.css"
+  "_fonts-C9MNnjVw.css": {
+    "file": "assets/fonts-C9MNnjVw.css",
+    "src": "_fonts-C9MNnjVw.css"
   },
   "_instrument-sans-400-normal-D1W7dsQl.woff": {
     "file": "assets/instrument-sans-400-normal-D1W7dsQl.woff",
@@ -10,22 +10,6 @@
   "_instrument-sans-400-normal-DRC__1Mx.woff2": {
     "file": "assets/instrument-sans-400-normal-DRC__1Mx.woff2",
     "src": "_instrument-sans-400-normal-DRC__1Mx.woff2"
-  },
-  "_instrument-sans-400-normal-Q_nF8v4l.woff2": {
-    "file": "assets/instrument-sans-400-normal-Q_nF8v4l.woff2",
-    "src": "_instrument-sans-400-normal-Q_nF8v4l.woff2"
-  },
-  "_instrument-sans-400-normal-r32jotim.woff": {
-    "file": "assets/instrument-sans-400-normal-r32jotim.woff",
-    "src": "_instrument-sans-400-normal-r32jotim.woff"
-  },
-  "_instrument-sans-500-normal-CAxz3nsc.woff": {
-    "file": "assets/instrument-sans-500-normal-CAxz3nsc.woff",
-    "src": "_instrument-sans-500-normal-CAxz3nsc.woff"
-  },
-  "_instrument-sans-500-normal-CTEe1bJa.woff2": {
-    "file": "assets/instrument-sans-500-normal-CTEe1bJa.woff2",
-    "src": "_instrument-sans-500-normal-CTEe1bJa.woff2"
   },
   "_instrument-sans-500-normal-Dk9ku72i.woff2": {
     "file": "assets/instrument-sans-500-normal-Dk9ku72i.woff2",
@@ -43,20 +27,12 @@
     "file": "assets/instrument-sans-600-normal-B9e8oLYv.woff",
     "src": "_instrument-sans-600-normal-B9e8oLYv.woff"
   },
-  "_instrument-sans-600-normal-BsaQcF38.woff2": {
-    "file": "assets/instrument-sans-600-normal-BsaQcF38.woff2",
-    "src": "_instrument-sans-600-normal-BsaQcF38.woff2"
-  },
-  "_instrument-sans-600-normal-DMks36a2.woff": {
-    "file": "assets/instrument-sans-600-normal-DMks36a2.woff",
-    "src": "_instrument-sans-600-normal-DMks36a2.woff"
-  },
   "node_modules/@jsquash/webp/codec/dec/webp_dec.wasm": {
     "file": "assets/webp_dec-C990n7mh.wasm",
     "src": "node_modules/@jsquash/webp/codec/dec/webp_dec.wasm"
   },
   "node_modules/@jsquash/webp/codec/enc/webp_enc.js": {
-    "file": "assets/webp_enc-XV06IBG7.js",
+    "file": "assets/webp_enc-m1whiriH.js",
     "name": "webp_enc",
     "src": "node_modules/@jsquash/webp/codec/enc/webp_enc.js",
     "isDynamicEntry": true,
@@ -69,7 +45,7 @@
     "src": "node_modules/@jsquash/webp/codec/enc/webp_enc.wasm"
   },
   "node_modules/@jsquash/webp/codec/enc/webp_enc_simd.js": {
-    "file": "assets/webp_enc_simd-DcFNLma7.js",
+    "file": "assets/webp_enc_simd-CZK937-1.js",
     "name": "webp_enc_simd",
     "src": "node_modules/@jsquash/webp/codec/enc/webp_enc_simd.js",
     "isDynamicEntry": true,
@@ -82,7 +58,7 @@
     "src": "node_modules/@jsquash/webp/codec/enc/webp_enc_simd.wasm"
   },
   "node_modules/@jsquash/webp/index.js": {
-    "file": "assets/webp-CPGEyeaa.js",
+    "file": "assets/webp-CKuWjkN0.js",
     "name": "webp",
     "src": "node_modules/@jsquash/webp/index.js",
     "isDynamicEntry": true,
@@ -95,7 +71,7 @@
     ]
   },
   "resources/css/app.css": {
-    "file": "assets/app-DCGQ20Zg.css",
+    "file": "assets/app-B1ottmHy.css",
     "name": "app",
     "names": [
       "app.css"
@@ -104,7 +80,7 @@
     "isEntry": true
   },
   "resources/js/app.js": {
-    "file": "assets/app-DyFzbU9M.js",
+    "file": "assets/app-D2nB4OQZ.js",
     "name": "app",
     "src": "resources/js/app.js",
     "isEntry": true,

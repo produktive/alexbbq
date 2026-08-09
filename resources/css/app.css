@@ -511,10 +511,5 @@ html:has(.offline-status-banner:not([hidden])) body {
 }
 
 #nprogress .peg {
-    box-shadow:
-        0 0 10px 1px color-mix(in srgb, var(--firefox-progress-yellow-20) 80%, transparent),
-        0 0 4px 0 color-mix(in srgb, var(--firefox-progress-orange-50) 75%, white) !important;
-    opacity: 0.95 !important;
-    transform: none !important;
-    width: 72px !important;
+    box-shadow: none !important;
 }
