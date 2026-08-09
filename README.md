@@ -200,11 +200,10 @@ Manage smoker names used when starting cooks.
 
 ### Production (Raspberry Pi)
 
+- Fresh [Raspberry Pi OS](https://www.raspberrypi.com/software/) — **nothing preinstalled** (PHP, Composer, Caddy, pigpio installed by `install-pi-production.sh`)
 - Pi with GPIO (BCM pin 15); tested on Pi Zero W (ARMv6)
 - Cloudflare: API token (Zone → DNS → Edit), zone ID, domain A record
-- No Node.js — assets are committed in `public/build/`
-
----
+- No Node.js — assets in `public/build/`
 
 ## Installation
 
@@ -436,14 +435,18 @@ Optional env vars: `SCREENSHOT_EMAIL`, `SCREENSHOT_PASSWORD`, `SCREENSHOT_COOK_I
 
 ## Production (Raspberry Pi)
 
-Tested on Pi Zero W (ARMv6). One installer script handles PHP, Composer, Caddy, Laravel, Reverb, Maverick, permissions, and DDNS.
+Tested on Pi Zero W (ARMv6). Assumes a **fresh Raspberry Pi OS** SD card — nothing else preinstalled.
+
+`install-pi-production.sh` installs via apt: **PHP 8.4** (+ extensions), **Composer**, **pigpio**, **gcc/make**, **jq**, **sqlite3**, **Caddy** (ARMv6 + Cloudflare DNS), then configures Laravel, Reverb, Maverick, permissions, and DDNS. No Node.js.
 
 ### Fresh install
 
-**Before you start** — from [Cloudflare](https://dash.cloudflare.com): hostname (`bbq.example.com`), API token (Zone → DNS → Edit), zone ID, and an A record for the domain.
+**You need:** Pi OS, network/SSH, Cloudflare credentials (hostname, API token, zone ID, A record).
+
+**You do not need:** PHP, Composer, Caddy, pigpio, or any other libraries installed beforehand.
 
 ```bash
-sudo apt update && sudo apt install -y git
+sudo apt update && sudo apt install -y git   # git only — to clone the repo
 sudo git clone https://github.com/produktive/alexbbq.git /var/www/alexbbq
 cd /var/www/alexbbq && sudo chown -R pi:www-data . && chmod +x deploy/*.sh
 

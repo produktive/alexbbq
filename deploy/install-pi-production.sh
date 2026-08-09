@@ -79,7 +79,7 @@ prompt_missing_vars() {
 }
 
 install_system_packages() {
-    log "Installing system packages"
+    log "Installing system packages (PHP ${PHP_VERSION}, pigpio, jq, build tools, …)"
     apt-get update
     apt-get install -y \
         git curl wget ca-certificates \
@@ -292,6 +292,7 @@ EOF
 
 main() {
     require_root
+    log "Fresh Pi install — no PHP, Composer, Caddy, or pigpio required beforehand"
     prompt_missing_vars
     [[ -d "$APP_DIR" ]] || die "App directory not found: ${APP_DIR}"
 
