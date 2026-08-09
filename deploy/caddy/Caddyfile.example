@@ -1,8 +1,9 @@
-# Caddyfile for the Pi — copy to /etc/caddy/Caddyfile (adjust paths if needed).
+# Caddyfile for the Pi — installed by deploy/install-pi-production.sh (or copy manually).
 #
 # Prerequisites:
-#   1. CLOUDFLARE_API_TOKEN set for the caddy service (deploy/systemd/caddy.service.d/)
-#   2. Reverb running: sudo ./deploy/install-reverb-service.sh
+#   1. Caddy ARMv6 + Cloudflare DNS: sudo ./deploy/install-caddy-armv6.sh
+#   2. CLOUDFLARE_API_TOKEN in deploy/systemd/caddy.service.d/cloudflare.conf
+#   3. Reverb running: sudo ./deploy/install-reverb-service.sh
 #
 # Validate: sudo caddy validate --config /etc/caddy/Caddyfile
 # Reload:   sudo systemctl reload caddy

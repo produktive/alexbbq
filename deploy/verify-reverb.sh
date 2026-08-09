@@ -59,14 +59,15 @@ if [[ -z "$REVERB_HOST" ]]; then
 elif [[ -z "$REVERB_APP_KEY" ]]; then
     echo "REVERB_APP_KEY is not set in .env; skipping WebSocket curl test"
 else
-    curl -sS -o /dev/null -w "HTTP %{http_code}\n" \
+    # WebSocket upgrades stay open; --max-time avoids hanging on success (HTTP 101).
+    curl --max-time 3 -sS -o /dev/null -w "HTTP %{http_code}\n" \
         -H "Host: ${REVERB_HOST}" \
         -H "Connection: Upgrade" \
         -H "Upgrade: websocket" \
         -H "Sec-WebSocket-Version: 13" \
         -H "Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==" \
         "http://127.0.0.1:${PORT}/app/${REVERB_APP_KEY}" \
-        || echo "curl to Reverb failed"
+        || echo "curl to Reverb failed (timeout with no response may mean Reverb accepted the upgrade)"
 fi
 
 echo

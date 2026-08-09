@@ -1,0 +1,10 @@
+# Passwordless sudo for www-data to start/stop the Maverick daemon.
+#
+# Install:
+#   sudo cp deploy/sudoers/maverick.example /etc/sudoers.d/alexbbq-maverick
+#   sudo chmod 440 /etc/sudoers.d/alexbbq-maverick
+#   sudo visudo -c
+#
+# Adjust the path if your app is not in /var/www/alexbbq.
+
+www-data ALL=(ALL) NOPASSWD: /var/www/alexbbq/maverick.sh
