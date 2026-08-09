@@ -72,5 +72,12 @@ fi
 
 echo
 echo "=== Caddy /app route present? ==="
-grep -n 'app/\*' /etc/caddy/Caddyfile 2>/dev/null || echo "no /app/* handler in Caddyfile"
-grep -n "127.0.0.1:${PORT}" /etc/caddy/Caddyfile 2>/dev/null || echo "Caddyfile may not proxy to port ${PORT}"
+if grep -q 'reverb.caddy' /etc/caddy/Caddyfile 2>/dev/null \
+    || grep -q 'app/\*' /etc/caddy/Caddyfile 2>/dev/null; then
+    echo "reverb.caddy imported (proxies /app/* → 127.0.0.1:${PORT})"
+elif grep -q 'app/\*' "$DIR/deploy/caddy/snippets/reverb.caddy" 2>/dev/null \
+    && grep -q 'reverb.caddy' /etc/caddy/Caddyfile 2>/dev/null; then
+    echo "reverb.caddy imported"
+else
+    echo "WARNING: no reverb.caddy import in /etc/caddy/Caddyfile — live charts need /app/* proxied to port ${PORT}"
+fi
