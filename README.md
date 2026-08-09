@@ -467,7 +467,7 @@ Prompts for anything omitted. `SKIP_DDNS=1` if your IP is static. Login: `admin@
 | Caddy `Illegal instruction` | `sudo ./deploy/install-caddy-armv6.sh` |
 | Caddy `API token '' invalid` | Token must be in `/etc/systemd/system/caddy.service.d/cloudflare.conf`, not just `.env` |
 | Port 80 in use | `sudo systemctl disable --now apache2` |
-| SQLite readonly | `sudo chown -R pi:www-data database storage bootstrap/cache` |
+| SQLite readonly / disk I/O error | Remove `database/database.sqlite*` and rerun installer; check `dmesg` for SD card errors |
 
 Validate Caddy (CLI does not read systemd env): `sudo CLOUDFLARE_API_TOKEN=your-token caddy validate --config /etc/caddy/Caddyfile`
 

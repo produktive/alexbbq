@@ -120,6 +120,15 @@ configure_git_safe_directory() {
     run_as_app_user "git config --global --add safe.directory '$APP_DIR'"
 }
 
+ensure_sqlite_database() {
+    log "Preparing SQLite database"
+    rm -f "$APP_DIR/database/database.sqlite" "$APP_DIR/database/database.sqlite-"*
+    run_as_app_user "touch database/database.sqlite"
+    chown "${APP_USER}:www-data" "$APP_DIR/database" "$APP_DIR/database/database.sqlite"
+    chmod 775 "$APP_DIR/database"
+    chmod 664 "$APP_DIR/database/database.sqlite"
+}
+
 deploy_laravel_app() {
     log "Installing PHP dependencies and bootstrapping Laravel"
     run_as_app_user "composer install --no-dev --optimize-autoloader"
@@ -128,7 +137,7 @@ deploy_laravel_app() {
         run_as_app_user "cp .env.example .env"
     fi
 
-    run_as_app_user "php -r \"file_exists('database/database.sqlite') || touch('database/database.sqlite');\""
+    ensure_sqlite_database
     run_as_app_user "php artisan key:generate --force"
     run_as_app_user "php artisan reverb:configure"
     run_as_app_user "php artisan webpush:configure"
