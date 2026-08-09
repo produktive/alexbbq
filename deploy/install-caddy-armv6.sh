@@ -33,7 +33,7 @@ rm -f /usr/share/keyrings/caddy-stable-archive-keyring.gpg
 
 echo "==> Stopping stray Caddy processes (manual 'caddy start' blocks systemd on :2019)"
 systemctl stop caddy 2>/dev/null || true
-pkill caddy 2>/dev/null || true
+pkill -x caddy 2>/dev/null || true
 sleep 1
 
 echo "==> Disabling Apache (conflicts with Caddy on :80)"
