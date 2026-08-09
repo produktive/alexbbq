@@ -132,6 +132,7 @@ deploy_laravel_app() {
     run_as_app_user "php artisan key:generate --force"
     run_as_app_user "php artisan reverb:configure"
     run_as_app_user "php artisan webpush:configure"
+    run_as_app_user "php artisan migrate --force"
     log "Seeding database (skipped if admin already exists)"
     run_as_app_user "php artisan db:seed --force" 2>/dev/null || log "Seed skipped — admin user already exists"
 
