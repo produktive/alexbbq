@@ -9,6 +9,7 @@
 #
 # Optional env:
 #   CADDY_VERSION=2.11.4
+#   CADDY_CUSTOM_PATH=/tmp/caddy-test   (use a pre-downloaded binary)
 set -euo pipefail
 
 CADDY_VERSION="${CADDY_VERSION:-2.11.4}"
@@ -27,6 +28,49 @@ if [[ "$arch" != "armv6l" ]]; then
     echo "This script is required on ARMv6. On ARMv7+ you may use the standard Caddy apt repo." >&2
 fi
 
+download_custom_caddy() {
+    local dest="$1"
+    local attempt
+
+    for attempt in 1 2 3; do
+        echo "==> Downloading ARMv6 Caddy with Cloudflare DNS plugin (attempt ${attempt}/3, may take several minutes)"
+        if curl -fSL --retry 3 --retry-delay 5 --connect-timeout 30 --max-time 900 \
+            "$CADDY_CUSTOM_URL" -o "$dest"; then
+            chmod +x "$dest"
+
+            if head -c 20 "$dest" | grep -qi '<!DOCTYPE\|<html'; then
+                echo "Warning: download returned HTML, not a binary (attempt ${attempt})" >&2
+                rm -f "$dest"
+                continue
+            fi
+
+            local size
+            size="$(wc -c < "$dest" | tr -d '[:space:]')"
+            if (( size < 1000000 )); then
+                echo "Warning: download too small (${size} bytes), likely incomplete (attempt ${attempt})" >&2
+                rm -f "$dest"
+                continue
+            fi
+
+            if "$dest" version >/dev/null 2>&1; then
+                return 0
+            fi
+
+            echo "Warning: binary failed to execute (attempt ${attempt}): $(file "$dest")" >&2
+            rm -f "$dest"
+        else
+            echo "Warning: curl download failed (attempt ${attempt})" >&2
+        fi
+
+        sleep 5
+    done
+
+    echo "Error: could not download a working ARMv6 Caddy binary with Cloudflare DNS." >&2
+    echo "Try manually on the Pi:" >&2
+    echo "  curl -fSL '$CADDY_CUSTOM_URL' -o /tmp/caddy-test && chmod +x /tmp/caddy-test && /tmp/caddy-test version" >&2
+    exit 1
+}
+
 echo "==> Removing Cloudsmith apt repo (ARMv7 binary) if present"
 rm -f /etc/apt/sources.list.d/caddy-stable.list
 rm -f /usr/share/keyrings/caddy-stable-archive-keyring.gpg
@@ -44,18 +88,19 @@ tmpdir="$(mktemp -d)"
 trap 'rm -rf "$tmpdir"' EXIT
 
 echo "==> Downloading ARMv6 Caddy ${CADDY_VERSION} (.deb for systemd unit files)"
-wget -q -O "${tmpdir}/${CADDY_DEB}" "$CADDY_DEB_URL"
+curl -fSL --retry 3 -o "${tmpdir}/${CADDY_DEB}" "$CADDY_DEB_URL"
 dpkg -i "${tmpdir}/${CADDY_DEB}" || apt-get install -f -y
+systemctl daemon-reload 2>/dev/null || true
 
-echo "==> Downloading ARMv6 Caddy with Cloudflare DNS plugin (this may take several minutes)"
-wget -q -O "${tmpdir}/caddy-custom" "$CADDY_CUSTOM_URL"
-chmod +x "${tmpdir}/caddy-custom"
+if [[ -n "${CADDY_CUSTOM_PATH:-}" && -f "$CADDY_CUSTOM_PATH" ]]; then
+    echo "==> Using pre-downloaded Caddy binary: ${CADDY_CUSTOM_PATH}"
+    cp "$CADDY_CUSTOM_PATH" "${tmpdir}/caddy-custom"
+    chmod +x "${tmpdir}/caddy-custom"
+else
+    download_custom_caddy "${tmpdir}/caddy-custom"
+fi
 
 echo "==> Verifying custom binary"
-file "${tmpdir}/caddy-custom" | grep -q 'ARM, EABI5' || {
-    echo "Error: downloaded binary is not 32-bit ARM EABI5" >&2
-    exit 1
-}
 "${tmpdir}/caddy-custom" version
 "${tmpdir}/caddy-custom" list-modules | grep -qi cloudflare || {
     echo "Error: Cloudflare DNS module missing from custom binary" >&2
