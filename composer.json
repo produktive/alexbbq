@@ -61,6 +61,7 @@
             "@php artisan reverb:configure --local",
             "@php artisan webpush:configure",
             "@php artisan migrate --force",
+            "@php artisan storage:link --ansi",
             "npm install",
             "npm run build"
         ],

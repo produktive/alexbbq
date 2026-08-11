@@ -27,9 +27,14 @@ new
 class extends Component implements HasActions, HasForms, HasTable {
     use InteractsWithActions, InteractsWithForms, InteractsWithTable;
 
-    private function cookHasDescription(Cook $record): bool
+    private function cookHasDescriptionText(Cook $record): bool
     {
-        return filled($record->getRawOriginal('description'));
+        return $this->descriptionPreviewText($record) !== '';
+    }
+
+    private function descriptionPreviewText(Cook $record): string
+    {
+        return trim(html_entity_decode(strip_tags($record->getRawOriginal('description') ?? '')));
     }
 
     private function formatCookTitle(Cook $record): string|Htmlable
@@ -64,15 +69,19 @@ class extends Component implements HasActions, HasForms, HasTable {
                     ->wrap(),
                 TextColumn::make('description')
                     ->state(function (Cook $record): string|Htmlable {
-                        $text = trim(html_entity_decode(strip_tags($record->getRawOriginal('description'))));
+                        $text = $this->descriptionPreviewText($record);
 
-                        return $text !== '' ? $text : $this->formatCookTitle($record);
+                        if ($text !== '') {
+                            return $text;
+                        }
+
+                        return $this->formatCookTitle($record);
                     })
-                    ->color(fn (Cook $record): ?string => $this->cookHasDescription($record) ? 'gray' : null)
-                    ->extraAttributes(fn (Cook $record): array => $this->cookHasDescription($record) ? [] : ['class' => 'cook-list-title-only'])
+                    ->color(fn (Cook $record): ?string => $this->cookHasDescriptionText($record) ? 'gray' : null)
+                    ->extraAttributes(fn (Cook $record): array => $this->cookHasDescriptionText($record) ? [] : ['class' => 'cook-list-title-only'])
                     ->label('Description')
                     ->description(
-                        fn (Cook $record): string|Htmlable|null => $this->cookHasDescription($record) ? $this->formatCookTitle($record) : null,
+                        fn (Cook $record): string|Htmlable|null => $this->cookHasDescriptionText($record) ? $this->formatCookTitle($record) : null,
                         position: 'above',
                     )
                     ->wrap()

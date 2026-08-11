@@ -226,8 +226,9 @@ This runs, in order:
 5. `php artisan reverb:configure --local` — generates `REVERB_APP_*` credentials and confirms local WebSocket defaults
 6. `php artisan webpush:configure` — generates `VAPID_*` keys for browser push notifications
 7. `php artisan migrate --force`
-8. `npm install`
-9. `npm run build`
+8. `php artisan storage:link` — symlink `public/storage` for cook description images and other public uploads
+9. `npm install`
+10. `npm run build`
 
 The defaults in `.env.example` target `php artisan serve` at `http://127.0.0.1:8000` with Reverb on port `8080`. No Herd or other hosting is required.
 
@@ -437,7 +438,7 @@ Optional env vars: `SCREENSHOT_EMAIL`, `SCREENSHOT_PASSWORD`, `SCREENSHOT_COOK_I
 
 Tested on Pi Zero W (ARMv6). Assumes a **fresh Raspberry Pi OS** SD card — nothing else preinstalled.
 
-`install-pi-production.sh` installs via apt: **PHP 8.4** (+ extensions), **Composer**, **pigpio**, **gcc/make**, **jq**, **sqlite3**, **Caddy** (ARMv6 + Cloudflare DNS), then configures Laravel, Reverb, Maverick, permissions, and DDNS. No Node.js.
+`install-pi-production.sh` installs via apt: **PHP 8.4** (+ extensions), **Composer**, **pigpio**, **gcc/make**, **jq**, **sqlite3**, **Caddy** (ARMv6 + Cloudflare DNS), then configures Laravel (including `storage:link` for uploaded cook photos), Reverb, Maverick, permissions, and DDNS. No Node.js.
 
 ### Fresh install
 
@@ -468,6 +469,7 @@ Prompts for anything omitted. `SKIP_DDNS=1` if your IP is static. Login: `admin@
 | Caddy `API token '' invalid` | Token must be in `/etc/systemd/system/caddy.service.d/cloudflare.conf`, not just `.env` |
 | Port 80 in use | `sudo systemctl disable --now apache2` |
 | SQLite readonly / disk I/O error | Remove `database/database.sqlite*` and rerun installer; check `dmesg` for SD card errors |
+| Cook description images 404 | Run `php artisan storage:link` from the app root (creates `public/storage` → `storage/app/public`) |
 
 Validate Caddy (CLI does not read systemd env): `sudo CLOUDFLARE_API_TOKEN=your-token caddy validate --config /etc/caddy/Caddyfile`
 
@@ -483,7 +485,7 @@ sudo apt install -y git curl wget jq php8.4-{cli,fpm,curl,intl,xml,mbstring,sqli
 cd /var/www/alexbbq && composer install --no-dev --optimize-autoloader
 cp .env.example .env && touch database/database.sqlite
 php artisan key:generate && php artisan reverb:configure && php artisan webpush:configure
-php artisan migrate --force && php artisan db:seed
+php artisan migrate --force && php artisan storage:link && php artisan db:seed
 # Set production .env values (see .env.example), then: php artisan config:cache
 sudo chown -R pi:www-data storage bootstrap/cache database && sudo chmod -R ug+rwx storage bootstrap/cache database
 
@@ -516,6 +518,7 @@ Individual scripts: `deploy/install-{pi-production,caddy-armv6,cloudflare-ddns,r
 | Command | Description |
 |---------|-------------|
 | `reverb:configure` | Generate `REVERB_APP_*` credentials in `.env` when empty |
+| `storage:link` | Create `public/storage` symlink for cook description images and other public uploads |
 | `webpush:configure` | Generate `VAPID_*` keys in `.env` when empty (included in `composer setup`) |
 | `maverick:simulate` | Generate fake probe readings (local dev) |
 | `app:import-legacy-data` | Import data from Alex.bbq v1 SQLite database |
