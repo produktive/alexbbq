@@ -37,5 +37,8 @@
         "pwa-asset-generator": "^8.1.5",
         "sharp": "^0.35.3",
         "vitest": "^3.2.4"
+    },
+    "overrides": {
+        "puppeteer-core": "^25.7.0"
     }
 }
