@@ -1,6 +1,9 @@
 <?php
 
+use App\Http\Responses\PasskeyLoginResponse;
 use App\Models\User;
+use App\Support\AuthRedirect;
+use Illuminate\Http\Request;
 use Laravel\Fortify\Features;
 
 test('login screen can be rendered', function () {
@@ -184,25 +187,25 @@ test('login screen exposes intended redirect for passkey sign in', function () {
 });
 
 test('passkey login response honors posted redirect', function () {
-    $request = \Illuminate\Http\Request::create('/passkeys/login', 'POST', [
+    $request = Request::create('/passkeys/login', 'POST', [
         'redirect' => '/cooks/7',
     ]);
     $request->headers->set('Accept', 'application/json');
     $request->setLaravelSession(app('session.store'));
 
-    $response = (new \App\Http\Responses\PasskeyLoginResponse)->toResponse($request);
+    $response = (new PasskeyLoginResponse)->toResponse($request);
 
     expect($response->getData(true))
         ->redirect->toBe('/cooks/7');
 });
 
 test('passkey login response honors persistent redirect session key', function () {
-    $request = \Illuminate\Http\Request::create('/passkeys/login', 'POST');
+    $request = Request::create('/passkeys/login', 'POST');
     $request->headers->set('Accept', 'application/json');
     $request->setLaravelSession(app('session.store'));
-    $request->session()->put(\App\Support\AuthRedirect::PERSISTENT_SESSION_KEY, '/cooks/8');
+    $request->session()->put(AuthRedirect::PERSISTENT_SESSION_KEY, '/cooks/8');
 
-    $response = (new \App\Http\Responses\PasskeyLoginResponse)->toResponse($request);
+    $response = (new PasskeyLoginResponse)->toResponse($request);
 
     expect($response->getData(true))
         ->redirect->toBe('/cooks/8');
@@ -213,7 +216,7 @@ test('passkey options request persists redirect from query string', function () 
         ->assertSuccessful()
         ->assertJsonStructure(['options']);
 
-    expect(session(\App\Support\AuthRedirect::PERSISTENT_SESSION_KEY))->toBe('/cooks/9');
+    expect(session(AuthRedirect::PERSISTENT_SESSION_KEY))->toBe('/cooks/9');
 });
 
 test('users can logout', function () {
