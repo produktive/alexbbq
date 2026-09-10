@@ -1,7 +1,7 @@
 {
-  "_fonts-C9MNnjVw.css": {
-    "file": "assets/fonts-C9MNnjVw.css",
-    "src": "_fonts-C9MNnjVw.css"
+  "_fonts-DqppEDJS.css": {
+    "file": "assets/fonts-DqppEDJS.css",
+    "src": "_fonts-DqppEDJS.css"
   },
   "_instrument-sans-400-normal-D1W7dsQl.woff": {
     "file": "assets/instrument-sans-400-normal-D1W7dsQl.woff",
@@ -58,7 +58,7 @@
     "src": "node_modules/@jsquash/webp/codec/enc/webp_enc_simd.wasm"
   },
   "node_modules/@jsquash/webp/index.js": {
-    "file": "assets/webp-CKuWjkN0.js",
+    "file": "assets/webp-BpddS1AA.js",
     "name": "webp",
     "src": "node_modules/@jsquash/webp/index.js",
     "isDynamicEntry": true,
@@ -71,7 +71,7 @@
     ]
   },
   "resources/css/app.css": {
-    "file": "assets/app-B1ottmHy.css",
+    "file": "assets/app-x_N5rJZV.css",
     "name": "app",
     "names": [
       "app.css"
@@ -80,7 +80,7 @@
     "isEntry": true
   },
   "resources/js/app.js": {
-    "file": "assets/app-D2nB4OQZ.js",
+    "file": "assets/app-CA2TQyDT.js",
     "name": "app",
     "src": "resources/js/app.js",
     "isEntry": true,
@@ -89,7 +89,7 @@
     ]
   },
   "resources/js/passkeys.js": {
-    "file": "assets/passkeys-oQINWg0m.js",
+    "file": "assets/passkeys-BQxM_kzV.js",
     "name": "passkeys",
     "src": "resources/js/passkeys.js",
     "isEntry": true
