@@ -4437,7 +4437,7 @@ ${expression ? 'Expression: "' + expression + '"\n\n' : ""}`, el);
       });
       return obj;
     }
-    var Alpine26 = {
+    var Alpine27 = {
       get reactive() {
         return reactive;
       },
@@ -4453,7 +4453,7 @@ ${expression ? 'Expression: "' + expression + '"\n\n' : ""}`, el);
       get transaction() {
         return transaction;
       },
-      version: "3.17.1",
+      version: "3.17.2",
       flushAndStopDeferringMutations,
       dontAutoEvaluateFunctions,
       disableEffectScheduling,
@@ -4512,7 +4512,7 @@ ${expression ? 'Expression: "' + expression + '"\n\n' : ""}`, el);
       data,
       bind: bind2
     };
-    var alpine_default = Alpine26;
+    var alpine_default = Alpine27;
     var import_reactivity10 = __toESM2(require_reactivity());
     magic("nextTick", () => nextTick);
     magic("dispatch", (el) => dispatch3.bind(dispatch3, el));
@@ -5554,8 +5554,8 @@ var require_module_cjs2 = __commonJS({
       default: () => module_default2
     });
     module.exports = __toCommonJS(module_exports);
-    function src_default2(Alpine26) {
-      Alpine26.directive("collapse", collapse3);
+    function src_default2(Alpine27) {
+      Alpine27.directive("collapse", collapse3);
       collapse3.inline = (el, { modifiers }) => {
         if (!modifiers.includes("min"))
           return;
@@ -5575,7 +5575,7 @@ var require_module_cjs2 = __commonJS({
         if (!el._x_isShown)
           el.style.overflow = "hidden";
         let setFunction = (el2, styles) => {
-          let revertFunction = Alpine26.setStyles(el2, styles);
+          let revertFunction = Alpine27.setStyles(el2, styles);
           return styles.height ? () => {
           } : revertFunction;
         };
@@ -5598,7 +5598,7 @@ var require_module_cjs2 = __commonJS({
             if (current === full) {
               current = floor;
             }
-            Alpine26.transition(el, Alpine26.setStyles, {
+            Alpine27.transition(el, Alpine27.setStyles, {
               during: transitionStyles,
               start: { height: current + "px" },
               end: { height: full + "px" }
@@ -5612,7 +5612,7 @@ var require_module_cjs2 = __commonJS({
           }, after = () => {
           }) {
             let full = el.getBoundingClientRect().height;
-            Alpine26.transition(el, setFunction, {
+            Alpine27.transition(el, setFunction, {
               during: transitionStyles,
               start: { height: full + "px" },
               end: { height: floor + "px" }
@@ -7052,14 +7052,14 @@ var require_module_cjs3 = __commonJS({
     module.exports = __toCommonJS(module_exports);
     var import_focus_trap = __toESM2(require_focus_trap());
     var import_tabbable = __toESM2(require_dist());
-    function src_default2(Alpine26) {
+    function src_default2(Alpine27) {
       let lastFocused;
       let currentFocused;
       window.addEventListener("focusin", () => {
         lastFocused = currentFocused;
         currentFocused = document.activeElement;
       });
-      Alpine26.magic("focus", (el) => {
+      Alpine27.magic("focus", (el) => {
         let within = el;
         return {
           __noscroll: false,
@@ -7163,7 +7163,7 @@ var require_module_cjs3 = __commonJS({
           }
         };
       });
-      Alpine26.directive("trap", Alpine26.skipDuringClone(
+      Alpine27.directive("trap", Alpine27.skipDuringClone(
         (el, { expression, modifiers }, { effect, evaluateLater, cleanup }) => {
           let evaluator = evaluateLater(expression);
           let oldValue = false;
@@ -7183,7 +7183,7 @@ var require_module_cjs3 = __commonJS({
           }
           if (modifiers.includes("inert")) {
             options.onPostActivate = () => {
-              Alpine26.nextTick(() => {
+              Alpine27.nextTick(() => {
                 undoInert = setInert(el);
               });
             };
@@ -7295,8 +7295,8 @@ var require_module_cjs4 = __commonJS({
       intersect: () => src_default2
     });
     module.exports = __toCommonJS(module_exports);
-    function src_default2(Alpine26) {
-      Alpine26.directive("intersect", Alpine26.skipDuringClone((el, { value, expression, modifiers }, { evaluateLater, cleanup }) => {
+    function src_default2(Alpine27) {
+      Alpine27.directive("intersect", Alpine27.skipDuringClone((el, { value, expression, modifiers }, { evaluateLater, cleanup }) => {
         let evaluate = evaluateLater(expression);
         let threshold = getThreshold(modifiers);
         let options = {
@@ -8453,8 +8453,8 @@ var require_module_cjs5 = __commonJS({
         node = node.nextElementSibling;
       }
     }
-    function src_default2(Alpine26) {
-      Alpine26.directive("sort", (el, { value, modifiers, expression }, { effect, evaluate, cleanup }) => {
+    function src_default2(Alpine27) {
+      Alpine27.directive("sort", (el, { value, modifiers, expression }, { effect, evaluate, cleanup }) => {
         if (value === "config") {
           return;
         }
@@ -8616,8 +8616,8 @@ var require_module_cjs6 = __commonJS({
       resize: () => src_default2
     });
     module.exports = __toCommonJS(module_exports);
-    function src_default2(Alpine26) {
-      Alpine26.directive("resize", Alpine26.skipDuringClone((el, { value, expression, modifiers }, { evaluateLater, cleanup }) => {
+    function src_default2(Alpine27) {
+      Alpine27.directive("resize", Alpine27.skipDuringClone((el, { value, expression, modifiers }, { evaluateLater, cleanup }) => {
         let evaluator = evaluateLater(expression);
         let evaluate = (width, height) => {
           evaluator(() => {
@@ -9861,21 +9861,21 @@ var require_module_cjs7 = __commonJS({
         platform: platformWithCache
       });
     };
-    function src_default2(Alpine26) {
-      Alpine26.magic("anchor", (el) => {
+    function src_default2(Alpine27) {
+      Alpine27.magic("anchor", (el) => {
         if (!el._x_anchor)
           throw "Alpine: No x-anchor directive found on element using $anchor...";
         return el._x_anchor;
       });
-      Alpine26.interceptClone((from, to) => {
+      Alpine27.interceptClone((from, to) => {
         if (from && from._x_anchor && !to._x_anchor) {
           to._x_anchor = from._x_anchor;
         }
       });
-      Alpine26.directive("anchor", Alpine26.skipDuringClone(
+      Alpine27.directive("anchor", Alpine27.skipDuringClone(
         (el, { expression, modifiers, value }, { evaluate: evaluate2, effect, cleanup }) => {
           let { placement, offsetValue, unstyled, strategy, allowFlip } = getOptions(modifiers);
-          el._x_anchor = Alpine26.reactive({ x: 0, y: 0 });
+          el._x_anchor = Alpine27.reactive({ x: 0, y: 0 });
           let previousReference = null;
           let release = null;
           effect(() => {
@@ -10626,9 +10626,9 @@ var require_module_cjs8 = __commonJS({
       to.setAttribute("id", fromId);
       to.id = fromId;
     }
-    function src_default2(Alpine26) {
-      Alpine26.morph = morph3;
-      Alpine26.morphBetween = morphBetween;
+    function src_default2(Alpine27) {
+      Alpine27.morph = morph3;
+      Alpine27.morphBetween = morphBetween;
     }
     var module_default2 = src_default2;
   }
@@ -10661,8 +10661,8 @@ var require_module_cjs9 = __commonJS({
       mask: () => src_default2
     });
     module.exports = __toCommonJS(module_exports);
-    function src_default2(Alpine26) {
-      Alpine26.directive("mask", (el, { value, expression }, { effect, evaluateLater, cleanup }) => {
+    function src_default2(Alpine27) {
+      Alpine27.directive("mask", (el, { value, expression }, { effect, evaluateLater, cleanup }) => {
         let templateFn = () => expression;
         let lastInputValue = "";
         let undoModelUpdate = () => {
@@ -10673,7 +10673,7 @@ var require_module_cjs9 = __commonJS({
             effect(() => {
               templateFn = (input) => {
                 let result;
-                Alpine26.dontAutoEvaluateFunctions(() => {
+                Alpine27.dontAutoEvaluateFunctions(() => {
                   evaluator((value2) => {
                     result = typeof value2 === "function" ? value2(input) : value2;
                   }, { scope: {
@@ -11527,8 +11527,26 @@ function cloneIfObject(value) {
   return typeof value === "object" ? JSON.parse(JSON.stringify(value)) : value;
 }
 
+// js/features/supportWatch.js
+var import_alpinejs2 = __toESM(require_module_cjs());
+function generateWatchFunction(component, cleanup) {
+  return (path, callback) => {
+    let getter = () => dataGet(component.reactive, path);
+    let unwatch = import_alpinejs2.default.watch(getter, callback);
+    if (cleanup) {
+      cleanup(unwatch);
+      return unwatch;
+    }
+    let removeCleanup = component.addCleanup(unwatch);
+    return () => {
+      removeCleanup();
+      unwatch();
+    };
+  };
+}
+
 // js/$wire.js
-var import_alpinejs5 = __toESM(require_module_cjs());
+var import_alpinejs6 = __toESM(require_module_cjs());
 
 // js/hooks.js
 var listeners = [];
@@ -11588,6 +11606,8 @@ function coordinateNetworkInteractions(messageBus2) {
     }
   });
   interceptPartition(({ message, compileRequest }) => {
+    if (!message.hasActionForComponent())
+      return;
     let component = message.component;
     let bundledMessages = [];
     component.getDeepChildrenWithBindings((child) => {
@@ -12968,9 +12988,9 @@ function createUrlObjectFromString(urlString) {
 registerLegacyEventSupport(interceptRequest, interceptMessage);
 
 // js/features/supportErrors.js
-var import_alpinejs2 = __toESM(require_module_cjs());
+var import_alpinejs3 = __toESM(require_module_cjs());
 function getErrorsObject(component) {
-  let state = component.__errorsState ??= import_alpinejs2.default.reactive({
+  let state = component.__errorsState ??= import_alpinejs3.default.reactive({
     clientErrors: null
   });
   component.__lastErrorsSnapshot ??= component.snapshot;
@@ -13316,7 +13336,7 @@ function dirtyTargets(el) {
 }
 
 // js/features/supportJsModules.js
-var import_alpinejs3 = __toESM(require_module_cjs());
+var import_alpinejs4 = __toESM(require_module_cjs());
 var pendingComponentAssets = /* @__PURE__ */ new WeakMap();
 var morphGates = /* @__PURE__ */ new WeakMap();
 on("effect", ({ component, effects, request }) => {
@@ -13336,7 +13356,7 @@ on("effect", ({ component, effects, request }) => {
   if (!scriptModuleHash)
     return;
   let path = modulePath(component.name, scriptModuleHash);
-  let pending = import_alpinejs3.default.reactive({
+  let pending = import_alpinejs4.default.reactive({
     loading: true,
     afterLoaded: []
   });
@@ -13360,8 +13380,8 @@ on("effect", ({ component, effects, request }) => {
   deferInit(component.el, ready);
 });
 function deferInit(el, promise) {
-  if (import_alpinejs3.default.deferInit)
-    import_alpinejs3.default.deferInit(el, promise);
+  if (import_alpinejs4.default.deferInit)
+    import_alpinejs4.default.deferInit(el, promise);
 }
 function modulePath(name, hash) {
   let encodedName = name.replace(/\./g, "--").replace(/::/g, "---").replace(/:/g, "----");
@@ -13407,7 +13427,7 @@ function assetIsPendingFor(component) {
   return pendingComponentAssets.has(component) && pendingComponentAssets.get(component).loading;
 }
 function treeIsSuspendedFor(component) {
-  return !!import_alpinejs3.default.deferInit && assetIsPendingFor(component);
+  return !!import_alpinejs4.default.deferInit && assetIsPendingFor(component);
 }
 function runAfterAssetIsLoadedFor(component, callback) {
   if (assetIsPendingFor(component)) {
@@ -13418,7 +13438,7 @@ function runAfterAssetIsLoadedFor(component, callback) {
 }
 
 // js/evaluator.js
-var import_alpinejs4 = __toESM(require_module_cjs());
+var import_alpinejs5 = __toESM(require_module_cjs());
 function getAlpineScopeKeys(el) {
   let keys = [];
   let currentEl = el;
@@ -13440,7 +13460,7 @@ function evaluateExpression(el, expression, options = {}) {
   if (!expression || expression.trim() === "")
     return;
   try {
-    let result = import_alpinejs4.default.evaluateRaw(el, expression, options);
+    let result = import_alpinejs5.default.evaluateRaw(el, expression, options);
     if (result instanceof Promise) {
       result.catch(() => {
       });
@@ -13467,7 +13487,7 @@ function evaluateActionExpression(el, expression, options = {}) {
     return;
   let contextualExpression = contextualizeExpression(expression, el, !isEvaluatingReactiveExpression());
   try {
-    let result = import_alpinejs4.default.evaluateRaw(el, contextualExpression, options);
+    let result = import_alpinejs5.default.evaluateRaw(el, contextualExpression, options);
     if (result instanceof Promise && result._livewireAction) {
       result.catch(() => {
       });
@@ -13589,7 +13609,7 @@ function getProperty(component, name) {
 function getFallback(component) {
   return fallback(component);
 }
-import_alpinejs5.default.magic("wire", (el, { cleanup }) => {
+import_alpinejs6.default.magic("wire", (el, { cleanup }) => {
   let component;
   return new Proxy({}, {
     get(target, property) {
@@ -13603,6 +13623,8 @@ import_alpinejs5.default.magic("wire", (el, { cleanup }) => {
       }
       if (["$entangle", "entangle"].includes(property)) {
         return generateEntangleFunction(component, cleanup);
+      } else if (["$watch", "watch"].includes(property)) {
+        return generateWatchFunction(component, cleanup);
       }
       return component.$wire[property];
     },
@@ -13675,7 +13697,7 @@ wireProperty("$refs", (component) => {
   });
 });
 wireProperty("$dirty", (component) => (property) => {
-  let reactive = import_alpinejs5.default.reactive({ dirty: false });
+  let reactive = import_alpinejs6.default.reactive({ dirty: false });
   interceptComponentMessage(component, ({ onFinish }) => {
     onFinish(() => {
       queueMicrotask(() => {
@@ -13683,7 +13705,7 @@ wireProperty("$dirty", (component) => (property) => {
       });
     });
   });
-  import_alpinejs5.default.effect(() => {
+  import_alpinejs6.default.effect(() => {
     reactive.dirty = checkDirty(component, property);
   });
   return reactive.dirty;
@@ -13715,18 +13737,10 @@ wireProperty("$toggle", (component) => (name, live = true) => {
   return component.$wire.set(name, !component.$wire.get(name), live);
 });
 wireProperty("$watch", (component) => (path, callback) => {
-  let getter = () => {
-    return dataGet(component.reactive, path);
-  };
-  let unwatch = import_alpinejs5.default.watch(getter, callback);
-  let removeCleanup = component.addCleanup(unwatch);
-  return () => {
-    removeCleanup();
-    unwatch();
-  };
+  return generateWatchFunction(component)(path, callback);
 });
 wireProperty("$effect", (component) => (callback) => {
-  let effect = import_alpinejs5.default.effect(callback);
+  let effect = import_alpinejs6.default.effect(callback);
   component.addCleanup(effect);
   return effect;
 });
@@ -14302,7 +14316,7 @@ var import_collapse = __toESM(require_module_cjs2());
 var import_focus = __toESM(require_module_cjs3());
 
 // node_modules/@alpinejs/persist/dist/module.esm.js
-function src_default(Alpine26) {
+function src_default(Alpine27) {
   let persist = () => {
     let alias;
     let storage;
@@ -14317,17 +14331,17 @@ function src_default(Alpine26) {
         setItem: dummy.set.bind(dummy)
       };
     }
-    return Alpine26.interceptor((initialValue, getter, setter, path, key, cleanup = () => {
+    return Alpine27.interceptor((initialValue, getter, setter, path, key, cleanup = () => {
     }) => {
       let lookup = alias || `_x_${path}`;
       let initial = storageHas(lookup, storage) ? storageGet(lookup, storage) : initialValue;
       setter(initial);
-      let effect = Alpine26.effect(() => {
+      let effect = Alpine27.effect(() => {
         let value = getter();
         storageSet(lookup, value, storage);
         setter(value);
       });
-      cleanup(() => Alpine26.release(effect));
+      cleanup(() => Alpine27.release(effect));
       return initial;
     }, (func) => {
       func.as = (key) => {
@@ -14339,12 +14353,12 @@ function src_default(Alpine26) {
       };
     });
   };
-  Object.defineProperty(Alpine26, "$persist", { get: () => persist() });
-  Alpine26.magic("persist", persist);
-  Alpine26.persist = (key, { get, set }, storage = localStorage) => {
+  Object.defineProperty(Alpine27, "$persist", { get: () => persist() });
+  Alpine27.magic("persist", persist);
+  Alpine27.persist = (key, { get, set }, storage = localStorage) => {
     let initial = storageHas(key, storage) ? storageGet(key, storage) : get();
     set(initial);
-    Alpine26.effect(() => {
+    Alpine27.effect(() => {
       let value = get();
       storageSet(key, value, storage);
       set(value);
@@ -14710,19 +14724,19 @@ function getPretchedHtmlOr(destination, receive, ifNoPrefetchExists) {
 }
 
 // js/plugins/navigate/teleport.js
-var import_alpinejs6 = __toESM(require_module_cjs());
+var import_alpinejs7 = __toESM(require_module_cjs());
 function packUpPersistedTeleports(persistedEl) {
-  import_alpinejs6.default.mutateDom(() => {
+  import_alpinejs7.default.mutateDom(() => {
     persistedEl.querySelectorAll("[data-teleport-template]").forEach((i) => i._x_teleport.remove());
   });
 }
 function removeAnyLeftOverStaleTeleportTargets(body) {
-  import_alpinejs6.default.mutateDom(() => {
+  import_alpinejs7.default.mutateDom(() => {
     body.querySelectorAll("[data-teleport-target]").forEach((i) => i.remove());
   });
 }
 function unPackPersistedTeleports(persistedEl) {
-  import_alpinejs6.default.walk(persistedEl, (el, skip) => {
+  import_alpinejs7.default.walk(persistedEl, (el, skip) => {
     if (!el._x_teleport)
       return;
     el._x_teleportPutBack();
@@ -14765,35 +14779,37 @@ function restoreScrollPositionOrScrollToTop() {
 }
 
 // js/plugins/navigate/persist.js
-var import_alpinejs7 = __toESM(require_module_cjs());
+var import_alpinejs8 = __toESM(require_module_cjs());
 var els = {};
 function storePersistantElementsForLater(callback) {
   els = {};
   document.querySelectorAll("[x-persist]").forEach((i) => {
     els[i.getAttribute("x-persist")] = i;
     callback(i);
-    import_alpinejs7.default.mutateDom(() => {
+    import_alpinejs8.default.mutateDom(() => {
       i.remove();
     });
   });
 }
 function putPersistantElementsBack(callback) {
   let usedPersists = [];
+  let putBacks = [];
   document.querySelectorAll("[x-persist]").forEach((i) => {
     let old = els[i.getAttribute("x-persist")];
     if (!old)
       return;
     usedPersists.push(i.getAttribute("x-persist"));
     old._x_wasPersisted = true;
-    callback(old, i);
-    import_alpinejs7.default.mutateDom(() => {
+    import_alpinejs8.default.mutateDom(() => {
       i.replaceWith(old);
     });
+    putBacks.push([old, i]);
   });
+  putBacks.forEach(([old, i]) => callback(old, i));
   Object.entries(els).forEach(([key, el]) => {
     if (usedPersists.includes(key))
       return;
-    import_alpinejs7.default.destroyTree(el);
+    import_alpinejs8.default.destroyTree(el);
   });
   els = {};
 }
@@ -15236,8 +15252,8 @@ var Navigation = class {
 var enablePersist = true;
 var showProgressBar = true;
 var restoreScroll = true;
-function navigate_default(Alpine26) {
-  Alpine26.navigate = (url, options = {}) => {
+function navigate_default(Alpine27) {
+  Alpine27.navigate = (url, options = {}) => {
     let { preserveScroll = false } = options;
     let destination = createUrlObjectFromString2(url);
     if (!isSameOrigin(destination))
@@ -15251,11 +15267,11 @@ function navigate_default(Alpine26) {
       return;
     navigateTo(destination, { preserveScroll });
   };
-  Alpine26.navigate.disableProgressBar = () => {
+  Alpine27.navigate.disableProgressBar = () => {
     showProgressBar = false;
   };
-  Alpine26.addInitSelector(() => `[${Alpine26.prefixed("navigate")}]`);
-  Alpine26.directive("navigate", (el, { modifiers }) => {
+  Alpine27.addInitSelector(() => `[${Alpine27.prefixed("navigate")}]`);
+  Alpine27.directive("navigate", (el, { modifiers }) => {
     let shouldPrefetchOnHover = modifiers.includes("hover");
     let preserveScroll = modifiers.includes("preserve-scroll");
     shouldPrefetchOnHover && whenThisLinkIsHoveredFor(el, 60, () => {
@@ -15304,7 +15320,7 @@ function navigate_default(Alpine26) {
       restoreScroll && storeScrollInformationInHtmlBeforeNavigatingAway();
       cleanupAlpineElementsOnThePageThatArentInsideAPersistedElement();
       shouldPushToHistoryState && updateCurrentPageHtmlInHistoryStateForLaterBackButtonClicks();
-      preventAlpineFromPickingUpDomChanges(Alpine26, (andAfterAllThis) => {
+      preventAlpineFromPickingUpDomChanges(Alpine27, (andAfterAllThis) => {
         enablePersist && storePersistantElementsForLater((persistedEl) => {
           packUpPersistedTeleports(persistedEl);
           packUpPersistedPopovers(persistedEl);
@@ -15324,7 +15340,7 @@ function navigate_default(Alpine26) {
           swapCallbacks.forEach((callback) => callback());
           afterNewScriptsAreDoneLoading(() => {
             andAfterAllThis(() => {
-              nowInitializeAlpineOnTheNewPage(Alpine26);
+              nowInitializeAlpineOnTheNewPage(Alpine27);
               autofocusElementsWithTheAutofocusAttribute();
               fireEventForOtherLibrariesToHookInto("alpine:navigated");
               navigation.finish();
@@ -15375,7 +15391,7 @@ function navigate_default(Alpine26) {
       });
       cleanupAlpineElementsOnThePageThatArentInsideAPersistedElement();
       updateCurrentPageHtmlInSnapshotCacheForLaterBackButtonClicks(currentPageKey, currentPageUrl);
-      preventAlpineFromPickingUpDomChanges(Alpine26, (andAfterAllThis) => {
+      preventAlpineFromPickingUpDomChanges(Alpine27, (andAfterAllThis) => {
         enablePersist && storePersistantElementsForLater((persistedEl) => {
           packUpPersistedTeleports(persistedEl);
           packUpPersistedPopovers(persistedEl);
@@ -15390,7 +15406,7 @@ function navigate_default(Alpine26) {
           restoreScrollPositionOrScrollToTop();
           swapCallbacks.forEach((callback) => callback());
           andAfterAllThis(() => {
-            nowInitializeAlpineOnTheNewPage(Alpine26);
+            nowInitializeAlpineOnTheNewPage(Alpine27);
             autofocusElementsWithTheAutofocusAttribute();
             fireEventForOtherLibrariesToHookInto("alpine:navigated");
             navigation.finish();
@@ -15411,10 +15427,10 @@ function fetchHtmlOrUsePrefetchedHtml(fromDestination, callback, errorCallback) 
 function requestWasCancelled(error2) {
   return error2?.name === "AbortError";
 }
-function preventAlpineFromPickingUpDomChanges(Alpine26, callback) {
-  Alpine26.stopObservingMutations();
+function preventAlpineFromPickingUpDomChanges(Alpine27, callback) {
+  Alpine27.stopObservingMutations();
   callback((afterAllThis) => {
-    Alpine26.startObservingMutations();
+    Alpine27.startObservingMutations();
     queueMicrotask(() => {
       afterAllThis();
     });
@@ -15429,8 +15445,8 @@ function fireEventForOtherLibrariesToHookInto(name, detail) {
   document.dispatchEvent(event);
   return event.defaultPrevented;
 }
-function nowInitializeAlpineOnTheNewPage(Alpine26) {
-  Alpine26.initTree(document.body, void 0, (el, skip) => {
+function nowInitializeAlpineOnTheNewPage(Alpine27) {
+  Alpine27.initTree(document.body, void 0, (el, skip) => {
     if (el._x_wasPersisted)
       skip();
   });
@@ -15453,8 +15469,8 @@ function cleanupAlpineElementsOnThePageThatArentInsideAPersistedElement() {
 }
 
 // js/plugins/history/index.js
-function history(Alpine26) {
-  Alpine26.magic("queryString", (el, { interceptor }) => {
+function history(Alpine27) {
+  Alpine27.magic("queryString", (el, { interceptor }) => {
     let alias;
     let alwaysShow = false;
     let usePush = false;
@@ -15463,9 +15479,9 @@ function history(Alpine26) {
       let { initial, replace: replace2, push: push2, pop } = track(queryKey, initialSeedValue, alwaysShow);
       setter(initial);
       if (!usePush) {
-        Alpine26.effect(() => replace2(getter()));
+        Alpine27.effect(() => replace2(getter()));
       } else {
-        Alpine26.effect(() => push2(getter()));
+        Alpine27.effect(() => push2(getter()));
         pop(async (newValue) => {
           setter(newValue);
           let tillTheEndOfTheMicrotaskQueue = () => Promise.resolve();
@@ -15488,7 +15504,7 @@ function history(Alpine26) {
       };
     });
   });
-  Alpine26.history = { track };
+  Alpine27.history = { track };
 }
 function track(name, initialSeedValue, alwaysShow = false, except = null) {
   let { has, get, set, remove } = queryStringUtils();
@@ -15648,24 +15664,24 @@ function fromQueryString(search, queryKey) {
 // js/lifecycle.js
 var import_morph = __toESM(require_module_cjs8());
 var import_mask = __toESM(require_module_cjs9());
-var import_alpinejs8 = __toESM(require_module_cjs());
+var import_alpinejs9 = __toESM(require_module_cjs());
 function start() {
   setTimeout(() => ensureLivewireScriptIsntMisplaced());
   dispatch(document, "livewire:init");
   dispatch(document, "livewire:initializing");
-  import_alpinejs8.default.plugin(import_morph.default);
-  import_alpinejs8.default.plugin(history);
-  import_alpinejs8.default.plugin(import_intersect.default);
-  import_alpinejs8.default.plugin(import_sort.default);
-  import_alpinejs8.default.plugin(import_resize.default);
-  import_alpinejs8.default.plugin(import_collapse.default);
-  import_alpinejs8.default.plugin(import_anchor.default);
-  import_alpinejs8.default.plugin(import_focus.default);
-  import_alpinejs8.default.plugin(module_default);
-  import_alpinejs8.default.plugin(navigate_default);
-  import_alpinejs8.default.plugin(import_mask.default);
-  import_alpinejs8.default.addRootSelector(() => "[wire\\:id]");
-  import_alpinejs8.default.onAttributesAdded((el, attributes) => {
+  import_alpinejs9.default.plugin(import_morph.default);
+  import_alpinejs9.default.plugin(history);
+  import_alpinejs9.default.plugin(import_intersect.default);
+  import_alpinejs9.default.plugin(import_sort.default);
+  import_alpinejs9.default.plugin(import_resize.default);
+  import_alpinejs9.default.plugin(import_collapse.default);
+  import_alpinejs9.default.plugin(import_anchor.default);
+  import_alpinejs9.default.plugin(import_focus.default);
+  import_alpinejs9.default.plugin(module_default);
+  import_alpinejs9.default.plugin(navigate_default);
+  import_alpinejs9.default.plugin(import_mask.default);
+  import_alpinejs9.default.addRootSelector(() => "[wire\\:id]");
+  import_alpinejs9.default.onAttributesAdded((el, attributes) => {
     if (!Array.from(attributes).some((attribute) => matchesForLivewireDirective(attribute.name)))
       return;
     if (!el._x_marker)
@@ -15678,18 +15694,18 @@ function start() {
         return;
       let directive2 = extractDirective(el, attribute.name);
       trigger("directive.init", { el, component, directive: directive2, cleanup: (callback) => {
-        import_alpinejs8.default.onAttributeRemoved(el, directive2.raw, callback);
+        import_alpinejs9.default.onAttributeRemoved(el, directive2.raw, callback);
       } });
     });
   });
-  import_alpinejs8.default.interceptInit(
-    import_alpinejs8.default.skipDuringClone(
+  import_alpinejs9.default.interceptInit(
+    import_alpinejs9.default.skipDuringClone(
       (el) => {
         if (!Array.from(el.attributes).some((attribute) => matchesForLivewireDirective(attribute.name)))
           return;
         if (el.hasAttribute("wire:id") && !el.__livewire && !hasComponent(el.getAttribute("wire:id"))) {
           let component2 = initComponent(el);
-          import_alpinejs8.default.onAttributeRemoved(el, "wire:id", () => {
+          import_alpinejs9.default.onAttributeRemoved(el, "wire:id", () => {
             destroyComponent(component2.id);
           });
           if (treeIsSuspendedFor(component2))
@@ -15698,7 +15714,7 @@ function start() {
         let directives = Array.from(el.getAttributeNames()).filter((name) => matchesForLivewireDirective(name)).map((name) => extractDirective(el, name));
         directives.forEach((directive2) => {
           trigger("directive.global.init", { el, directive: directive2, cleanup: (callback) => {
-            import_alpinejs8.default.onAttributeRemoved(el, directive2.raw, callback);
+            import_alpinejs9.default.onAttributeRemoved(el, directive2.raw, callback);
           } });
         });
         let component = findComponentByEl(el, false);
@@ -15706,7 +15722,7 @@ function start() {
           trigger("element.init", { el, component });
           directives.forEach((directive2) => {
             trigger("directive.init", { el, component, directive: directive2, cleanup: (callback) => {
-              import_alpinejs8.default.onAttributeRemoved(el, directive2.raw, callback);
+              import_alpinejs9.default.onAttributeRemoved(el, directive2.raw, callback);
             } });
           });
         }
@@ -15717,13 +15733,13 @@ function start() {
         let directives = Array.from(el.getAttributeNames()).filter((name) => matchesForLivewireDirective(name)).map((name) => extractDirective(el, name));
         directives.forEach((directive2) => {
           trigger("directive.global.init", { el, directive: directive2, cleanup: (callback) => {
-            import_alpinejs8.default.onAttributeRemoved(el, directive2.raw, callback);
+            import_alpinejs9.default.onAttributeRemoved(el, directive2.raw, callback);
           } });
         });
       }
     )
   );
-  import_alpinejs8.default.start();
+  import_alpinejs9.default.start();
   setTimeout(() => window.Livewire.initialRenderIsFinished = true);
   dispatch(document, "livewire:initialized");
 }
@@ -15738,7 +15754,7 @@ function ensureLivewireScriptIsntMisplaced() {
 }
 
 // js/index.js
-var import_alpinejs24 = __toESM(require_module_cjs());
+var import_alpinejs25 = __toESM(require_module_cjs());
 
 // js/features/supportListeners.js
 on("effect", ({ component, effects }) => {
@@ -15755,6 +15771,9 @@ function registerListeners(component, listeners2) {
         return;
       if (e.__livewire)
         e.__livewire.receivedBy.push(component);
+      if (e.target instanceof Element) {
+        setNextActionOrigin({ el: e.target });
+      }
       component.$wire.call("__dispatch", name, e.detail || {});
     };
     window.addEventListener(name, handler);
@@ -15774,7 +15793,7 @@ function registerListeners(component, listeners2) {
 }
 
 // js/features/supportScriptsAndAssets.js
-var import_alpinejs9 = __toESM(require_module_cjs());
+var import_alpinejs10 = __toESM(require_module_cjs());
 var executedScripts = /* @__PURE__ */ new WeakMap();
 var executedAssets = /* @__PURE__ */ new Set();
 on("payload.intercept", async ({ assets }) => {
@@ -15806,7 +15825,7 @@ function evaluateScripts(component, effects) {
       onlyIfScriptHasntBeenRunAlreadyForThisComponent(component, key, () => {
         let scriptContent = extractScriptTagContent(content);
         scriptContent = scriptContent.includes("await") ? `(async()=>{ ${scriptContent} })()` : `(()=>{ ${scriptContent} })()`;
-        import_alpinejs9.default.dontAutoEvaluateFunctions(() => {
+        import_alpinejs10.default.dontAutoEvaluateFunctions(() => {
           evaluateExpression(component.el, scriptContent, {
             context: component.$wire,
             scope: {
@@ -15878,8 +15897,8 @@ function isScript2(el) {
 }
 
 // js/features/supportJsEvaluation.js
-var import_alpinejs10 = __toESM(require_module_cjs());
-import_alpinejs10.default.magic("js", (el) => {
+var import_alpinejs11 = __toESM(require_module_cjs());
+import_alpinejs11.default.magic("js", (el) => {
   let component = findComponentByEl(el);
   return component.$wire.js;
 });
@@ -15910,7 +15929,7 @@ function evaluateJsEffects(component, effects) {
 }
 
 // js/morph.js
-var import_alpinejs11 = __toESM(require_module_cjs());
+var import_alpinejs12 = __toESM(require_module_cjs());
 
 // js/directives/wire-transition.js
 var defaultName = "match-element";
@@ -16056,7 +16075,7 @@ async function morph2(component, el, html) {
     transitionOptions = component.effects.transition;
   }
   await transitionDomMutation(el, to, () => {
-    import_alpinejs11.default.morph(el, to, getMorphConfig(component));
+    import_alpinejs12.default.morph(el, to, getMorphConfig(component));
   }, transitionOptions);
   trigger("morphed", { el, component });
 }
@@ -16094,7 +16113,7 @@ async function morphFragment(component, startNode, endNode, toHTML) {
   }
   let fromEl = islandHasTransition ? fromContainer : document.createElement("div");
   await transitionDomMutation(fromEl, toContainer, () => {
-    import_alpinejs11.default.morphBetween(startNode, endNode, toContainer, getMorphConfig(component));
+    import_alpinejs12.default.morphBetween(startNode, endNode, toContainer, getMorphConfig(component));
   }, transitionOptions);
   trigger("island.morphed", { startNode, endNode, component });
 }
@@ -16309,7 +16328,7 @@ function dispatchEvents(component, dispatches) {
 }
 
 // js/features/supportDisablingFormsDuringRequest.js
-var import_alpinejs12 = __toESM(require_module_cjs());
+var import_alpinejs13 = __toESM(require_module_cjs());
 var cleanups = new Bag();
 on("directive.init", ({ el, directive: directive2, cleanup, component }) => setTimeout(() => {
   if (directive2.value !== "submit")
@@ -16329,7 +16348,7 @@ interceptMessage(({ message, onSuccess, onFinish }) => {
 });
 function disableForm(formEl) {
   let undos = [];
-  import_alpinejs12.default.walk(formEl, (el, skip) => {
+  import_alpinejs13.default.walk(formEl, (el, skip) => {
     if (!formEl.contains(el))
       return;
     if (el.hasAttribute("wire:ignore"))
@@ -16425,7 +16444,7 @@ function base64toBlob(b64Data, contentType = "", sliceSize = 512) {
 }
 
 // js/features/supportQueryString.js
-var import_alpinejs13 = __toESM(require_module_cjs());
+var import_alpinejs14 = __toESM(require_module_cjs());
 on("effect", ({ component, effects, cleanup }) => {
   let queryString;
   if (Object.prototype.hasOwnProperty.call(effects, "url")) {
@@ -16440,10 +16459,10 @@ on("effect", ({ component, effects, cleanup }) => {
     let initialValue = [false, null, void 0].includes(except) ? dataGet(component.ephemeral, name) : except;
     let { replace: replace2, push: push2, pop } = track(as, initialValue, alwaysShow, except);
     if (use === "replace") {
-      let effectReference = import_alpinejs13.default.effect(() => {
+      let effectReference = import_alpinejs14.default.effect(() => {
         replace2(dataGet(component.reactive, name));
       });
-      cleanup(() => import_alpinejs13.default.release(effectReference));
+      cleanup(() => import_alpinejs14.default.release(effectReference));
     } else if (use === "push") {
       let popNavigating = false;
       let forgetCommitHandler = on("commit", ({ component: commitComponent, succeed }) => {
@@ -16685,8 +16704,8 @@ interceptMessage(({ message, onSend, onSuccess, onFinish }) => {
 });
 
 // js/directives/wire-current.js
-var import_alpinejs14 = __toESM(require_module_cjs());
-import_alpinejs14.default.addInitSelector(() => `[wire\\:current]`);
+var import_alpinejs15 = __toESM(require_module_cjs());
+import_alpinejs15.default.addInitSelector(() => `[wire\\:current]`);
 var onPageChanges = /* @__PURE__ */ new Map();
 document.addEventListener("livewire:navigated", () => {
   onPageChanges.forEach((i) => i(new URL(window.location.href)));
@@ -16738,7 +16757,7 @@ function pathMatches(hrefUrl, actualUrl, options = {}) {
 }
 
 // js/directives/wire-navigate.js
-var import_alpinejs15 = __toESM(require_module_cjs());
+var import_alpinejs16 = __toESM(require_module_cjs());
 var wireNavigateSelectors = [
   "[wire\\:navigate]",
   "[wire\\:navigate\\.hover]",
@@ -16755,13 +16774,13 @@ var attributeMap = {
   "wire:navigate.hover.preserve-scroll": "x-navigate.hover.preserve-scroll"
 };
 wireNavigateSelectors.forEach((selector) => {
-  import_alpinejs15.default.addInitSelector(() => selector);
+  import_alpinejs16.default.addInitSelector(() => selector);
 });
-import_alpinejs15.default.interceptInit(
-  import_alpinejs15.default.skipDuringClone((el) => {
+import_alpinejs16.default.interceptInit(
+  import_alpinejs16.default.skipDuringClone((el) => {
     for (let [wireAttr, alpineDirective] of Object.entries(attributeMap)) {
       if (el.hasAttribute(wireAttr)) {
-        import_alpinejs15.default.bind(el, { [alpineDirective]: true });
+        import_alpinejs16.default.bind(el, { [alpineDirective]: true });
         break;
       }
     }
@@ -16830,15 +16849,15 @@ interceptMessage(({ message, onSuccess }) => {
 });
 
 // js/features/supportWireIntersect.js
-var import_alpinejs16 = __toESM(require_module_cjs());
-import_alpinejs16.default.interceptInit((el) => {
+var import_alpinejs17 = __toESM(require_module_cjs());
+import_alpinejs17.default.interceptInit((el) => {
   for (let i = 0; i < el.attributes.length; i++) {
     if (el.attributes[i].name.startsWith("wire:intersect")) {
       let { name, value } = el.attributes[i];
       let directive2 = extractDirective(el, name);
       let modifierString = name.split("wire:intersect")[1];
       let expression = value.trim();
-      import_alpinejs16.default.bind(el, {
+      import_alpinejs17.default.bind(el, {
         ["x-intersect" + modifierString](e) {
           directive2.eventContext = e;
           let component = findComponentByEl(el, false);
@@ -16856,7 +16875,7 @@ import_alpinejs16.default.interceptInit((el) => {
 });
 
 // js/features/supportWireSort.js
-var import_alpinejs17 = __toESM(require_module_cjs());
+var import_alpinejs18 = __toESM(require_module_cjs());
 on("directive.init", ({ el, directive: directive2 }) => {
   if (!directive2.rawName.startsWith("wire:sort:item"))
     return;
@@ -16864,7 +16883,7 @@ on("directive.init", ({ el, directive: directive2 }) => {
     return;
   bindSortItem(el, directive2);
 });
-import_alpinejs17.default.interceptInit((el) => {
+import_alpinejs18.default.interceptInit((el) => {
   for (let i = 0; i < el.attributes.length; i++) {
     if (el.attributes[i].name.startsWith("wire:sort:item")) {
       let directive2 = extractDirective(el, el.attributes[i].name);
@@ -16889,7 +16908,7 @@ import_alpinejs17.default.interceptInit((el) => {
         attribute = attribute.replace(".append", "");
       }
       let expression = directive2.expression;
-      import_alpinejs17.default.bind(el, {
+      import_alpinejs18.default.bind(el, {
         [attribute]() {
           setNextActionOrigin({ el, directive: directive2 });
           let sortableChildren = Array.from(el.children).filter(
@@ -16913,7 +16932,7 @@ import_alpinejs17.default.interceptInit((el) => {
 function bindSortItem(el, directive2) {
   let modifierString = directive2.modifiers.join(".");
   let expression = directive2.expression;
-  import_alpinejs17.default.bind(el, {
+  import_alpinejs18.default.bind(el, {
     ["x-sort:item" + modifierString]() {
       return expression;
     }
@@ -16962,7 +16981,7 @@ function callAndClearComponentDebounces(component, callback) {
 }
 
 // js/directives/wire-wildcard.js
-var import_alpinejs18 = __toESM(require_module_cjs());
+var import_alpinejs19 = __toESM(require_module_cjs());
 on("directive.init", ({ el, directive: directive2, cleanup, component }) => {
   if (["snapshot", "effects", "model", "init", "loading", "poll", "ignore", "id", "data", "key", "target", "dirty", "sort"].includes(directive2.value))
     return;
@@ -16984,7 +17003,7 @@ on("directive.init", ({ el, directive: directive2, cleanup, component }) => {
   if (directive2.modifiers.includes("append")) {
     attribute = attribute.replace(".append", "");
   }
-  let cleanupBinding = import_alpinejs18.default.bind(el, {
+  let cleanupBinding = import_alpinejs19.default.bind(el, {
     [attribute](e) {
       directive2.eventContext = e;
       directive2.wire = component.$wire;
@@ -17298,15 +17317,15 @@ directive("ignore", ({ el, directive: directive2 }) => {
 });
 
 // js/directives/wire-cloak.js
-var import_alpinejs19 = __toESM(require_module_cjs());
-import_alpinejs19.default.interceptInit((el) => {
+var import_alpinejs20 = __toESM(require_module_cjs());
+import_alpinejs20.default.interceptInit((el) => {
   if (el.hasAttribute("wire:cloak")) {
-    import_alpinejs19.default.mutateDom(() => el.removeAttribute("wire:cloak"));
+    import_alpinejs20.default.mutateDom(() => el.removeAttribute("wire:cloak"));
   }
 });
 
 // js/directives/wire-model.js
-var import_alpinejs20 = __toESM(require_module_cjs());
+var import_alpinejs21 = __toESM(require_module_cjs());
 directive("model", ({ el, directive: directive2, component, cleanup }) => {
   component = findComponentByEl(el);
   let { expression, modifiers } = directive2;
@@ -17390,7 +17409,7 @@ directive("model", ({ el, directive: directive2, component, cleanup }) => {
       }
     };
   };
-  import_alpinejs20.default.bind(el, bindings);
+  import_alpinejs21.default.bind(el, bindings);
 });
 function getModifierTail(modifiers) {
   modifiers = modifiers.filter((i) => ![
@@ -17574,14 +17593,14 @@ function extractDurationFrom(modifiers, defaultDuration) {
 }
 
 // js/directives/wire-show.js
-var import_alpinejs21 = __toESM(require_module_cjs());
-import_alpinejs21.default.interceptInit((el) => {
+var import_alpinejs22 = __toESM(require_module_cjs());
+import_alpinejs22.default.interceptInit((el) => {
   for (let i = 0; i < el.attributes.length; i++) {
     if (el.attributes[i].name.startsWith("wire:show")) {
       let { name, value } = el.attributes[i];
       let modifierString = name.split("wire:show")[1];
       let expression = value.trim();
-      import_alpinejs21.default.bind(el, {
+      import_alpinejs22.default.bind(el, {
         ["x-show" + modifierString]() {
           return evaluateReactiveExpression(el, expression);
         }
@@ -17591,14 +17610,14 @@ import_alpinejs21.default.interceptInit((el) => {
 });
 
 // js/directives/wire-text.js
-var import_alpinejs22 = __toESM(require_module_cjs());
-import_alpinejs22.default.interceptInit((el) => {
+var import_alpinejs23 = __toESM(require_module_cjs());
+import_alpinejs23.default.interceptInit((el) => {
   for (let i = 0; i < el.attributes.length; i++) {
     if (el.attributes[i].name.startsWith("wire:text")) {
       let { name, value } = el.attributes[i];
       let modifierString = name.split("wire:text")[1];
       let expression = value.trim();
-      import_alpinejs22.default.bind(el, {
+      import_alpinejs23.default.bind(el, {
         ["x-text" + modifierString]() {
           return evaluateReactiveExpression(el, expression);
         }
@@ -17608,14 +17627,14 @@ import_alpinejs22.default.interceptInit((el) => {
 });
 
 // js/directives/wire-bind.js
-var import_alpinejs23 = __toESM(require_module_cjs());
-import_alpinejs23.default.interceptInit((el) => {
+var import_alpinejs24 = __toESM(require_module_cjs());
+import_alpinejs24.default.interceptInit((el) => {
   for (let i = 0; i < el.attributes.length; i++) {
     if (el.attributes[i].name.startsWith("wire:bind:")) {
       let { name, value } = el.attributes[i];
       let remainder = name.split("wire:bind")[1];
       let expression = value.trim();
-      import_alpinejs23.default.bind(el, {
+      import_alpinejs24.default.bind(el, {
         ["x-bind" + remainder]() {
           return evaluateReactiveExpression(el, expression);
         }
@@ -17643,7 +17662,7 @@ var Livewire2 = {
   dispatch: dispatchGlobal,
   on: on2,
   get navigate() {
-    return import_alpinejs24.default.navigate;
+    return import_alpinejs25.default.navigate;
   }
 };
 var warnAboutMultipleInstancesOf = (entity) => console.warn(`Detected multiple instances of ${entity} running`);
@@ -17652,7 +17671,7 @@ if (window.Livewire)
 if (window.Alpine)
   warnAboutMultipleInstancesOf("Alpine");
 window.Livewire = Livewire2;
-window.Alpine = import_alpinejs24.default;
+window.Alpine = import_alpinejs25.default;
 if (window.livewireScriptConfig === void 0) {
   window.Alpine.__fromLivewire = true;
   document.addEventListener("DOMContentLoaded", () => {
@@ -17662,7 +17681,7 @@ if (window.livewireScriptConfig === void 0) {
     Livewire2.start();
   });
 }
-var export_Alpine = import_alpinejs24.default;
+var export_Alpine = import_alpinejs25.default;
 export {
   export_Alpine as Alpine,
   Livewire2 as Livewire

@@ -2792,7 +2792,7 @@ ${expression ? 'Expression: "' + expression + '"\n\n' : ""}`, el);
     get transaction() {
       return transaction;
     },
-    version: "3.17.1",
+    version: "3.17.2",
     flushAndStopDeferringMutations,
     dontAutoEvaluateFunctions,
     disableEffectScheduling,
@@ -5171,6 +5171,23 @@ ${expression ? 'Expression: "' + expression + '"\n\n' : ""}`, el);
     return typeof value === "object" ? JSON.parse(JSON.stringify(value)) : value;
   }
 
+  // js/features/supportWatch.js
+  function generateWatchFunction(component, cleanup) {
+    return (path, callback) => {
+      let getter = () => dataGet(component.reactive, path);
+      let unwatch = module_default.watch(getter, callback);
+      if (cleanup) {
+        cleanup(unwatch);
+        return unwatch;
+      }
+      let removeCleanup = component.addCleanup(unwatch);
+      return () => {
+        removeCleanup();
+        unwatch();
+      };
+    };
+  }
+
   // js/hooks.js
   var listeners = [];
   function on2(name, callback) {
@@ -5229,6 +5246,8 @@ ${expression ? 'Expression: "' + expression + '"\n\n' : ""}`, el);
       }
     });
     interceptPartition(({ message, compileRequest }) => {
+      if (!message.hasActionForComponent())
+        return;
       let component = message.component;
       let bundledMessages = [];
       component.getDeepChildrenWithBindings((child) => {
@@ -7241,6 +7260,8 @@ ${expression ? 'Expression: "' + expression + '"\n\n' : ""}`, el);
         }
         if (["$entangle", "entangle"].includes(property)) {
           return generateEntangleFunction(component, cleanup);
+        } else if (["$watch", "watch"].includes(property)) {
+          return generateWatchFunction(component, cleanup);
         }
         return component.$wire[property];
       },
@@ -7353,15 +7374,7 @@ ${expression ? 'Expression: "' + expression + '"\n\n' : ""}`, el);
     return component.$wire.set(name, !component.$wire.get(name), live);
   });
   wireProperty("$watch", (component) => (path, callback) => {
-    let getter = () => {
-      return dataGet(component.reactive, path);
-    };
-    let unwatch = module_default.watch(getter, callback);
-    let removeCleanup = component.addCleanup(unwatch);
-    return () => {
-      removeCleanup();
-      unwatch();
-    };
+    return generateWatchFunction(component)(path, callback);
   });
   wireProperty("$effect", (component) => (callback) => {
     let effect3 = module_default.effect(callback);
@@ -13858,17 +13871,19 @@ ${expression ? 'Expression: "' + expression + '"\n\n' : ""}`, el);
   }
   function putPersistantElementsBack(callback) {
     let usedPersists = [];
+    let putBacks = [];
     document.querySelectorAll("[x-persist]").forEach((i) => {
       let old = els[i.getAttribute("x-persist")];
       if (!old)
         return;
       usedPersists.push(i.getAttribute("x-persist"));
       old._x_wasPersisted = true;
-      callback(old, i);
       module_default.mutateDom(() => {
         i.replaceWith(old);
       });
+      putBacks.push([old, i]);
     });
+    putBacks.forEach(([old, i]) => callback(old, i));
     Object.entries(els).forEach(([key, el]) => {
       if (usedPersists.includes(key))
         return;
@@ -15384,6 +15399,9 @@ ${expression ? 'Expression: "' + expression + '"\n\n' : ""}`, el);
           return;
         if (e.__livewire)
           e.__livewire.receivedBy.push(component);
+        if (e.target instanceof Element) {
+          setNextActionOrigin({ el: e.target });
+        }
         component.$wire.call("__dispatch", name, e.detail || {});
       };
       window.addEventListener(name, handler4);
