@@ -470,6 +470,8 @@ Prompts for anything omitted. `SKIP_DDNS=1` if your IP is static. Login: `admin@
 | Port 80 in use | `sudo systemctl disable --now apache2` |
 | SQLite readonly / disk I/O error | Remove `database/database.sqlite*` and rerun installer; check `dmesg` for SD card errors |
 | Cook description images 404 | Run `php artisan storage:link` from the app root (creates `public/storage` → `storage/app/public`) |
+| `pigpio` / `libpigpio-dev` not in apt (Pi OS Trixie) | Run `sudo ./deploy/install-pigpio.sh`, then re-run the production installer (or `gcc -o maverick maverick.c -lpigpio -lsqlite3 -lrt -pthread`) |
+| pigpio `does not appear to be a raspberry pi` | **Pi 5 is unsupported** by pigpio — use Pi Zero 2 W, Pi 3, or Pi 4 |
 
 Validate Caddy (CLI does not read systemd env): `sudo CLOUDFLARE_API_TOKEN=your-token caddy validate --config /etc/caddy/Caddyfile`
 
@@ -480,7 +482,8 @@ For partial installs or recovery — same result as the automated script:
 ```bash
 # 1. System + app
 sudo apt install -y git curl wget jq php8.4-{cli,fpm,curl,intl,xml,mbstring,sqlite3,bcmath,zip,gd} \
-  pigpio libpigpio-dev libsqlite3-dev gcc make sqlite3
+  libsqlite3-dev gcc make sqlite3
+sudo ./deploy/install-pigpio.sh
 # Install Composer if needed: https://getcomposer.org/download/
 cd /var/www/alexbbq && composer install --no-dev --optimize-autoloader
 cp .env.example .env && touch database/database.sqlite
@@ -509,6 +512,7 @@ Individual scripts: `deploy/install-{pi-production,caddy-armv6,cloudflare-ddns,r
 | `install-caddy-armv6.sh` | Caddy ARMv6 + Cloudflare DNS plugin |
 | `install-cloudflare-ddns.sh` | DDNS cron + `.env` values |
 | `install-reverb-service.sh` | Reverb systemd unit |
+| `install-pigpio.sh` | pigpio via apt (Bookworm) or source build (Trixie) |
 | `verify-reverb.sh` | Check Reverb + Caddy proxy |
 
 ---

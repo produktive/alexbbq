@@ -90,7 +90,8 @@ install_system_packages() {
         sqlite3 jq
 
     if [[ "$SKIP_MAVERICK" != "1" ]]; then
-        apt-get install -y pigpio libpigpio-dev libsqlite3-dev gcc make
+        apt-get install -y libsqlite3-dev gcc make
+        "$DIR/deploy/install-pigpio.sh"
     fi
 }
 
