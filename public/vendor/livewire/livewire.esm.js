@@ -415,8 +415,8 @@ var require_module_cjs = __commonJS({
           if (value == null) {
             return false;
           }
-          const type = typeof value;
-          return type === "string" || type === "number" || type === "boolean";
+          const type2 = typeof value;
+          return type2 === "string" || type2 === "number" || type2 === "boolean";
         }
         var escapeRE = /["'&<>]/;
         function escapeHtml(string) {
@@ -1273,7 +1273,7 @@ var require_module_cjs = __commonJS({
         var ARRAY_ITERATE_KEY = /* @__PURE__ */ Symbol(
           "Array iterate"
         );
-        function track2(target, type, key) {
+        function track2(target, type2, key) {
           if (shouldTrack && activeSub) {
             let depsMap = targetMap.get(target);
             if (!depsMap) {
@@ -1288,13 +1288,13 @@ var require_module_cjs = __commonJS({
             {
               dep.track({
                 target,
-                type,
+                type: type2,
                 key
               });
             }
           }
         }
-        function trigger2(target, type, key, newValue, oldValue, oldTarget) {
+        function trigger2(target, type2, key, newValue, oldValue, oldTarget) {
           const depsMap = targetMap.get(target);
           if (!depsMap) {
             globalVersion++;
@@ -1305,7 +1305,7 @@ var require_module_cjs = __commonJS({
               {
                 dep.trigger({
                   target,
-                  type,
+                  type: type2,
                   key,
                   newValue,
                   oldValue,
@@ -1315,7 +1315,7 @@ var require_module_cjs = __commonJS({
             }
           };
           startBatch();
-          if (type === "clear") {
+          if (type2 === "clear") {
             depsMap.forEach(run);
           } else {
             const targetIsArray = shared.isArray(target);
@@ -1334,7 +1334,7 @@ var require_module_cjs = __commonJS({
               if (isArrayIndex) {
                 run(depsMap.get(ARRAY_ITERATE_KEY));
               }
-              switch (type) {
+              switch (type2) {
                 case "add":
                   if (!targetIsArray) {
                     run(depsMap.get(ITERATE_KEY));
@@ -1767,16 +1767,16 @@ var require_module_cjs = __commonJS({
             );
           };
         }
-        function createReadonlyMethod(type) {
+        function createReadonlyMethod(type2) {
           return function(...args) {
             {
               const key = args[0] ? `on key "${args[0]}" ` : ``;
               warn2(
-                `${shared.capitalize(type)} operation ${key}failed: target is readonly.`,
+                `${shared.capitalize(type2)} operation ${key}failed: target is readonly.`,
                 toRaw2(this)
               );
             }
-            return type === "delete" ? false : type === "clear" ? void 0 : this;
+            return type2 === "delete" ? false : type2 === "clear" ? void 0 : this;
           };
         }
         function createInstrumentations(readonly2, shallow) {
@@ -1949,9 +1949,9 @@ var require_module_cjs = __commonJS({
         function checkIdentityKeys(target, has, key) {
           const rawKey = toRaw2(key);
           if (rawKey !== key && has.call(target, rawKey)) {
-            const type = shared.toRawType(target);
+            const type2 = shared.toRawType(target);
             warn2(
-              `Reactive ${type} contains both the raw and reactive versions of the same object${type === `Map` ? ` as keys` : ``}, which can lead to inconsistencies. Avoid differentiating between the raw and reactive versions of an object and only use the reactive version if possible.`
+              `Reactive ${type2} contains both the raw and reactive versions of the same object${type2 === `Map` ? ` as keys` : ``}, which can lead to inconsistencies. Avoid differentiating between the raw and reactive versions of an object and only use the reactive version if possible.`
             );
           }
         }
@@ -2769,7 +2769,10 @@ var require_module_cjs = __commonJS({
         oldValueJSON = newJSON;
         firstTime = false;
       });
-      return () => release(effectReference);
+      return () => {
+        dequeueJob(effectReference);
+        release(effectReference);
+      };
     }
     async function transaction(callback) {
       startTransaction();
@@ -2856,9 +2859,11 @@ var require_module_cjs = __commonJS({
       if (!currentlyObserving)
         return callback();
       stopObservingMutations();
-      let result = callback();
-      startObservingMutations();
-      return result;
+      try {
+        return callback();
+      } finally {
+        startObservingMutations();
+      }
     }
     var isCollecting = false;
     var deferredMutations = [];
@@ -3301,14 +3306,14 @@ ${expression ? 'Expression: "' + expression + '"\n\n' : ""}`, el);
       if (el._x_virtualDirectives) {
         let vAttributes = Object.entries(el._x_virtualDirectives).map(([name, value]) => ({ name, value }));
         let staticAttributes = attributesOnly(vAttributes);
-        vAttributes = vAttributes.map((attribute) => {
-          if (staticAttributes.find((attr) => attr.name === attribute.name)) {
+        vAttributes = vAttributes.map((attribute2) => {
+          if (staticAttributes.find((attr) => attr.name === attribute2.name)) {
             return {
-              name: `x-bind:${attribute.name}`,
-              value: `"${attribute.value}"`
+              name: `x-bind:${attribute2.name}`,
+              value: `"${attribute2.value}"`
             };
           }
-          return attribute;
+          return attribute2;
         });
         attributes = attributes.concat(vAttributes);
       }
@@ -4339,6 +4344,7 @@ ${expression ? 'Expression: "' + expression + '"\n\n' : ""}`, el);
         innerHash = JSON.stringify(innerGet());
       });
       return () => {
+        dequeueJob(reference);
         release(reference);
       };
     }
@@ -4402,14 +4408,14 @@ ${expression ? 'Expression: "' + expression + '"\n\n' : ""}`, el);
         cleanupRunners.pop()();
       let attributes = Object.entries(obj).map(([name, value]) => ({ name, value }));
       let staticAttributes = attributesOnly(attributes);
-      attributes = attributes.map((attribute) => {
-        if (staticAttributes.find((attr) => attr.name === attribute.name)) {
+      attributes = attributes.map((attribute2) => {
+        if (staticAttributes.find((attr) => attr.name === attribute2.name)) {
           return {
-            name: `x-bind:${attribute.name}`,
-            value: `"${attribute.value}"`
+            name: `x-bind:${attribute2.name}`,
+            value: `"${attribute2.value}"`
           };
         }
-        return attribute;
+        return attribute2;
       });
       directives(el, attributes, original).map((handle) => {
         cleanupRunners.push(handle.runCleanups);
@@ -4453,7 +4459,7 @@ ${expression ? 'Expression: "' + expression + '"\n\n' : ""}`, el);
       get transaction() {
         return transaction;
       },
-      version: "3.17.2",
+      version: "3.17.4",
       flushAndStopDeferringMutations,
       dontAutoEvaluateFunctions,
       disableEffectScheduling,
@@ -4809,9 +4815,35 @@ ${expression ? 'Expression: "' + expression + '"\n\n' : ""}`, el);
     function isClickEvent(event) {
       return ["contextmenu", "click", "mouse"].some((i) => event.includes(i));
     }
+    var nonKeyModifiers = [
+      "window",
+      "document",
+      "prevent",
+      "stop",
+      "once",
+      "capture",
+      "self",
+      "away",
+      "outside",
+      "passive",
+      "dot",
+      "camel",
+      "preserve-scroll",
+      "blur",
+      "change",
+      "lazy",
+      "number",
+      "boolean",
+      "trim",
+      "fill",
+      "unintrusive",
+      "parent"
+    ];
     function isListeningForASpecificKeyThatHasntBeenPressed(e, modifiers) {
-      let keyModifiers = modifiers.filter((i) => {
-        return !["window", "document", "prevent", "stop", "once", "capture", "self", "away", "outside", "passive", "preserve-scroll", "blur", "change", "lazy"].includes(i);
+      let keyModifiers = modifiers.filter((modifier, index) => {
+        if (modifier === "false" && modifiers[index - 1] === "passive")
+          return false;
+        return !nonKeyModifiers.includes(modifier);
       });
       if (keyModifiers.includes("debounce")) {
         let debounceIndex = keyModifiers.indexOf("debounce");
@@ -5184,7 +5216,9 @@ ${expression ? 'Expression: "' + expression + '"\n\n' : ""}`, el);
       }
       initInterceptors(reactiveData, cleanup);
       let undo = addScopeToNode(el, reactiveData);
-      reactiveData["init"] && evaluate(el, reactiveData["init"]);
+      skipDuringClone(() => {
+        reactiveData["init"] && evaluate(el, reactiveData["init"]);
+      })();
       cleanup(() => {
         reactiveData["destroy"] && evaluate(el, reactiveData["destroy"]);
         undo();
@@ -5379,7 +5413,7 @@ ${expression ? 'Expression: "' + expression + '"\n\n' : ""}`, el);
     function parseForExpression(expression) {
       let forIteratorRE = /,([^,\}\]]*)(?:,([^,\}\]]*))?$/;
       let stripParensRE = /^\s*\(|\)\s*$/g;
-      let forAliasRE = /([\s\S]*?)\s+(?:in|of)\s+([\s\S]*)/;
+      let forAliasRE = /([\s\S]*?)\b(?:in|of)\b([\s\S]*)/;
       let inMatch = expression.match(forAliasRE);
       if (!inMatch)
         return;
@@ -8623,6 +8657,10 @@ var require_module_cjs6 = __commonJS({
           evaluator(() => {
           }, { scope: { "$width": width, "$height": height } });
         };
+        if (modifiers.includes("viewport")) {
+          onViewportResize(evaluate, cleanup);
+          return;
+        }
         let off = modifiers.includes("document") ? onDocumentResize(evaluate) : onElResize(el, evaluate);
         cleanup(() => off());
       }));
@@ -8634,6 +8672,17 @@ var require_module_cjs6 = __commonJS({
       });
       observer.observe(el);
       return () => observer.disconnect();
+    }
+    function onViewportResize(callback, cleanup) {
+      let viewport = window.visualViewport;
+      if (!viewport) {
+        cleanup(onElResize(document.documentElement, callback));
+        return;
+      }
+      let evaluate = () => callback(viewport.width, viewport.height);
+      viewport.addEventListener("resize", evaluate);
+      cleanup(() => viewport.removeEventListener("resize", evaluate));
+      evaluate();
     }
     var documentResizeObserver;
     var documentResizeObserverCallbacks = /* @__PURE__ */ new Set();
@@ -12281,7 +12330,8 @@ var Action = class {
     this.promise = new Promise((resolve, reject) => {
       this.promiseResolution = { resolve, reject };
     });
-    this.promise._livewireAction = this;
+    this.promise.catch(() => {
+    });
   }
   cancel() {
     if (this.cancelled)
@@ -13487,12 +13537,7 @@ function evaluateActionExpression(el, expression, options = {}) {
     return;
   let contextualExpression = contextualizeExpression(expression, el, !isEvaluatingReactiveExpression());
   try {
-    let result = import_alpinejs5.default.evaluateRaw(el, contextualExpression, options);
-    if (result instanceof Promise && result._livewireAction) {
-      result.catch(() => {
-      });
-    }
-    return result;
+    return import_alpinejs5.default.evaluateRaw(el, contextualExpression, options);
   } catch (error2) {
     reportExpressionError(error2, expression, el);
   }
@@ -13677,7 +13722,7 @@ wireProperty("$js", (component) => {
     }
   });
 });
-wireProperty("$set", (component) => async (property, value, live = true) => {
+wireProperty("$set", (component) => (property, value, live = true) => {
   dataSet(component.reactive, property, value);
   if (live) {
     component.queueUpdate(property, value);
@@ -13723,8 +13768,8 @@ wireProperty("$interceptRequest", (component) => (actionNameOrCallback, maybeCal
   return interceptComponentRequest(component, actionNameOrCallback, maybeCallback);
 });
 wireProperty("$errors", (component) => getErrorsObject(component));
-wireProperty("$call", (component) => async (method, ...params) => {
-  return await component.$wire[method](...params);
+wireProperty("$call", (component) => (method, ...params) => {
+  return component.$wire[method](...params);
 });
 wireProperty("$island", (component) => (name, options = {}) => {
   setNextActionMetadata({ island: { name, mode: "morph", ...options } });
@@ -14482,6 +14527,7 @@ var Snapshot = class {
 };
 var snapshotCache = {
   currentKey: null,
+  currentDocumentId: Math.random(),
   currentUrl: null,
   keys: [],
   lookup: {},
@@ -14528,7 +14574,7 @@ function updateCurrentPageHtmlInSnapshotCacheForLaterBackButtonClicks(key, url) 
   let html = document.documentElement.outerHTML;
   snapshotCache.replace(key, new Snapshot(url, html));
 }
-function whenTheBackOrForwardButtonIsClicked(registerFallback, handleHtml) {
+function whenTheBackOrForwardButtonIsClicked(registerFallback, handleHtml, handleFragment) {
   let fallback2;
   registerFallback((i) => fallback2 = i);
   window.addEventListener("popstate", (e) => {
@@ -14541,14 +14587,23 @@ function whenTheBackOrForwardButtonIsClicked(registerFallback, handleHtml) {
       return;
     if (!alpine.snapshotIdx)
       return;
+    if (alpine.documentId && alpine.documentId === snapshotCache.currentDocumentId) {
+      let snapshot = snapshotCache.has(alpine.snapshotIdx) && snapshotCache.retrieve(alpine.snapshotIdx);
+      handleFragment(new URL(window.location.href), snapshot?.html, snapshotCache.currentUrl, snapshotCache.currentKey);
+      snapshotCache.currentKey = alpine.snapshotIdx;
+      snapshotCache.currentUrl = new URL(window.location.href);
+      return;
+    }
     if (snapshotCache.has(alpine.snapshotIdx)) {
       let snapshot = snapshotCache.retrieve(alpine.snapshotIdx);
       handleHtml(snapshot.html, snapshot.url, snapshotCache.currentUrl, snapshotCache.currentKey);
       snapshotCache.currentKey = alpine.snapshotIdx;
       snapshotCache.currentUrl = snapshot.url;
+      snapshotCache.currentDocumentId = alpine.documentId ?? Math.random();
     } else {
       snapshotCache.currentKey = null;
       snapshotCache.currentUrl = null;
+      snapshotCache.currentDocumentId = alpine.documentId ?? Math.random();
       fallback2(alpine.url);
     }
   });
@@ -14556,13 +14611,15 @@ function whenTheBackOrForwardButtonIsClicked(registerFallback, handleHtml) {
 function updateUrlAndStoreLatestHtmlForFutureBackButtons(html, destination) {
   pushUrl(destination, html);
 }
-function pushUrl(url, html) {
-  updateUrl("pushState", url, html);
+function pushUrl(url, html, { sameDocument = false } = {}) {
+  updateUrl("pushState", url, html, { sameDocument });
 }
 function replaceUrl(url, html) {
   updateUrl("replaceState", url, html);
 }
-function updateUrl(method, url, html) {
+function updateUrl(method, url, html, { sameDocument = false } = {}) {
+  if (method === "pushState" && !sameDocument)
+    snapshotCache.currentDocumentId = Math.random();
   let key = url.toString() + "-" + Math.random();
   method === "pushState" ? snapshotCache.push(key, new Snapshot(url, html)) : snapshotCache.replace(key = snapshotCache.currentKey ?? key, new Snapshot(url, html));
   coordinator_default.addErrorHandler("navigate", (error2) => {
@@ -14572,7 +14629,7 @@ function updateUrl(method, url, html) {
       );
     }
   });
-  coordinator_default[method](url, { snapshotIdx: key, url: url.toString() });
+  coordinator_default[method](url, { snapshotIdx: key, url: url.toString(), documentId: snapshotCache.currentDocumentId });
   snapshotCache.currentKey = key;
   snapshotCache.currentUrl = url;
 }
@@ -14622,17 +14679,19 @@ function whenThisLinkIsPressed(el, callback) {
     callback((whenReleased) => whenReleased());
   });
 }
-function whenThisLinkIsHoveredFor(el, ms = 60, callback) {
-  el.addEventListener("mouseenter", (e) => {
-    let timeout = setTimeout(() => {
-      callback(e);
-    }, ms);
-    let handler = () => {
-      clearTimeout(timeout);
-      el.removeEventListener("mouseleave", handler);
-    };
-    el.addEventListener("mouseleave", handler);
-  });
+function whenThisLinkIsHoveredOrFocusedFor(el, ms = 60, callback) {
+  for (let [enterEvent, leaveEvent] of [["mouseenter", "mouseleave"], ["focus", "blur"]]) {
+    el.addEventListener(enterEvent, (e) => {
+      let timeout = setTimeout(() => {
+        callback(e);
+      }, ms);
+      let handler = () => {
+        clearTimeout(timeout);
+        el.removeEventListener(leaveEvent, handler);
+      };
+      el.addEventListener(leaveEvent, handler);
+    });
+  }
 }
 function extractDestinationFromLink(linkEl) {
   return createUrlObjectFromString2(linkEl.getAttribute("href"));
@@ -14642,6 +14701,9 @@ function createUrlObjectFromString2(urlString) {
 }
 function isSameOrigin(destination) {
   return !!destination && destination.origin === window.location.origin;
+}
+function isSamePageFragment(destination) {
+  return isSameOrigin(destination) && destination.pathname === window.location.pathname && destination.search === window.location.search && destination.href.includes("#");
 }
 function visitNatively(destination) {
   window.location.href = destination.href;
@@ -14752,18 +14814,23 @@ function storeScrollInformationInHtmlBeforeNavigatingAway() {
   document.body.setAttribute("data-scroll-x", document.body.scrollLeft);
   document.body.setAttribute("data-scroll-y", document.body.scrollTop);
   document.querySelectorAll(["[x-navigate\\:scroll]", "[wire\\:navigate\\:scroll]"]).forEach((el) => {
+    if (!el.hasAttribute("data-scroll-id"))
+      el.setAttribute("data-scroll-id", Math.random());
     el.setAttribute("data-scroll-x", el.scrollLeft);
     el.setAttribute("data-scroll-y", el.scrollTop);
   });
 }
-function restoreScrollPositionOrScrollToTop() {
+function restoreScrollPositionOrScrollToTop({ scrollToFragment = false, snapshotHtml = null } = {}) {
+  let savedElements = snapshotHtml ? new DOMParser().parseFromString(snapshotHtml, "text/html").querySelectorAll("[data-scroll-id]") : [];
+  let savedScroll = new Map(Array.from(savedElements, (el) => [el.getAttribute("data-scroll-id"), el]));
   let scroll = (el) => {
-    if (!el.hasAttribute("data-scroll-x")) {
+    let source = savedScroll.get(el.getAttribute("data-scroll-id")) || el;
+    if (!source.hasAttribute("data-scroll-x")) {
       window.scrollTo({ top: 0, left: 0, behavior: "instant" });
     } else {
       el.scrollTo({
-        top: Number(el.getAttribute("data-scroll-y")),
-        left: Number(el.getAttribute("data-scroll-x")),
+        top: Number(source.getAttribute("data-scroll-y")),
+        left: Number(source.getAttribute("data-scroll-x")),
         behavior: "instant"
       });
       el.removeAttribute("data-scroll-x");
@@ -14772,10 +14839,29 @@ function restoreScrollPositionOrScrollToTop() {
   };
   queueMicrotask(() => {
     queueMicrotask(() => {
+      let shouldScrollToFragment = !document.body.hasAttribute("data-scroll-x");
       scroll(document.body);
       document.querySelectorAll(["[x-navigate\\:scroll]", "[wire\\:navigate\\:scroll]"]).forEach(scroll);
+      if (scrollToFragment && !window.location.hash) {
+        window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+      } else if (shouldScrollToFragment || scrollToFragment) {
+        getFragmentTarget()?.scrollIntoView({ behavior: "instant" });
+      }
     });
   });
+}
+function getFragmentTarget() {
+  let fragment = window.location.hash.substring(1);
+  if (!fragment)
+    return;
+  let target = document.getElementById(fragment);
+  if (target)
+    return target;
+  try {
+    fragment = decodeURIComponent(fragment);
+  } catch (e) {
+  }
+  return document.getElementById(fragment) || Array.from(document.getElementsByName(fragment)).find((el) => el.tagName === "A");
 }
 
 // js/plugins/navigate/persist.js
@@ -14968,6 +15054,203 @@ function unPackPersistedPopovers(persistedEl) {
 }
 function isPopoverSupported() {
   return typeof document.createElement("div").showPopover === "function";
+}
+
+// js/directives/wire-transition.js
+var defaultName = "match-element";
+var assignedTransitionNames = /* @__PURE__ */ new WeakSet();
+globalDirective("transition", ({ el, directive: directive2, cleanup }) => {
+});
+function setTransitionNames(root, options = {}) {
+  let attribute2 = options.attribute ?? "wire:transition";
+  let hasUsedDefaultName = false;
+  elementsForAttribute(root, attribute2, options.includeRoot).forEach((el) => {
+    if (el.style.viewTransitionName)
+      return;
+    let name = el.getAttribute(attribute2);
+    if (!name && options.defaultName) {
+      if (hasUsedDefaultName) {
+        console.warn(`Livewire: Only one unnamed [${attribute2}] element can be transitioned per page. Give additional elements unique names.`);
+        return;
+      }
+      name = options.defaultName;
+      hasUsedDefaultName = true;
+    }
+    if (!name && options.type)
+      return;
+    el.style.viewTransitionName = name || defaultName;
+    assignedTransitionNames.add(el);
+  });
+}
+function clearTransitionNames(root, options = {}) {
+  let attribute2 = options.attribute ?? "wire:transition";
+  elementsForAttribute(root, attribute2, options.includeRoot).forEach((el) => {
+    if (!assignedTransitionNames.has(el))
+      return;
+    el.style.viewTransitionName = "";
+    assignedTransitionNames.delete(el);
+  });
+}
+function selectorForAttribute(attribute2) {
+  return `[${attribute2.replace(/[:.]/g, "\\$&")}]`;
+}
+function elementsForAttribute(root, attribute2, includeRoot = false) {
+  let selector = selectorForAttribute(attribute2);
+  let elements = Array.from(root.querySelectorAll(selector));
+  if (includeRoot && root.matches?.(selector))
+    elements.unshift(root);
+  return elements;
+}
+function startViewTransition(update, options = {}) {
+  let transitionConfig = { update };
+  if (options.type)
+    transitionConfig.types = [options.type];
+  try {
+    return document.startViewTransition(transitionConfig);
+  } catch (e) {
+    return document.startViewTransition(update);
+  }
+}
+function skipTransitionWhenTopLayerOpens(transition) {
+  transition.ready.catch(() => {
+  });
+  let onBeforeToggle = (event) => {
+    if (event.newState === "open" && event.target.matches?.("dialog, [popover]")) {
+      transition.skipTransition();
+    }
+  };
+  document.addEventListener("beforetoggle", onBeforeToggle, true);
+  let observer = new MutationObserver(() => {
+    if (document.querySelector("dialog:modal")) {
+      transition.skipTransition();
+      observer.disconnect();
+    }
+  });
+  observer.observe(document.documentElement, {
+    attributes: true,
+    attributeFilter: ["open"],
+    subtree: true
+  });
+  transition.finished.finally(() => {
+    observer.disconnect();
+    document.removeEventListener("beforetoggle", onBeforeToggle, true);
+  }).catch(() => {
+  });
+}
+async function transitionDomMutation(fromEl, toEl, callback, options = {}) {
+  if (options.skip)
+    return callback();
+  if (!fromEl.querySelector("[wire\\:transition]") && !toEl.querySelector("[wire\\:transition]"))
+    return callback();
+  if (typeof document.startViewTransition !== "function") {
+    return callback();
+  }
+  if (document.querySelector("dialog:modal"))
+    return callback();
+  for (let popover of document.querySelectorAll(":popover-open")) {
+    for (let el of popover.querySelectorAll("*")) {
+      if (el.checkVisibility())
+        return callback();
+    }
+  }
+  setTransitionNames(fromEl, options);
+  let style = document.createElement("style");
+  style.textContent = `
+        @media (prefers-reduced-motion: reduce) {
+            ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) {
+                animation: none !important;
+            }
+        }
+
+        ::view-transition-old(root) {
+            animation: none !important;
+            opacity: 0 !important;
+        }
+
+        ::view-transition-new(root) {
+            animation: none !important;
+            opacity: 1 !important;
+        }
+    `;
+  document.head.appendChild(style);
+  let update = () => {
+    callback();
+    setTransitionNames(fromEl, options);
+  };
+  let cleanup = () => {
+    style.remove();
+    clearTransitionNames(fromEl);
+  };
+  let transition = startViewTransition(update, { type: options.type });
+  skipTransitionWhenTopLayerOpens(transition);
+  transition.finished.finally(cleanup).catch(() => {
+  });
+  await transition.updateCallbackDone;
+}
+
+// js/plugins/navigate/transition.js
+var type = "navigate";
+var attribute = "wire:transition.navigate";
+var navigateTransitionSelector = "[wire\\:transition\\.navigate]";
+var defaultName2 = "livewire-navigate";
+function transitionPageSwap(html, update) {
+  let newDocument = new DOMParser().parseFromString(html, "text/html");
+  let currentDocumentTransitions = findNavigateTransitions(document);
+  let newDocumentTransitions = findNavigateTransitions(newDocument);
+  if (!currentDocumentTransitions.length && !newDocumentTransitions.length)
+    return update();
+  if (typeof document.startViewTransition !== "function")
+    return update();
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches)
+    return update();
+  if (document.querySelector("dialog:modal, :popover-open"))
+    return update();
+  let useRootTransition = document.documentElement.matches(navigateTransitionSelector) || newDocument.documentElement.matches(navigateTransitionSelector);
+  let style = useRootTransition ? null : disableRootTransition();
+  setNavigateTransitionNames(document.body);
+  let updateAndNameNewPage = () => {
+    update();
+    setNavigateTransitionNames(document.body);
+  };
+  let viewTransition = startViewTransition(updateAndNameNewPage, { type });
+  skipTransitionWhenTopLayerOpens(viewTransition);
+  viewTransition.finished.finally(() => {
+    style?.remove();
+    clearTransitionNames(document.body, { attribute, includeRoot: true });
+  }).catch(() => {
+  });
+}
+function findNavigateTransitions(subject) {
+  let root = subject.documentElement;
+  let elements = Array.from(root.querySelectorAll(navigateTransitionSelector));
+  if (root.matches(navigateTransitionSelector))
+    elements.unshift(root);
+  return elements;
+}
+function setNavigateTransitionNames(root) {
+  setTransitionNames(root, {
+    type,
+    attribute,
+    defaultName: defaultName2,
+    includeRoot: true
+  });
+}
+function disableRootTransition() {
+  let style = document.createElement("style");
+  style.setAttribute("data-livewire-navigate-transition", "");
+  style.textContent = `
+        ::view-transition-old(root) {
+            animation: none !important;
+            opacity: 0 !important;
+        }
+
+        ::view-transition-new(root) {
+            animation: none !important;
+            opacity: 1 !important;
+        }
+    `;
+  document.head.appendChild(style);
+  return style;
 }
 
 // js/plugins/navigate/page.js
@@ -15274,9 +15557,9 @@ function navigate_default(Alpine27) {
   Alpine27.directive("navigate", (el, { modifiers }) => {
     let shouldPrefetchOnHover = modifiers.includes("hover");
     let preserveScroll = modifiers.includes("preserve-scroll");
-    shouldPrefetchOnHover && whenThisLinkIsHoveredFor(el, 60, () => {
+    shouldPrefetchOnHover && whenThisLinkIsHoveredOrFocusedFor(el, 60, () => {
       let destination = extractDestinationFromLink(el);
-      if (linkShouldBeHandledNatively(el, destination))
+      if (linkShouldBeHandledNatively(el, destination) || isSamePageFragment(destination))
         return;
       prefetchHtml(destination, (html, finalDestination) => {
         storeThePrefetchedHtmlForWhenALinkIsClicked(html, destination, finalDestination);
@@ -15286,11 +15569,12 @@ function navigate_default(Alpine27) {
     });
     whenThisLinkIsPressed(el, (whenItIsReleased) => {
       let destination = extractDestinationFromLink(el);
-      prefetchHtml(destination, (html, finalDestination) => {
-        storeThePrefetchedHtmlForWhenALinkIsClicked(html, destination, finalDestination);
-      }, () => {
-        showProgressBar && finishAndHideProgressBar();
-      });
+      if (!isSamePageFragment(destination))
+        prefetchHtml(destination, (html, finalDestination) => {
+          storeThePrefetchedHtmlForWhenALinkIsClicked(html, destination, finalDestination);
+        }, () => {
+          showProgressBar && finishAndHideProgressBar();
+        });
       whenItIsReleased(() => {
         let prevented = fireEventForOtherLibrariesToHookInto("alpine:navigate", {
           url: destination,
@@ -15305,6 +15589,18 @@ function navigate_default(Alpine27) {
   });
   function navigateTo(destination, { preserveScroll = false, shouldPushToHistoryState = true }) {
     let navigation = startNavigation();
+    if (shouldPushToHistoryState && isSamePageFragment(destination)) {
+      navigation.ready();
+      storeScrollInformationInHtmlBeforeNavigatingAway();
+      updateCurrentPageHtmlInHistoryStateForLaterBackButtonClicks();
+      if (destination.href !== window.location.href) {
+        pushUrl(destination, document.documentElement.outerHTML, { sameDocument: true });
+      }
+      restoreScrollPositionOrScrollToTop({ scrollToFragment: !preserveScroll });
+      fireEventForOtherLibrariesToHookInto("alpine:navigated");
+      navigation.finish();
+      return;
+    }
     showProgressBar && showAndStartProgressBar();
     fetchHtmlOrUsePrefetchedHtml(destination, (html, finalDestination) => {
       if (!isSameOrigin(finalDestination)) {
@@ -15321,30 +15617,32 @@ function navigate_default(Alpine27) {
       cleanupAlpineElementsOnThePageThatArentInsideAPersistedElement();
       shouldPushToHistoryState && updateCurrentPageHtmlInHistoryStateForLaterBackButtonClicks();
       preventAlpineFromPickingUpDomChanges(Alpine27, (andAfterAllThis) => {
-        enablePersist && storePersistantElementsForLater((persistedEl) => {
-          packUpPersistedTeleports(persistedEl);
-          packUpPersistedPopovers(persistedEl);
-        });
-        if (shouldPushToHistoryState) {
-          updateUrlAndStoreLatestHtmlForFutureBackButtons(html, finalDestination);
-        } else {
-          replaceUrl(finalDestination, html);
-        }
-        swapCurrentPageWithNewHtml(html, (afterNewScriptsAreDoneLoading) => {
-          removeAnyLeftOverStaleTeleportTargets(document.body);
-          enablePersist && putPersistantElementsBack((persistedEl, newStub) => {
-            unPackPersistedTeleports(persistedEl);
-            unPackPersistedPopovers(persistedEl);
+        transitionPageSwap(html, () => {
+          enablePersist && storePersistantElementsForLater((persistedEl) => {
+            packUpPersistedTeleports(persistedEl);
+            packUpPersistedPopovers(persistedEl);
           });
-          !preserveScroll && restoreScrollPositionOrScrollToTop();
-          swapCallbacks.forEach((callback) => callback());
-          afterNewScriptsAreDoneLoading(() => {
-            andAfterAllThis(() => {
-              nowInitializeAlpineOnTheNewPage(Alpine27);
-              autofocusElementsWithTheAutofocusAttribute();
-              fireEventForOtherLibrariesToHookInto("alpine:navigated");
-              navigation.finish();
-              showProgressBar && finishAndHideProgressBar();
+          if (shouldPushToHistoryState) {
+            updateUrlAndStoreLatestHtmlForFutureBackButtons(html, finalDestination);
+          } else {
+            replaceUrl(finalDestination, html);
+          }
+          swapCurrentPageWithNewHtml(html, (afterNewScriptsAreDoneLoading) => {
+            removeAnyLeftOverStaleTeleportTargets(document.body);
+            enablePersist && putPersistantElementsBack((persistedEl, newStub) => {
+              unPackPersistedTeleports(persistedEl);
+              unPackPersistedPopovers(persistedEl);
+            });
+            !preserveScroll && restoreScrollPositionOrScrollToTop();
+            swapCallbacks.forEach((callback) => callback());
+            afterNewScriptsAreDoneLoading(() => {
+              andAfterAllThis(() => {
+                nowInitializeAlpineOnTheNewPage(Alpine27);
+                autofocusElementsWithTheAutofocusAttribute();
+                fireEventForOtherLibrariesToHookInto("alpine:navigated");
+                navigation.finish();
+                showProgressBar && finishAndHideProgressBar();
+              });
             });
           });
         });
@@ -15392,27 +15690,42 @@ function navigate_default(Alpine27) {
       cleanupAlpineElementsOnThePageThatArentInsideAPersistedElement();
       updateCurrentPageHtmlInSnapshotCacheForLaterBackButtonClicks(currentPageKey, currentPageUrl);
       preventAlpineFromPickingUpDomChanges(Alpine27, (andAfterAllThis) => {
-        enablePersist && storePersistantElementsForLater((persistedEl) => {
-          packUpPersistedTeleports(persistedEl);
-          packUpPersistedPopovers(persistedEl);
-        });
-        swapCurrentPageWithNewHtml(html, () => {
-          removeAnyLeftOverStaleProgressBars();
-          removeAnyLeftOverStaleTeleportTargets(document.body);
-          enablePersist && putPersistantElementsBack((persistedEl, newStub) => {
-            unPackPersistedTeleports(persistedEl);
-            unPackPersistedPopovers(persistedEl);
+        transitionPageSwap(html, () => {
+          enablePersist && storePersistantElementsForLater((persistedEl) => {
+            packUpPersistedTeleports(persistedEl);
+            packUpPersistedPopovers(persistedEl);
           });
-          restoreScrollPositionOrScrollToTop();
-          swapCallbacks.forEach((callback) => callback());
-          andAfterAllThis(() => {
-            nowInitializeAlpineOnTheNewPage(Alpine27);
-            autofocusElementsWithTheAutofocusAttribute();
-            fireEventForOtherLibrariesToHookInto("alpine:navigated");
-            navigation.finish();
+          swapCurrentPageWithNewHtml(html, () => {
+            removeAnyLeftOverStaleProgressBars();
+            removeAnyLeftOverStaleTeleportTargets(document.body);
+            enablePersist && putPersistantElementsBack((persistedEl, newStub) => {
+              unPackPersistedTeleports(persistedEl);
+              unPackPersistedPopovers(persistedEl);
+            });
+            restoreScrollPositionOrScrollToTop();
+            swapCallbacks.forEach((callback) => callback());
+            andAfterAllThis(() => {
+              nowInitializeAlpineOnTheNewPage(Alpine27);
+              autofocusElementsWithTheAutofocusAttribute();
+              fireEventForOtherLibrariesToHookInto("alpine:navigated");
+              navigation.finish();
+            });
           });
         });
       });
+    },
+    (destination, snapshotHtml, currentPageUrl, currentPageKey) => {
+      let prevented = fireEventForOtherLibrariesToHookInto("alpine:navigate", {
+        url: destination,
+        history: true,
+        cached: true
+      });
+      if (prevented)
+        return;
+      storeScrollInformationInHtmlBeforeNavigatingAway();
+      updateCurrentPageHtmlInSnapshotCacheForLaterBackButtonClicks(currentPageKey, currentPageUrl);
+      restoreScrollPositionOrScrollToTop({ snapshotHtml });
+      fireEventForOtherLibrariesToHookInto("alpine:navigated");
     }
   );
   setTimeout(() => {
@@ -15682,17 +15995,17 @@ function start() {
   import_alpinejs9.default.plugin(import_mask.default);
   import_alpinejs9.default.addRootSelector(() => "[wire\\:id]");
   import_alpinejs9.default.onAttributesAdded((el, attributes) => {
-    if (!Array.from(attributes).some((attribute) => matchesForLivewireDirective(attribute.name)))
+    if (!Array.from(attributes).some((attribute2) => matchesForLivewireDirective(attribute2.name)))
       return;
     if (!el._x_marker)
       return;
     let component = findComponentByEl(el, false);
     if (!component)
       return;
-    attributes.forEach((attribute) => {
-      if (!matchesForLivewireDirective(attribute.name))
+    attributes.forEach((attribute2) => {
+      if (!matchesForLivewireDirective(attribute2.name))
         return;
-      let directive2 = extractDirective(el, attribute.name);
+      let directive2 = extractDirective(el, attribute2.name);
       trigger("directive.init", { el, component, directive: directive2, cleanup: (callback) => {
         import_alpinejs9.default.onAttributeRemoved(el, directive2.raw, callback);
       } });
@@ -15701,7 +16014,7 @@ function start() {
   import_alpinejs9.default.interceptInit(
     import_alpinejs9.default.skipDuringClone(
       (el) => {
-        if (!Array.from(el.attributes).some((attribute) => matchesForLivewireDirective(attribute.name)))
+        if (!Array.from(el.attributes).some((attribute2) => matchesForLivewireDirective(attribute2.name)))
           return;
         if (el.hasAttribute("wire:id") && !el.__livewire && !hasComponent(el.getAttribute("wire:id"))) {
           let component2 = initComponent(el);
@@ -15728,7 +16041,7 @@ function start() {
         }
       },
       (el) => {
-        if (!Array.from(el.attributes).some((attribute) => matchesForLivewireDirective(attribute.name)))
+        if (!Array.from(el.attributes).some((attribute2) => matchesForLivewireDirective(attribute2.name)))
           return;
         let directives = Array.from(el.getAttributeNames()).filter((name) => matchesForLivewireDirective(name)).map((name) => extractDirective(el, name));
         directives.forEach((directive2) => {
@@ -15930,116 +16243,6 @@ function evaluateJsEffects(component, effects) {
 
 // js/morph.js
 var import_alpinejs12 = __toESM(require_module_cjs());
-
-// js/directives/wire-transition.js
-var defaultName = "match-element";
-globalDirective("transition", ({ el, directive: directive2, cleanup }) => {
-});
-function setTransitionNames(root, options = {}) {
-  root.querySelectorAll("[wire\\:transition]").forEach((el) => {
-    if (el.style.viewTransitionName)
-      return;
-    let name = el.getAttribute("wire:transition");
-    if (!name && options.type)
-      return;
-    el.style.viewTransitionName = name || defaultName;
-  });
-}
-function clearTransitionNames(root) {
-  root.querySelectorAll("[wire\\:transition]").forEach((el) => {
-    el.style.viewTransitionName = "";
-  });
-}
-async function transitionDomMutation(fromEl, toEl, callback, options = {}) {
-  if (options.skip)
-    return callback();
-  if (!fromEl.querySelector("[wire\\:transition]") && !toEl.querySelector("[wire\\:transition]"))
-    return callback();
-  if (typeof document.startViewTransition !== "function") {
-    return callback();
-  }
-  if (document.querySelector("dialog:modal"))
-    return callback();
-  for (let popover of document.querySelectorAll(":popover-open")) {
-    for (let el of popover.querySelectorAll("*")) {
-      if (el.checkVisibility())
-        return callback();
-    }
-  }
-  setTransitionNames(fromEl, options);
-  let style = document.createElement("style");
-  style.textContent = `
-        @media (prefers-reduced-motion: reduce) {
-            ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) {
-                animation: none !important;
-            }
-        }
-
-        ::view-transition-old(root) {
-            animation: none !important;
-            opacity: 0 !important;
-        }
-
-        ::view-transition-new(root) {
-            animation: none !important;
-            opacity: 1 !important;
-        }
-    `;
-  document.head.appendChild(style);
-  let update = () => {
-    callback();
-    setTransitionNames(fromEl, options);
-  };
-  let transitionConfig = { update };
-  if (options.type) {
-    transitionConfig.types = [options.type];
-  }
-  let cleanup = () => {
-    style.remove();
-    clearTransitionNames(fromEl);
-  };
-  let skipOnTopLayer = (transition) => {
-    transition.ready.catch(() => {
-    });
-    let onBeforeToggle = (event) => {
-      if (event.newState === "open" && event.target.matches?.("dialog, [popover]")) {
-        transition.skipTransition();
-      }
-    };
-    document.addEventListener("beforetoggle", onBeforeToggle, true);
-    let observer = new MutationObserver(() => {
-      if (document.querySelector("dialog:modal")) {
-        transition.skipTransition();
-        observer.disconnect();
-      }
-    });
-    observer.observe(document.documentElement, {
-      attributes: true,
-      attributeFilter: ["open"],
-      subtree: true
-    });
-    transition.finished.finally(() => {
-      observer.disconnect();
-      document.removeEventListener("beforetoggle", onBeforeToggle, true);
-    }).catch(() => {
-    });
-  };
-  try {
-    let transition = document.startViewTransition(transitionConfig);
-    skipOnTopLayer(transition);
-    transition.finished.finally(cleanup).catch(() => {
-    });
-    await transition.updateCallbackDone;
-  } catch (e) {
-    let transition = document.startViewTransition(update);
-    skipOnTopLayer(transition);
-    transition.finished.finally(cleanup).catch(() => {
-    });
-    await transition.updateCallbackDone;
-  }
-}
-
-// js/morph.js
 async function morph2(component, el, html) {
   let wrapperTag = getTagName(el.parentElement);
   let wrapper = document.createElement(wrapperTag);
@@ -16228,8 +16431,8 @@ interceptAction(({ action }) => {
 });
 interceptMessage(({ message, onSuccess, onStream }) => {
   onStream(async ({ json }) => {
-    let { type, islandFragment } = json;
-    if (type !== "island")
+    let { type: type2, islandFragment } = json;
+    if (type2 !== "island")
       return;
     await renderIsland(message.component, islandFragment);
   });
@@ -16247,16 +16450,16 @@ interceptMessage(({ message, onSuccess, onStream }) => {
 });
 function closestIsland(el) {
   return closestFragment(el, {
-    isMatch: ({ type }) => {
-      return type === "island";
+    isMatch: ({ type: type2 }) => {
+      return type2 === "island";
     }
   });
 }
 async function renderIsland(component, islandHtml) {
   let metadata = extractFragmentMetadataFromHtml(islandHtml);
   let fragment = findFragment(component.el, {
-    isMatch: ({ type, token }) => {
-      return type === metadata.type && token === metadata.token;
+    isMatch: ({ type: type2, token }) => {
+      return type2 === metadata.type && token === metadata.token;
     }
   });
   if (!fragment)
@@ -16580,12 +16783,12 @@ on("effect", ({ component, effects }) => {
 // js/features/supportStreaming.js
 interceptMessage(({ message, onStream }) => {
   onStream(({ json }) => {
-    let { id, type, name, el, ref, content, mode } = json;
-    if (type === "island")
+    let { id, type: type2, name, el, ref, content, mode } = json;
+    if (type2 === "island")
       return;
     let component = findComponent(id);
     let targetEl = null;
-    if (type === "directive") {
+    if (type2 === "directive") {
       const replaceEl = component.el.querySelector(`[wire\\:stream\\.replace="${name}"]`);
       if (replaceEl) {
         targetEl = replaceEl;
@@ -16593,9 +16796,9 @@ interceptMessage(({ message, onStream }) => {
       } else {
         targetEl = component.el.querySelector(`[wire\\:stream="${name}"]`);
       }
-    } else if (type === "ref") {
+    } else if (type2 === "ref") {
       targetEl = findRefEl(component, ref);
-    } else if (type === "element") {
+    } else if (type2 === "element") {
       targetEl = component.el.querySelector(el);
     }
     if (!targetEl)
@@ -16894,22 +17097,22 @@ import_alpinejs18.default.interceptInit((el) => {
       return;
     } else if (el.attributes[i].name.startsWith("wire:sort")) {
       let directive2 = extractDirective(el, el.attributes[i].name);
-      let attribute = directive2.rawName.replace("wire:", "x-");
+      let attribute2 = directive2.rawName.replace("wire:", "x-");
       if (directive2.modifiers.includes("async")) {
-        attribute = attribute.replace(".async", "");
+        attribute2 = attribute2.replace(".async", "");
       }
       if (directive2.modifiers.includes("renderless")) {
-        attribute = attribute.replace(".renderless", "");
+        attribute2 = attribute2.replace(".renderless", "");
       }
       if (directive2.modifiers.includes("prepend")) {
-        attribute = attribute.replace(".prepend", "");
+        attribute2 = attribute2.replace(".prepend", "");
       }
       if (directive2.modifiers.includes("append")) {
-        attribute = attribute.replace(".append", "");
+        attribute2 = attribute2.replace(".append", "");
       }
       let expression = directive2.expression;
       import_alpinejs18.default.bind(el, {
-        [attribute]() {
+        [attribute2]() {
           setNextActionOrigin({ el, directive: directive2 });
           let sortableChildren = Array.from(el.children).filter(
             (child) => child.hasAttribute("x-sort:item") || child.hasAttribute("wire:sort:item")
@@ -16987,24 +17190,24 @@ on("directive.init", ({ el, directive: directive2, cleanup, component }) => {
     return;
   if (customDirectiveHasBeenRegistered(directive2.value))
     return;
-  let attribute = directive2.rawName.replace("wire:", "x-on:");
+  let attribute2 = directive2.rawName.replace("wire:", "x-on:");
   if (directive2.value === "submit" && !directive2.modifiers.includes("prevent")) {
-    attribute = attribute + ".prevent";
+    attribute2 = attribute2 + ".prevent";
   }
   if (directive2.modifiers.includes("async")) {
-    attribute = attribute.replace(".async", "");
+    attribute2 = attribute2.replace(".async", "");
   }
   if (directive2.modifiers.includes("renderless")) {
-    attribute = attribute.replace(".renderless", "");
+    attribute2 = attribute2.replace(".renderless", "");
   }
   if (directive2.modifiers.includes("prepend")) {
-    attribute = attribute.replace(".prepend", "");
+    attribute2 = attribute2.replace(".prepend", "");
   }
   if (directive2.modifiers.includes("append")) {
-    attribute = attribute.replace(".append", "");
+    attribute2 = attribute2.replace(".append", "");
   }
   let cleanupBinding = import_alpinejs19.default.bind(el, {
-    [attribute](e) {
+    [attribute2](e) {
       directive2.eventContext = e;
       directive2.wire = component.$wire;
       let execute = () => {
@@ -17101,9 +17304,9 @@ directive("loading", ({ el, directive: directive2, component, cleanup }) => {
           el.classList.toggle(className, wasPresent);
         });
       } else if (directive2.modifiers.includes("attr")) {
-        let attribute = directive2.expression;
-        let value = el.getAttribute(attribute);
-        restoreLoadingState = value === null ? () => el.removeAttribute(attribute) : () => el.setAttribute(attribute, value);
+        let attribute2 = directive2.expression;
+        let value = el.getAttribute(attribute2);
+        restoreLoadingState = value === null ? () => el.removeAttribute(attribute2) : () => el.setAttribute(attribute2, value);
       }
       delay(() => toggleBooleanStateDirective(el, directive2, true));
     }
