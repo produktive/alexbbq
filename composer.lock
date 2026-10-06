@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "aa2550b519dfb075b33bd7ec47f64652",
+    "content-hash": "697b5a12b6f192bd1da285e0e93cacc9",
     "packages": [
         {
             "name": "anourvalar/eloquent-serialize",
@@ -2694,16 +2694,16 @@
         },
         {
             "name": "laravel/fortify",
-            "version": "v1.40.0",
+            "version": "v1.41.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/laravel/fortify.git",
-                "reference": "fe0fce8814660317df0684f2c7be3b573def67d3"
+                "reference": "c456642584c102f6a6aafee9932299542da637b5"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/laravel/fortify/zipball/fe0fce8814660317df0684f2c7be3b573def67d3",
-                "reference": "fe0fce8814660317df0684f2c7be3b573def67d3",
+                "url": "https://api.github.com/repos/laravel/fortify/zipball/c456642584c102f6a6aafee9932299542da637b5",
+                "reference": "c456642584c102f6a6aafee9932299542da637b5",
                 "shasum": ""
             },
             "require": {
@@ -2716,6 +2716,7 @@
                 "pragmarx/google2fa": "^9.0"
             },
             "require-dev": {
+                "jasonmccreary/double": "^1.0",
                 "orchestra/testbench": "^9.15|^10.8|^11.0",
                 "phpstan/phpstan": "^2.2.6"
             },
@@ -2754,20 +2755,20 @@
                 "issues": "https://github.com/laravel/fortify/issues",
                 "source": "https://github.com/laravel/fortify"
             },
-            "time": "2026-09-10T11:52:08+00:00"
+            "time": "2026-09-28T14:56:25+00:00"
         },
         {
             "name": "laravel/framework",
-            "version": "v13.34.0",
+            "version": "v13.35.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/laravel/framework.git",
-                "reference": "c829b4982d29344cbcf1d7ad78eb5d2bb8ae66c4"
+                "reference": "a413a9da94884e5e9d58f4e6612884f712827804"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/laravel/framework/zipball/c829b4982d29344cbcf1d7ad78eb5d2bb8ae66c4",
-                "reference": "c829b4982d29344cbcf1d7ad78eb5d2bb8ae66c4",
+                "url": "https://api.github.com/repos/laravel/framework/zipball/a413a9da94884e5e9d58f4e6612884f712827804",
+                "reference": "a413a9da94884e5e9d58f4e6612884f712827804",
                 "shasum": ""
             },
             "require": {
@@ -2985,7 +2986,7 @@
                 "issues": "https://github.com/laravel/framework/issues",
                 "source": "https://github.com/laravel/framework"
             },
-            "time": "2026-09-29T12:46:21+00:00"
+            "time": "2026-10-06T13:52:37+00:00"
         },
         {
             "name": "laravel/passkeys",
@@ -3057,16 +3058,16 @@
         },
         {
             "name": "laravel/prompts",
-            "version": "v0.3.24",
+            "version": "v0.3.25",
             "source": {
                 "type": "git",
                 "url": "https://github.com/laravel/prompts.git",
-                "reference": "5d3cdef29e93ca3b62b1871359db3078cd99908b"
+                "reference": "21b7b49d60fcb700016dd27b582ae739c75de816"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/laravel/prompts/zipball/5d3cdef29e93ca3b62b1871359db3078cd99908b",
-                "reference": "5d3cdef29e93ca3b62b1871359db3078cd99908b",
+                "url": "https://api.github.com/repos/laravel/prompts/zipball/21b7b49d60fcb700016dd27b582ae739c75de816",
+                "reference": "21b7b49d60fcb700016dd27b582ae739c75de816",
                 "shasum": ""
             },
             "require": {
@@ -3109,10 +3110,9 @@
             ],
             "description": "Add beautiful and user-friendly forms to your command-line applications.",
             "support": {
-                "issues": "https://github.com/laravel/prompts/issues",
-                "source": "https://github.com/laravel/prompts/tree/v0.3.24"
+                "source": "https://github.com/laravel/prompts/tree/v0.3.25"
             },
-            "time": "2026-08-20T12:55:36+00:00"
+            "time": "2026-10-06T02:25:49+00:00"
         },
         {
             "name": "laravel/reverb",
@@ -10977,16 +10977,16 @@
         },
         {
             "name": "webmozart/assert",
-            "version": "2.4.1",
+            "version": "2.5.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/webmozarts/assert.git",
-                "reference": "2ccb7c2e821038c03a3e6e1700c570c158c55f70"
+                "reference": "8a163706bbcac613733dba03f51e13b5eb1bb819"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/webmozarts/assert/zipball/2ccb7c2e821038c03a3e6e1700c570c158c55f70",
-                "reference": "2ccb7c2e821038c03a3e6e1700c570c158c55f70",
+                "url": "https://api.github.com/repos/webmozarts/assert/zipball/8a163706bbcac613733dba03f51e13b5eb1bb819",
+                "reference": "8a163706bbcac613733dba03f51e13b5eb1bb819",
                 "shasum": ""
             },
             "require": {
@@ -11037,9 +11037,9 @@
             ],
             "support": {
                 "issues": "https://github.com/webmozarts/assert/issues",
-                "source": "https://github.com/webmozarts/assert/tree/2.4.1"
+                "source": "https://github.com/webmozarts/assert/tree/2.5.0"
             },
-            "time": "2026-06-15T15:31:57+00:00"
+            "time": "2026-10-05T23:14:19+00:00"
         }
     ],
     "packages-dev": [
@@ -11515,16 +11515,16 @@
         },
         {
             "name": "laravel/agent-detector",
-            "version": "v2.0.2",
+            "version": "v2.0.4",
             "source": {
                 "type": "git",
                 "url": "https://github.com/laravel/agent-detector.git",
-                "reference": "90694b9256099591cf9e55d08c18ba7a00bf099f"
+                "reference": "2e4f1e00f75afa82ce2ade999c6e72b3c81d03c5"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/laravel/agent-detector/zipball/90694b9256099591cf9e55d08c18ba7a00bf099f",
-                "reference": "90694b9256099591cf9e55d08c18ba7a00bf099f",
+                "url": "https://api.github.com/repos/laravel/agent-detector/zipball/2e4f1e00f75afa82ce2ade999c6e72b3c81d03c5",
+                "reference": "2e4f1e00f75afa82ce2ade999c6e72b3c81d03c5",
                 "shasum": ""
             },
             "require": {
@@ -11573,7 +11573,7 @@
                 "issues": "https://github.com/laravel/agent-detector/issues",
                 "source": "https://github.com/laravel/agent-detector"
             },
-            "time": "2026-04-29T18:32:34+00:00"
+            "time": "2026-10-05T14:40:01+00:00"
         },
         {
             "name": "laravel/pail",
